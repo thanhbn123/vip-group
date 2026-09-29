@@ -10,11 +10,13 @@ Owner chọn **Cloudflare Pages** ngày 29/09/2026 (VIPG-WEB-003, issue #4). URL
 | pull request vào `develop` | `pr-<số PR>` | `https://pr-<số>.<project>.pages.dev` |
 | (không bao giờ) | `main` — nhánh production của project | `https://<project>.pages.dev` |
 
-- Workflow: `.github/workflows/staging.yml` — build, `check`, `test` rồi mới deploy bằng Direct Upload (`wrangler pages deploy`), gắn `--commit-hash` = SHA thật.
+- Workflow: `.github/workflows/staging.yml`, **hai job**:
+  - `build` — checkout đúng SHA (PR: PR HEAD), `npm ci`, `check`, `build`, `test`, tải `dist` lên artifact. **Không có secret.**
+  - `deploy` (`needs: build`) — **không checkout, không `npm ci`**, chỉ tải artifact `dist` rồi Direct Upload (`wrangler pages deploy`), gắn `--commit-hash` = SHA thật. Secret chỉ ở job này. Mã của PR vì thế không thể chạm vào token.
 - Workflow **cấm** deploy vào `main` / `master` / `production`. Production là việc riêng, cần lệnh owner.
 - `public/_headers`: header bảo mật + `X-Robots-Tag: noindex` cho mọi host `*.pages.dev`.
 - CSP: thẻ `<meta>` do Astro sinh (`security.csp` trong `astro.config.mjs`).
-- Secret Cloudflare chỉ cấp cho bước kiểm credential và bước deploy — không cho `npm ci` / build / test.
+- Secret Cloudflare chỉ cấp cho bước kiểm credential và bước deploy của job `deploy`. Job `deploy` kiểm lại nhánh đích bằng regex `^(staging|pr-[0-9]+)$` và SHA 40 ký tự hex trước mọi việc khác.
 - PR từ fork không nhận secret → không deploy preview (hành vi mặc định của GitHub).
 - Thiếu credential → bước deploy bị bỏ qua, job summary ghi `BLOCKED_EXTERNAL_CREDENTIAL` và có annotation cảnh báo. **Job vẫn hiện dấu xanh** (build/test thật sự đạt) — dấu xanh đó KHÔNG có nghĩa staging đã deploy; phải đọc summary.
 - Mọi bước chạy `bash -eo pipefail`; deploy lỗi hoặc wrangler không in ra URL → bước FAIL, không in bảng "Staging deploy".

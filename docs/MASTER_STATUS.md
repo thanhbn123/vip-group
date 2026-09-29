@@ -1,14 +1,14 @@
 # MASTER STATUS — VIP GROUP WEBSITE
 
 > Ảnh chụp trạng thái, **không phải nguồn chân lý**. GitHub là nguồn chân lý: đo lại (`git ls-remote`, `gh pr list`, `gh run list`) trước khi dựa vào bất kỳ SHA nào ở đây.
-> Cập nhật lần cuối: 29/09/2026, trong PR của VIPG-WEB-004 (#7). SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
+> Cập nhật lần cuối: 29/09/2026, trong PR của VIPG-WEB-005 (#9). SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
 
 ## Nhánh
 
 | Nhánh | SHA đo được | Ghi chú |
 |---|---|---|
 | `main` | `57214628acd7aa1f05e5d018cc3dee4ca8d4ed9e` | Chỉ có commit khởi tạo. Giữ nguyên tới khi staging PASS + owner ra lệnh production |
-| `develop` | `bc6be7b4c87ed8d8228915d79f9b4b9acc75e9e4` (base của PR VIPG-WEB-004) | CI 36593581246 + Staging 36593581189 — success (staging deploy skipped: thiếu credential) |
+| `develop` | `c50fb70de72336c6012dfc541df5f1b6d7725266` (base của PR VIPG-WEB-005) | CI 36595289188 + Staging 36595289082 — success (staging deploy skipped: thiếu credential) |
 
 ## Work item
 
@@ -17,24 +17,27 @@
 | #1 | VIPG-WEB-001 — Official corporate website v1 | CLOSED — merged develop `5f34a0b` | #2 MERGED |
 | #3 | VIPG-WEB-002 — Hardening sau verifier + tài liệu điều phối | CLOSED — merged develop `7ce3b7d` | #5 MERGED |
 | #4 | VIPG-WEB-003 — Thiết lập môi trường staging | **Mở** — repo/config đã merge `bc6be7b`; deploy thật BLOCKED_EXTERNAL_CREDENTIAL | #6 MERGED |
-| #7 | VIPG-WEB-004 — SHA preview chính xác + script inline nằm dưới CSP | Đang làm | (PR của chính thay đổi này) |
+| #7 | VIPG-WEB-004 — SHA preview chính xác + script inline nằm dưới CSP | CLOSED — merged develop `c50fb70` | #8 MERGED |
+| #9 | VIPG-WEB-005 — Tách job deploy staging khỏi job build (cô lập credential) | Đang làm | (PR của chính thay đổi này) |
 
 ## Gate hiện tại
 
-VIPG-WEB-004 → verifier → merge `develop`. Sau đó mọi việc kỹ thuật còn lại phụ thuộc owner: staging thật **BLOCKED_EXTERNAL_CREDENTIAL** (xem `docs/STAGING.md`), nội dung CONTENT_PENDING, production BLOCKED_EXTERNAL_DNS.
+VIPG-WEB-005 → verifier → merge `develop`. Sau đó mọi việc kỹ thuật còn lại phụ thuộc owner: staging thật **BLOCKED_EXTERNAL_CREDENTIAL** (xem `docs/STAGING.md`), nội dung CONTENT_PENDING, production BLOCKED_EXTERNAL_DNS.
 
-## Kỹ thuật (đo trên `develop` `bc6be7b`)
+## Kỹ thuật (đo trên `develop` `c50fb70`)
 
 | Hạng mục | Trạng thái | Căn cứ |
 |---|---|---|
-| Type check / build / test | PASS | verifier PR #6 lượt 2; CI 36593581246 |
+| Type check / build / test | PASS | verifier PR #8; CI 36595289188 |
 | Link nội bộ, sitemap, robots, canonical, OG, schema.org | PASS | verifier PR #5 |
 | Lighthouse | 100/100/100/100 trên 7 trang | đo cục bộ 29/09 (Lighthouse 13.5.0, mobile mặc định, không độ trễ mạng thật) — cần đo lại trên staging |
 | Form tắt JS | PASS — không dữ liệu nào vào URL | verifier PR #5 (Chrome CDP, JS tắt thật) |
 | Menu tắt JS, 404 noindex không canonical | PASS | verifier PR #5 |
-| CSP (`<meta>`, hash, không unsafe-inline) | PASS cục bộ | verifier PR #6: 0 vi phạm, script chèn bị chặn |
+| CSP (`<meta>`, hash, không unsafe-inline) | PASS cục bộ | verifier PR #6: 0 vi phạm, script chèn bị chặn. Hash của script `html.js` **chỉ được trình duyệt thực thi từ PR #8** (trước đó script đứng trên thẻ CSP) — verifier PR #8: đột biến bị chặn trên `1fcd534`, không bị chặn trên `bc6be7b` |
 | Header bảo mật (`public/_headers`) | Có trong repo, **chưa kiểm thật** | chỉ có hiệu lực trên Cloudflare Pages — nghiệm thu trên staging |
 | Workflow staging không deploy giả / không deploy production | PASS | verifier PR #6 lượt 2 (mô phỏng a/b/c + đối chứng âm) |
+| Preview PR build từ đúng PR HEAD | PASS | verifier PR #8 (log Staging: `HEAD is now at 1fcd534`) |
+| Cô lập credential (job deploy không chạy mã repo) | Làm trong VIPG-WEB-005 | — |
 
 ## CONTENT_PENDING — V-11501 (owner cung cấp; không được tự điền)
 

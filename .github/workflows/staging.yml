@@ -6,6 +6,10 @@ name: Staging (Cloudflare Pages)
 # Nhánh production của project Cloudflare là "main" và workflow này bị cấm dùng tên đó.
 # Thiếu secret/biến Cloudflare → bỏ qua bước deploy và ghi BLOCKED_EXTERNAL_CREDENTIAL, không báo PASS giả.
 # Thiết lập: docs/STAGING.md
+#
+# Hai job, cô lập credential:
+# - build : chạy mã của repo/PR (npm ci, build, test) — KHÔNG có secret.
+# - deploy: KHÔNG checkout, KHÔNG npm ci — chỉ tải artifact dist rồi deploy. Secret chỉ ở đây.
 
 on:
   push:
@@ -27,15 +31,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     # workflow_dispatch chỉ được chạy từ develop — không ghi đè alias staging bằng mã nhánh khác.
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Secret Cloudflare chỉ cấp cho đúng hai bước cần nó — không lộ cho npm ci / build / test.
-    env:
-      CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
-      WRANGLER_VERSION: 4.142.0
+    outputs:
+      branch: ${{ steps.target.outputs.branch }}
+      sha: ${{ steps.target.outputs.sha }}
     steps:
       # PR: checkout đúng PR HEAD (không phải merge ref) để bản preview == SHA đã verify và == --commit-hash.
       - uses: actions/checkout@v7
@@ -64,6 +67,30 @@ jobs:
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
+      WRANGLER_VERSION: 4.142.0
+      TARGET_BRANCH: ${{ needs.build.outputs.branch }}
+      TARGET_SHA: ${{ needs.build.outputs.sha }}
+    steps:
+      - name: Kiểm lại nhánh đích (không bao giờ là production)
+        run: |
+          set -euo pipefail
+          # Chỉ nhận đúng "staging" hoặc "pr-<số>" — mọi tên khác (kể cả main/production) bị từ chối.
+          [[ "$TARGET_BRANCH" =~ ^(staging|pr-[0-9]+)$ ]] || { echo "::error::Nhánh đích không hợp lệ: '$TARGET_BRANCH'"; exit 1; }
+          [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::SHA đích không hợp lệ: '$TARGET_SHA'"; exit 1; }
+
       - name: Kiểm credential Cloudflare (thiếu → deploy bị BỎ QUA, không phải PASS)
         id: creds
         env:
@@ -78,10 +105,21 @@ jobs:
               echo "## Staging: BLOCKED_EXTERNAL_CREDENTIAL"
               echo ""
               echo "Chưa deploy. Thiếu secret \`CLOUDFLARE_API_TOKEN\` / \`CLOUDFLARE_ACCOUNT_ID\` hoặc biến \`CF_PAGES_PROJECT\`."
-              echo "Build + test ở trên vẫn là thật. Xem docs/STAGING.md."
+              echo "Job build/test là thật. Xem docs/STAGING.md."
             } >> "$GITHUB_STEP_SUMMARY"
             echo "::warning::Staging chưa deploy: thiếu credential Cloudflare (BLOCKED_EXTERNAL_CREDENTIAL)"
           fi
+
+      - uses: actions/download-artifact@v8
+        if: steps.creds.outputs.ready == 'true'
+        with:
+          name: dist
+          path: dist
+
+      - uses: actions/setup-node@v7
+        if: steps.creds.outputs.ready == 'true'
+        with:
+          node-version: 22
 
       - name: Deploy lên Cloudflare Pages
         if: steps.creds.outputs.ready == 'true'
@@ -92,8 +130,8 @@ jobs:
           set -euo pipefail
           npx --yes "wrangler@${WRANGLER_VERSION}" pages deploy dist \
             --project-name="$CF_PAGES_PROJECT" \
-            --branch="${{ steps.target.outputs.branch }}" \
-            --commit-hash="${{ steps.target.outputs.sha }}" \
+            --branch="$TARGET_BRANCH" \
+            --commit-hash="$TARGET_SHA" \
             --commit-dirty=false | tee deploy.log
           URL=$(grep -oE 'https://[a-z0-9.-]+\.pages\.dev' deploy.log | tail -1 || true)
           if [ -z "$URL" ]; then
@@ -105,8 +143,8 @@ jobs:
             echo ""
             echo "| | |"
             echo "|---|---|"
-            echo "| Nhánh Cloudflare | \`${{ steps.target.outputs.branch }}\` |"
-            echo "| SHA | \`${{ steps.target.outputs.sha }}\` |"
+            echo "| Nhánh Cloudflare | \`${TARGET_BRANCH}\` |"
+            echo "| SHA | \`${TARGET_SHA}\` |"
             echo "| URL lượt deploy | ${URL} |"
-            echo "| URL cố định | https://${{ steps.target.outputs.branch }}.${CF_PAGES_PROJECT}.pages.dev |"
+            echo "| URL cố định | https://${TARGET_BRANCH}.${CF_PAGES_PROJECT}.pages.dev |"
           } >> "$GITHUB_STEP_SUMMARY"
