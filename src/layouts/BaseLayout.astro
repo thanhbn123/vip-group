@@ -20,6 +20,8 @@ const ui = t(locale);
 <html lang={htmlLang[locale]}>
   <head>
     <meta charset="utf-8" />
+    <!-- Đánh dấu có JS: menu mobile chỉ thu gọn khi JS chạy; tắt JS thì menu hiện sẵn. -->
+    <script is:inline>document.documentElement.classList.add('js')</script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#06101d" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

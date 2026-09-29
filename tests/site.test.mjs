@@ -126,6 +126,33 @@ test('form liên hệ không giả vờ gửi dữ liệu', () => {
   }
 });
 
+test('form liên hệ tắt JavaScript: không dữ liệu nào lọt ra URL', () => {
+  const html = read('/lien-he/');
+  const start = html.indexOf('<form ');
+  const formHtml = html.slice(start, html.indexOf('</form>', start));
+  // Không có `name` thì trình duyệt không tuần tự hoá giá trị vào query string / body.
+  for (const [tag] of formHtml.matchAll(/<(?:input|textarea|select)\b[^>]*>/g)) {
+    assert.doesNotMatch(tag, /\sname=/, `ô nhập có name khi chưa có backend: ${tag}`);
+  }
+  // Nút gửi disabled sẵn trong HTML → tắt JS thì không gửi được, kể cả bấm Enter.
+  assert.match(formHtml, /<button [^>]*type="submit"[^>]*\sdisabled[\s>]/, 'nút gửi phải disabled khi tắt JS');
+});
+
+test('trang noindex (404) không phát canonical / og:url', () => {
+  const html = readFileSync(join(dist, '404.html'), 'utf8');
+  assert.doesNotMatch(html, /rel="canonical"/);
+  assert.doesNotMatch(html, /property="og:url"/);
+});
+
+test('menu dùng được khi tắt JavaScript', () => {
+  const html = read('/');
+  const head = html.slice(0, html.indexOf('</head>'));
+  assert.match(head, /document\.documentElement\.classList\.add\('js'\)/, 'đánh dấu html.js trong <head>');
+  // Chỉ ẩn menu khi có lớp js; không có JS thì mọi link menu vẫn nằm trong HTML và không bị ẩn.
+  assert.match(html, /html\.js [^{]*\.menu[^{]*\{[^}]*display:\s*none/, 'ẩn menu phải gắn với html.js');
+  assert.doesNotMatch(html, /(?<!html\.js )\.menu\[[^\]]*\]\s*\{[^}]*display:\s*none/, 'không được ẩn menu vô điều kiện');
+});
+
 test('menu mobile có nút bấm truy cập được', () => {
   const html = read('/');
   // Tên truy cập của link logo phải khớp chữ hiển thị (Lighthouse label-content-name-mismatch).

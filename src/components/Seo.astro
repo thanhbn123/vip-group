@@ -35,14 +35,14 @@ const organization = Object.fromEntries(
 ---
 <title>{fullTitle}</title>
 <meta name="description" content={description} />
-<link rel="canonical" href={canonical} />
-{noindex && <meta name="robots" content="noindex" />}
+{/* Trang noindex (404) không có URL chuẩn — không phát canonical / og:url. */}
+{noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content={company.name} />
 <meta property="og:locale" content={ogLocale[locale]} />
 <meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
-<meta property="og:url" content={canonical} />
+{!noindex && <meta property="og:url" content={canonical} />}
 <meta property="og:image" content={ogImage} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />

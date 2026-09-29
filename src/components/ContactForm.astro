@@ -1,14 +1,21 @@
 ---
 /**
  * Form liên hệ — GIAI ĐOẠN 1 CHỈ LÀ GIAO DIỆN.
- * Chưa có máy chủ nhận dữ liệu: form không có `action`, script chặn gửi và
- * báo rõ cho người dùng rằng dữ liệu CHƯA được gửi, kèm email thay thế.
- * Khi có backend: đặt contact.formBackendReady = true và nối API ở đây.
+ *
+ * Chưa có máy chủ nhận dữ liệu (`backendReady = false`), nên form bảo đảm
+ * KHÔNG dữ liệu nào rời trang, kể cả khi trình duyệt tắt JavaScript:
+ * - các ô nhập KHÔNG có thuộc tính `name` → trình duyệt không đưa giá trị vào URL/body;
+ * - nút gửi `disabled` sẵn trong HTML → tắt JS thì không gửi được (kể cả bấm Enter);
+ * - bật JS thì script mở nút gửi, chặn gửi và báo rõ dữ liệu CHƯA được gửi.
+ *
+ * Khi có backend: đặt contact.formBackendReady = true, thêm `action`/`method`
+ * và nối API ở đây (tests/site.test.mjs sẽ cần cập nhật theo).
  */
 interface Props { email: string; backendReady: boolean }
 const { email, backendReady } = Astro.props;
+const nameAttr = (n: string) => (backendReady ? n : undefined);
 ---
-<form class="contact-form card" data-contact-form data-email={email} novalidate={!backendReady}>
+<form class="contact-form card" data-contact-form data-email={email} data-backend-ready={String(backendReady)}>
   {!backendReady && (
     <p class="notice" role="note">
       Form đang trong giai đoạn thử nghiệm và <strong>chưa gửi được dữ liệu</strong>.
@@ -17,23 +24,23 @@ const { email, backendReady } = Astro.props;
   )}
   <div class="field">
     <label for="cf-name">Họ và tên</label>
-    <input id="cf-name" name="name" type="text" autocomplete="name" required />
+    <input id="cf-name" name={nameAttr('name')} type="text" autocomplete="name" required />
   </div>
   <div class="field-row">
     <div class="field">
       <label for="cf-phone">Số điện thoại</label>
-      <input id="cf-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" />
+      <input id="cf-phone" name={nameAttr('phone')} type="tel" autocomplete="tel" inputmode="tel" />
     </div>
     <div class="field">
       <label for="cf-email">Email</label>
-      <input id="cf-email" name="email" type="email" autocomplete="email" required />
+      <input id="cf-email" name={nameAttr('email')} type="email" autocomplete="email" required />
     </div>
   </div>
   <div class="field">
     <label for="cf-message">Nội dung</label>
-    <textarea id="cf-message" name="message" rows="5" required></textarea>
+    <textarea id="cf-message" name={nameAttr('message')} rows="5" required></textarea>
   </div>
-  <button class="btn btn-primary" type="submit">Gửi liên hệ</button>
+  <button class="btn btn-primary" type="submit" disabled={!backendReady} data-submit>Gửi liên hệ</button>
   <p class="form-status" data-form-status role="status" aria-live="polite"></p>
 </form>
 
@@ -47,16 +54,21 @@ const { email, backendReady } = Astro.props;
   input, textarea { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--text); }
   input:focus-visible, textarea:focus-visible { border-color: var(--gold); }
   textarea { resize: vertical; }
+  button[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
   .form-status { margin: 0; font-size: 14px; color: var(--gold-light); min-height: 1.4em; }
 </style>
 
 <script>
   const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
-  const status = form?.querySelector<HTMLElement>('[data-form-status]');
-  form?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (!status) return;
-    const email = form.dataset.email ?? '';
-    status.textContent = `Dữ liệu CHƯA được gửi — form chưa kết nối máy chủ. Vui lòng gửi email tới ${email}.`;
-  });
+  if (form && form.dataset.backendReady !== 'true') {
+    const status = form.querySelector<HTMLElement>('[data-form-status]');
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+    if (submit) submit.disabled = false;
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (status) {
+        status.textContent = `Dữ liệu CHƯA được gửi — form chưa kết nối máy chủ. Vui lòng gửi email tới ${form.dataset.email ?? ''}.`;
+      }
+    });
+  }
 </script>

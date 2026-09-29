@@ -13,8 +13,8 @@ export const company: CompanyProfile = {
   about: {
     heading: 'Nền tảng kết nối các lĩnh vực có khả năng hỗ trợ lẫn nhau',
     paragraphs: [
-      'VIP GROUP tập hợp các hoạt động kinh doanh theo ba trụ cột. Mỗi trụ cột vận hành độc lập nhưng dùng chung dữ liệu, quy trình và năng lực công nghệ.',
-      'Cách tổ chức này giúp kinh nghiệm vận hành thực tế ở một lĩnh vực trở thành nền tảng cho lĩnh vực khác.',
+      'VIP GROUP định hướng tổ chức hoạt động kinh doanh theo ba trụ cột. Mỗi trụ cột vận hành độc lập, cùng hướng tới dùng chung dữ liệu, quy trình và năng lực công nghệ.',
+      'Mục tiêu của cách tổ chức này là để kinh nghiệm vận hành ở một lĩnh vực trở thành nền tảng cho lĩnh vực khác.',
     ],
   },
   values: [

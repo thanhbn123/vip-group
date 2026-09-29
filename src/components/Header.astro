@@ -49,13 +49,19 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
   .menu-toggle[aria-expanded='true'] .bars span:nth-child(2) { opacity: 0; }
   .menu-toggle[aria-expanded='true'] .bars span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
+  /* Có JS: thu menu vào nút ☰. */
   @media (max-width: 1080px) {
-    .menu-toggle { display: grid; }
-    .menu { position: fixed; inset: var(--header-h) 0 auto 0; max-height: calc(100dvh - var(--header-h)); overflow-y: auto; background: var(--navy-950); border-bottom: 1px solid var(--line); display: none; }
-    .menu.is-open { display: block; }
-    .menu ul { flex-direction: column; align-items: stretch; padding: 12px 16px 24px; gap: 2px; }
-    .menu a { padding: 14px 12px; font-size: 16px; }
-    .nav-cta { margin: 12px 0 0; text-align: center; }
+    :global(html.js) .menu-toggle { display: grid; }
+    :global(html.js) .menu { position: fixed; inset: var(--header-h) 0 auto 0; max-height: calc(100dvh - var(--header-h)); overflow-y: auto; background: var(--navy-950); border-bottom: 1px solid var(--line); display: none; }
+    :global(html.js) .menu.is-open { display: block; }
+    :global(html.js) .menu ul { flex-direction: column; align-items: stretch; padding: 12px 16px 24px; gap: 2px; }
+    :global(html.js) .menu a { padding: 14px 12px; font-size: 16px; }
+    :global(html.js) .nav-cta { margin: 12px 0 0; text-align: center; }
+    /* Tắt JS: menu hiện sẵn, xuống dòng dưới logo. */
+    :global(html:not(.js)) .nav { height: auto; flex-wrap: wrap; padding: 12px 0; }
+    :global(html:not(.js)) .menu { width: 100%; }
+    :global(html:not(.js)) .menu ul { flex-wrap: wrap; }
+    :global(html:not(.js)) .nav-cta { margin-left: 0; }
   }
 </style>
 
