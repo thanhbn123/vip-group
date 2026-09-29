@@ -30,8 +30,8 @@ jobs:
       CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
       WRANGLER_VERSION: 4.142.0
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
