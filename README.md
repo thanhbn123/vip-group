@@ -3,7 +3,7 @@
 Website chính thức của VIP GROUP tại https://vipgroup.com.vn.
 
 - Stack: [Astro](https://astro.build) 7, xuất HTML tĩnh (không backend, không CMS).
-- Dependency duy nhất: `astro`.
+- Dependency chạy: chỉ `astro`. Dev dependency: `@astrojs/check` + `typescript` (kiểm kiểu).
 - Ngôn ngữ: tiếng Việt; cấu trúc sẵn để thêm tiếng Anh / tiếng Trung.
 
 ## Yêu cầu
@@ -21,11 +21,12 @@ npm run dev        # http://localhost:4321
 
 ```bash
 npm run build      # xuất ra dist/
+npm run check      # kiểm tra kiểu (astro check) cho file .astro / .ts
 npm test           # kiểm tra bản build: SEO, link nội bộ, sitemap, form, dữ liệu
 npm run preview    # xem bản build tại http://localhost:4321
 ```
 
-CI (GitHub Actions, `.github/workflows/ci.yml`) chạy `npm ci → build → test` cho mọi Pull Request vào `develop` / `main`.
+CI (GitHub Actions, `.github/workflows/ci.yml`) chạy `npm ci → check → build → test` cho mọi Pull Request vào `develop` / `main`.
 
 ## Deploy
 
@@ -86,12 +87,14 @@ Giai đoạn 1 **chỉ có giao diện**: form không có `action`, không gửi
 Logo hiện là placeholder dạng chữ.
 
 1. Thay `public/logo.svg`, `public/favicon.svg`, `design/og-image.svg`.
-2. Sinh lại ảnh PNG/ICO (cần Chrome và ImageMagick):
+2. Sinh lại ảnh JPG/PNG/ICO (cần Chrome và ImageMagick; Chrome headless có lúc chụp xong không tự thoát — thấy file ảnh đã ra thì bấm Ctrl+C):
    ```bash
    CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-   "$CHROME" --headless=new --hide-scrollbars --window-size=1200,630 --screenshot=public/og-image.png "file://$PWD/design/og-image.svg"
-   magick -background none public/favicon.svg -resize 180x180 public/apple-touch-icon.png
-   magick public/apple-touch-icon.png -define icon:auto-resize=32,16 public/favicon.ico
+   "$CHROME" --headless=new --hide-scrollbars --window-size=1200,630 --screenshot=/tmp/og.png "file://$PWD/design/og-image.svg"
+   magick /tmp/og.png -strip -quality 86 public/og-image.jpg
+   "$CHROME" --headless=new --hide-scrollbars --default-background-color=00000000 --window-size=540,540 --screenshot=/tmp/fav.png "file://$PWD/public/favicon.svg"
+   magick /tmp/fav.png -resize 180x180 public/apple-touch-icon.png
+   magick /tmp/fav.png -define icon:auto-resize=32,16 public/favicon.ico
    ```
 3. Muốn dùng ảnh logo trong header: sửa `src/components/Logo.astro`.
 

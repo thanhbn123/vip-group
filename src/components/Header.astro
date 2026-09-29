@@ -13,7 +13,7 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
 ---
 <header class="site-header">
   <div class="container nav">
-    <a href="/" class="brand" aria-label={`${company.name} — ${ui.nav[0].label}`}>
+    <a href="/" class="brand">
       <Logo name={company.name} />
     </a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu" data-label-open={ui.openMenu} data-label-close={ui.closeMenu}>

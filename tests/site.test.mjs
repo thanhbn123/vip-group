@@ -36,6 +36,7 @@ for (const path of PAGES) {
     assert.equal((html.match(/<h1[\s>]/g) ?? []).length, 1, 'mỗi trang đúng một <h1>');
     assert.match(html, /<main id="main"/);
     assert.match(html, /<header /);
+    assert.doesNotMatch(html, /<link rel="stylesheet"/, 'CSS phải được nhúng, không chặn hiển thị');
     assert.match(html, /<footer /);
     assert.match(html, /class="skip-link"/);
 
@@ -109,7 +110,7 @@ test('trang 404 có noindex và không nằm trong sitemap', () => {
 });
 
 test('favicon, logo và ảnh Open Graph tồn tại', () => {
-  for (const f of ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'logo.svg', 'og-image.png']) {
+  for (const f of ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'logo.svg', 'og-image.jpg']) {
     assert.ok(existsSync(join(dist, f)), `thiếu ${f}`);
   }
 });
@@ -127,6 +128,8 @@ test('form liên hệ không giả vờ gửi dữ liệu', () => {
 
 test('menu mobile có nút bấm truy cập được', () => {
   const html = read('/');
+  // Tên truy cập của link logo phải khớp chữ hiển thị (Lighthouse label-content-name-mismatch).
+  assert.doesNotMatch(attr(html, /(<a href="\/" class="brand"[^>]*>)/), /aria-label=/);
   assert.match(html, /<button class="menu-toggle"[^>]*aria-expanded="false"[^>]*aria-controls="site-menu"/);
   assert.match(html, /<nav id="site-menu"[^>]*aria-label=/);
 });
