@@ -48,7 +48,7 @@ Website là thư mục tĩnh `dist/` — đưa lên bất kỳ hosting tĩnh nà
 
 Năm © ở footer lấy lúc build — sang năm mới cần build lại (CI build mỗi lần merge).
 
-Không có biến môi trường hay secret nào. Tên miền cấu hình ở `astro.config.mjs` (`SITE_URL`).
+Build không cần biến môi trường hay secret nào. Riêng workflow staging cần secret/biến Cloudflare đặt trong GitHub (không nằm trong repo) — xem `docs/STAGING.md`. Tên miền cấu hình ở `astro.config.mjs` (`SITE_URL`).
 
 > Chưa deploy production. Việc deploy và DNS do chủ dự án quyết định.
 

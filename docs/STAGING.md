@@ -16,7 +16,10 @@ Owner chọn **Cloudflare Pages** ngày 29/09/2026 (VIPG-WEB-003, issue #4). URL
 - CSP: thẻ `<meta>` do Astro sinh (`security.csp` trong `astro.config.mjs`).
 - Secret Cloudflare chỉ cấp cho bước kiểm credential và bước deploy — không cho `npm ci` / build / test.
 - PR từ fork không nhận secret → không deploy preview (hành vi mặc định của GitHub).
-- Thiếu credential → bước deploy bị bỏ qua, job summary ghi `BLOCKED_EXTERNAL_CREDENTIAL`. Build/test vẫn chạy thật.
+- Thiếu credential → bước deploy bị bỏ qua, job summary ghi `BLOCKED_EXTERNAL_CREDENTIAL` và có annotation cảnh báo. **Job vẫn hiện dấu xanh** (build/test thật sự đạt) — dấu xanh đó KHÔNG có nghĩa staging đã deploy; phải đọc summary.
+- Mọi bước chạy `bash -eo pipefail`; deploy lỗi hoặc wrangler không in ra URL → bước FAIL, không in bảng "Staging deploy".
+- `workflow_dispatch` chỉ chạy từ `develop`.
+- Chốt chặn production dựa vào tên nhánh: project Cloudflare **phải** đặt production branch = `main`. Khi nghiệm thu staging, kiểm lại cấu hình này trên dashboard.
 
 ## Việc owner phải làm (Claude không có quyền, không tự làm)
 

@@ -17,12 +17,19 @@ on:
 permissions:
   contents: read
 
+# bash của GitHub khi khai báo tường minh chạy với `-eo pipefail`: lệnh hỏng trong ống `| tee` sẽ làm bước FAIL.
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: staging-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   deploy:
+    # workflow_dispatch chỉ được chạy từ develop — không ghi đè alias staging bằng mã nhánh khác.
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Secret Cloudflare chỉ cấp cho đúng hai bước cần nó — không lộ cho npm ci / build / test.
@@ -54,7 +61,7 @@ jobs:
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
-      - name: Kiểm credential Cloudflare
+      - name: Kiểm credential Cloudflare (thiếu → deploy bị BỎ QUA, không phải PASS)
         id: creds
         env:
           HAS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
@@ -79,12 +86,17 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          set -euo pipefail
           npx --yes "wrangler@${WRANGLER_VERSION}" pages deploy dist \
             --project-name="$CF_PAGES_PROJECT" \
             --branch="${{ steps.target.outputs.branch }}" \
             --commit-hash="${{ steps.target.outputs.sha }}" \
             --commit-dirty=false | tee deploy.log
-          URL=$(grep -oE 'https://[a-z0-9.-]+\.pages\.dev' deploy.log | tail -1)
+          URL=$(grep -oE 'https://[a-z0-9.-]+\.pages\.dev' deploy.log | tail -1 || true)
+          if [ -z "$URL" ]; then
+            echo "::error::wrangler không in ra URL deployment — coi như deploy KHÔNG thành công"
+            exit 1
+          fi
           {
             echo "## Staging deploy"
             echo ""
@@ -92,6 +104,6 @@ jobs:
             echo "|---|---|"
             echo "| Nhánh Cloudflare | \`${{ steps.target.outputs.branch }}\` |"
             echo "| SHA | \`${{ steps.target.outputs.sha }}\` |"
-            echo "| URL lượt deploy | ${URL:-không đọc được từ log} |"
+            echo "| URL lượt deploy | ${URL} |"
             echo "| URL cố định | https://${{ steps.target.outputs.branch }}.${CF_PAGES_PROJECT}.pages.dev |"
           } >> "$GITHUB_STEP_SUMMARY"

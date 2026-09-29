@@ -65,3 +65,18 @@ test('workflow staging không bao giờ deploy nhánh production và không lộ
   assert.doesNotMatch(jobEnv, /secrets\./, 'secret không được đặt ở env cấp job');
   assert.match(wf, /--commit-hash=/, 'deploy phải gắn SHA thật');
 });
+
+test('workflow staging: deploy hỏng thì bước phải FAIL, không báo deploy giả', () => {
+  const wf = readFileSync(join(root, '.github/workflows/staging.yml'), 'utf8');
+  // shell: bash tường minh → GitHub chạy `bash -eo pipefail`, lỗi trong `| tee` không bị nuốt.
+  assert.match(wf, /defaults:\s*\n\s+run:\s*\n\s+shell: bash\b/, 'phải khai báo defaults.run.shell: bash');
+  const deploy = wf.slice(wf.indexOf('- name: Deploy lên Cloudflare Pages'));
+  assert.match(deploy, /set -euo pipefail/, 'bước deploy phải set -euo pipefail');
+  assert.match(deploy, /if \[ -z "\$URL" \]; then[\s\S]*?exit 1/, 'không có URL deployment → exit 1');
+  assert.ok(deploy.indexOf('exit 1') < deploy.indexOf('## Staging deploy'), 'kiểm URL phải đứng trước khi in bảng deploy');
+});
+
+test('workflow staging: workflow_dispatch chỉ chạy từ develop', () => {
+  const wf = readFileSync(join(root, '.github/workflows/staging.yml'), 'utf8');
+  assert.match(wf, /if: github\.event_name != 'workflow_dispatch' \|\| github\.ref == 'refs\/heads\/develop'/);
+});
