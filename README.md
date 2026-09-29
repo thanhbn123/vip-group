@@ -35,6 +35,9 @@ Website là thư mục tĩnh `dist/` — đưa lên bất kỳ hosting tĩnh nà
 1. `npm ci && npm run build`
 2. Tải **toàn bộ nội dung** `dist/` lên thư mục gốc của `vipgroup.com.vn`.
 3. Cấu hình máy chủ trả `404.html` cho đường dẫn không tồn tại.
+4. Cấu hình máy chủ **chuyển hướng URL thiếu `/` cuối** sang bản có `/` (ví dụ `/gioi-thieu` → `/gioi-thieu/`). Site build với `trailingSlash: 'always'`; `astro preview` không tự chuyển hướng nên trả 404 cho URL thiếu `/`.
+
+Năm © ở footer lấy lúc build — sang năm mới cần build lại (CI build mỗi lần merge).
 
 Không có biến môi trường hay secret nào. Tên miền cấu hình ở `astro.config.mjs` (`SITE_URL`).
 
@@ -80,7 +83,7 @@ Mọi nội dung nằm trong `src/data/vi/`. Quy ước: **thông tin chưa ch�
 
 ## Form liên hệ
 
-Giai đoạn 1 **chỉ có giao diện**: form không có `action`, không gửi dữ liệu đi đâu, và hiện thông báo rõ rằng dữ liệu chưa được gửi, kèm email `contact@vipgroup.com.vn`. Khi có backend: nối API trong `src/components/ContactForm.astro` rồi đặt `formBackendReady: true` trong `contact.ts` (test sẽ cần cập nhật theo).
+Giai đoạn 1 **chỉ có giao diện**: form không có `action`, các ô nhập không có `name` và nút gửi `disabled` sẵn trong HTML — nên kể cả khi trình duyệt tắt JavaScript cũng không dữ liệu nào lọt vào URL. Bật JS thì nút gửi mở, bấm gửi chỉ hiện thông báo dữ liệu chưa được gửi, kèm email `contact@vipgroup.com.vn`. Khi có backend: nối API trong `src/components/ContactForm.astro` (thêm `action`/`method`) rồi đặt `formBackendReady: true` — ô nhập sẽ tự có `name` trong `contact.ts` (test sẽ cần cập nhật theo).
 
 ## Thay logo / favicon
 
@@ -108,6 +111,12 @@ Màu thương hiệu: biến CSS ở đầu `src/styles/global.css`.
 4. `src/data/en/` → chép cấu trúc `vi/`, dịch nội dung, đăng ký trong `src/data/index.ts`.
 5. `src/pages/en/` → tạo trang, truyền `locale="en"` cho `BaseLayout`.
 6. Mở rộng `sitemap.xml.ts` và thêm thẻ `hreflang` trong `Seo.astro`.
+
+## Tài liệu điều phối
+
+- `docs/PROJECT_CONTROLLER.md` — quy trình, quyền, chốt an toàn trước merge.
+- `docs/MASTER_STATUS.md` — ảnh chụp trạng thái (GitHub vẫn là nguồn chân lý).
+- `docs/verification/` — biên bản nghiệm thu từng PR.
 
 ## Quy trình Git
 

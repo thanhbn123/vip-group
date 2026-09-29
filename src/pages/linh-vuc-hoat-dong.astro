@@ -8,7 +8,7 @@ import { getContent } from '../data';
 const { company, sectors } = getContent('vi');
 ---
 <BaseLayout title="Lĩnh vực hoạt động" description={`${company.name} hoạt động trong ba lĩnh vực: ${sectors.map((s) => s.title).join('; ')}.`}>
-  <PageHero kicker="Lĩnh vực hoạt động" title="Ba trụ cột phát triển" lead="Mỗi trụ cột vận hành độc lập nhưng dùng chung dữ liệu, quy trình và năng lực công nghệ của hệ sinh thái." />
+  <PageHero kicker="Lĩnh vực hoạt động" title="Ba trụ cột phát triển" lead="VIP GROUP định hướng để mỗi trụ cột vận hành độc lập, cùng hướng tới dùng chung dữ liệu, quy trình và năng lực công nghệ." />
   <section class="section" aria-label="Danh sách lĩnh vực">
     <div class="container">
       <SectorGrid sectors={sectors} headingLevel="h2" />
