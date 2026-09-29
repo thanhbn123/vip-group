@@ -1,0 +1,120 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectorGrid from '../components/SectorGrid.astro';
+import MemberGrid from '../components/MemberGrid.astro';
+import NewsList from '../components/NewsList.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { getContent } from '../data';
+
+const { company, sectors, subsidiaries, news, careers } = getContent('vi');
+const [sloganA, sloganB] = company.slogan.split('–').map((s) => s.trim());
+---
+<BaseLayout title="Trang chủ" description={company.tagline}>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero-grid">
+      <div>
+        <span class="kicker">{company.name} · Việt Nam</span>
+        <h1 id="hero-title">{sloganA}.<br /><span class="gold">{sloganB}.</span></h1>
+        <p class="lead">{company.tagline}</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="/linh-vuc-hoat-dong/">Khám phá hệ sinh thái</a>
+          <a class="btn btn-ghost" href="/lien-he/">Liên hệ hợp tác</a>
+        </div>
+      </div>
+      <div class="hero-card" aria-hidden="true">
+        <div class="orbit">
+          <div class="orbit-core">VIP</div>
+          {sectors.map((s, i) => <div class={`orbit-item item-${i}`}>{s.title.split('–')[0].trim()}</div>)}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="about-title">
+    <div class="container split">
+      <div>
+        <span class="kicker">Giới thiệu</span>
+        <h2 id="about-title">{company.about.heading}</h2>
+      </div>
+      <div class="prose">
+        {company.intro.map((p) => <p>{p}</p>)}
+        <a class="text-link" href="/gioi-thieu/">Tìm hiểu thêm về {company.name} →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="sectors-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker">Lĩnh vực hoạt động</span>
+          <h2 id="sectors-title">Ba trụ cột phát triển</h2>
+        </div>
+        <a class="text-link" href="/linh-vuc-hoat-dong/">Xem chi tiết →</a>
+      </div>
+      <SectorGrid sectors={sectors} />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="members-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker">Hệ sinh thái</span>
+          <h2 id="members-title">Công ty thành viên</h2>
+        </div>
+        <a class="text-link" href="/cong-ty-thanh-vien/">Xem tất cả →</a>
+      </div>
+      <MemberGrid subsidiaries={subsidiaries} sectors={sectors} />
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="news-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker">Tin tức</span>
+          <h2 id="news-title">Tin mới</h2>
+        </div>
+        <a class="text-link" href="/tin-tuc/">Xem tất cả →</a>
+      </div>
+      <NewsList items={news} limit={3} />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="careers-title">
+    <div class="container split">
+      <div>
+        <span class="kicker">Tuyển dụng</span>
+        <h2 id="careers-title">Gia nhập {company.name}</h2>
+      </div>
+      <div class="prose">
+        <p>{careers.intro}</p>
+        <a class="btn btn-ghost" href="/tuyen-dung/">Cơ hội nghề nghiệp</a>
+      </div>
+    </div>
+  </section>
+
+  <CtaBand title="Hợp tác cùng VIP GROUP" text="Kết nối với chúng tôi để trao đổi về cơ hội hợp tác trong ba lĩnh vực hoạt động." />
+</BaseLayout>
+
+<style>
+  .hero { min-height: calc(100svh - var(--header-h)); display: flex; align-items: center; background: radial-gradient(circle at 15% 20%, rgba(217,182,111,.13), transparent 30%), radial-gradient(circle at 85% 25%, rgba(61,108,168,.2), transparent 30%), linear-gradient(145deg, var(--navy-950), var(--navy-900)); }
+  .hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; padding: 72px 0; }
+  .gold { color: var(--gold-light); }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+  .hero-card { border: 1px solid var(--line); border-radius: 32px; padding: 28px; background: linear-gradient(155deg, rgba(255,255,255,.07), rgba(255,255,255,.02)); box-shadow: var(--shadow); }
+  .orbit { position: relative; aspect-ratio: 1; max-width: 380px; margin: auto; display: grid; place-items: center; }
+  .orbit::before, .orbit::after { content: ''; position: absolute; border: 1px solid rgba(217,182,111,.25); border-radius: 50%; }
+  .orbit::before { inset: 14%; } .orbit::after { inset: 0; }
+  .orbit-core { width: 30%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(145deg, var(--gold), var(--gold-light)); color: var(--on-gold); font-size: clamp(20px, 2.4vw, 30px); font-weight: 900; z-index: 1; }
+  .orbit-item { position: absolute; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--navy-800); font-size: 12px; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
+  .item-0 { top: 4%; left: 50%; transform: translateX(-50%); }
+  .item-1 { bottom: 14%; left: 0; }
+  .item-2 { bottom: 14%; right: 0; }
+  @media (max-width: 900px) {
+    .hero { min-height: auto; }
+    .hero-grid { grid-template-columns: 1fr; gap: 32px; padding: 56px 0; }
+    .hero-card { max-width: 420px; width: 100%; }
+  }
+</style>

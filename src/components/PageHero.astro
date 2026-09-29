@@ -1,0 +1,22 @@
+---
+interface Props {
+  kicker: string;
+  title: string;
+  lead?: string;
+}
+const { kicker, title, lead } = Astro.props;
+---
+<section class="page-hero">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Đường dẫn">
+      <ol>
+        <li><a href="/">Trang chủ</a></li>
+        <li aria-current="page">{kicker}</li>
+      </ol>
+    </nav>
+    <span class="kicker">{kicker}</span>
+    <h1>{title}</h1>
+    {lead && <p class="lead">{lead}</p>}
+    <slot />
+  </div>
+</section>

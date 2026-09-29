@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import NewsList from '../components/NewsList.astro';
+import { getContent } from '../data';
+
+const { company, news } = getContent('vi');
+---
+<BaseLayout title="Tin tức" description={`Tin tức, thông báo và hoạt động chính thức của ${company.name} cùng các công ty thành viên trong hệ sinh thái.`}>
+  <PageHero kicker="Tin tức" title={`Thông tin từ ${company.name}`} lead="Tin tức, thông báo và hoạt động chính thức của tập đoàn và các công ty thành viên." />
+  <section class="section" aria-label="Danh sách tin tức">
+    <div class="container">
+      <NewsList items={news} headingLevel="h2" />
+    </div>
+  </section>
+</BaseLayout>

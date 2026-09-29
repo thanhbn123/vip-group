@@ -1,0 +1,79 @@
+---
+import Logo from './Logo.astro';
+import { t } from '../i18n/ui';
+import { defaultLocale, type Locale } from '../i18n/config';
+import { getContent } from '../data';
+
+interface Props { locale?: Locale }
+const { locale = defaultLocale } = Astro.props;
+const ui = t(locale);
+const { company } = getContent(locale);
+const current = Astro.url.pathname;
+const isCurrent = (href: string) => (href === '/' ? current === '/' : current.startsWith(href));
+---
+<header class="site-header">
+  <div class="container nav">
+    <a href="/" class="brand" aria-label={`${company.name} — ${ui.nav[0].label}`}>
+      <Logo name={company.name} />
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu" data-label-open={ui.openMenu} data-label-close={ui.closeMenu}>
+      <span class="visually-hidden">{ui.openMenu}</span>
+      <span class="bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <nav id="site-menu" class="menu" aria-label={ui.mainNav}>
+      <ul>
+        {ui.nav.map((item) => (
+          <li>
+            <a href={item.href} class:list={[{ 'nav-cta': item.key === 'contact' }]} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header { position: sticky; top: 0; z-index: 50; background: rgba(6, 16, 29, .88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+  .nav { height: var(--header-h); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  .menu ul { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 4px; }
+  .menu a { display: block; padding: 10px 12px; border-radius: 10px; font-size: 14px; color: #d8e0ea; }
+  .menu a:hover, .menu a[aria-current='page'] { color: var(--gold-light); }
+  .menu a[aria-current='page']:not(.nav-cta) { background: rgba(255,255,255,.05); }
+  .nav-cta { margin-left: 8px; border: 1px solid rgba(217, 182, 111, .45); }
+  .menu-toggle { display: none; width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 10px; background: transparent; cursor: pointer; place-items: center; }
+  .bars { display: grid; gap: 5px; width: 20px; }
+  .bars span { height: 2px; background: var(--text); border-radius: 2px; transition: transform .2s ease, opacity .2s ease; }
+  .menu-toggle[aria-expanded='true'] .bars span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .menu-toggle[aria-expanded='true'] .bars span:nth-child(2) { opacity: 0; }
+  .menu-toggle[aria-expanded='true'] .bars span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  @media (max-width: 1080px) {
+    .menu-toggle { display: grid; }
+    .menu { position: fixed; inset: var(--header-h) 0 auto 0; max-height: calc(100dvh - var(--header-h)); overflow-y: auto; background: var(--navy-950); border-bottom: 1px solid var(--line); display: none; }
+    .menu.is-open { display: block; }
+    .menu ul { flex-direction: column; align-items: stretch; padding: 12px 16px 24px; gap: 2px; }
+    .menu a { padding: 14px 12px; font-size: 16px; }
+    .nav-cta { margin: 12px 0 0; text-align: center; }
+  }
+</style>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
+  const menu = document.getElementById('site-menu');
+  if (toggle && menu) {
+    const label = toggle.querySelector('.visually-hidden');
+    const setOpen = (open: boolean) => {
+      menu.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      if (label) label.textContent = (open ? toggle.dataset.labelClose : toggle.dataset.labelOpen) ?? '';
+    };
+    toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+    menu.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('a')) setOpen(false); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') { setOpen(false); toggle.focus(); }
+    });
+    window.matchMedia('(min-width: 1081px)').addEventListener('change', (e) => { if (e.matches) setOpen(false); });
+  }
+</script>

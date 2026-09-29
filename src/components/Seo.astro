@@ -1,0 +1,51 @@
+---
+import { getContent } from '../data';
+import { defaultLocale, ogLocale, type Locale } from '../i18n/config';
+
+interface Props {
+  title: string;
+  description: string;
+  locale?: Locale;
+  noindex?: boolean;
+}
+
+const { title, description, locale = defaultLocale, noindex = false } = Astro.props;
+const { company, contact } = getContent(locale);
+const site = Astro.site!;
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImage = new URL('/og-image.png', site).href;
+const fullTitle = Astro.url.pathname === '/' ? `${company.name} | ${company.slogan}` : `${title} | ${company.name}`;
+
+// schema.org Organization — trường chưa chốt (null) sẽ không được đưa vào.
+const organization = Object.fromEntries(
+  Object.entries({
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': `${site.href}#organization`,
+    name: company.name,
+    legalName: company.legalName,
+    url: site.href,
+    logo: new URL('/logo.svg', site).href,
+    email: contact.email,
+    telephone: contact.hotline,
+    address: contact.address,
+    slogan: company.slogan,
+  }).filter(([, v]) => v !== null && v !== undefined),
+);
+---
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex" />}
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={company.name} />
+<meta property="og:locale" content={ogLocale[locale]} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={`${company.name} — ${company.slogan}`} />
+<meta name="twitter:card" content="summary_large_image" />
+<script type="application/ld+json" set:html={JSON.stringify(organization)} />
