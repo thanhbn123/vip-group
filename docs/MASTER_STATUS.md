@@ -1,14 +1,14 @@
 # MASTER STATUS — VIP GROUP WEBSITE
 
 > Ảnh chụp trạng thái, **không phải nguồn chân lý**. GitHub là nguồn chân lý: đo lại (`git ls-remote`, `gh pr list`, `gh run list`) trước khi dựa vào bất kỳ SHA nào ở đây.
-> Cập nhật lần cuối: 29/09/2026, trong PR của VIPG-WEB-003 (#4). SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
+> Cập nhật lần cuối: 29/09/2026, trong PR của VIPG-WEB-004 (#7). SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
 
 ## Nhánh
 
 | Nhánh | SHA đo được | Ghi chú |
 |---|---|---|
 | `main` | `57214628acd7aa1f05e5d018cc3dee4ca8d4ed9e` | Chỉ có commit khởi tạo. Giữ nguyên tới khi staging PASS + owner ra lệnh production |
-| `develop` | `7ce3b7dd1d6d6b8b09270ed24d41df67787b61cf` (base của PR VIPG-WEB-003) | CI push run 36589327008 — success |
+| `develop` | `bc6be7b4c87ed8d8228915d79f9b4b9acc75e9e4` (base của PR VIPG-WEB-004) | CI 36593581246 + Staging 36593581189 — success (staging deploy skipped: thiếu credential) |
 
 ## Work item
 
@@ -16,22 +16,25 @@
 |---|---|---|---|
 | #1 | VIPG-WEB-001 — Official corporate website v1 | CLOSED — merged develop `5f34a0b` | #2 MERGED |
 | #3 | VIPG-WEB-002 — Hardening sau verifier + tài liệu điều phối | CLOSED — merged develop `7ce3b7d` | #5 MERGED |
-| #4 | VIPG-WEB-003 — Thiết lập môi trường staging | Đang làm — repo/config; deploy chờ credential | (PR của chính thay đổi này) |
+| #4 | VIPG-WEB-003 — Thiết lập môi trường staging | **Mở** — repo/config đã merge `bc6be7b`; deploy thật BLOCKED_EXTERNAL_CREDENTIAL | #6 MERGED |
+| #7 | VIPG-WEB-004 — SHA preview chính xác + script inline nằm dưới CSP | Đang làm | (PR của chính thay đổi này) |
 
 ## Gate hiện tại
 
-VIPG-WEB-003: chuẩn bị staging Cloudflare Pages trong repo → verifier → merge `develop`. Deploy staging thật **BLOCKED_EXTERNAL_CREDENTIAL** tới khi owner tạo project + secret (xem `docs/STAGING.md`).
+VIPG-WEB-004 → verifier → merge `develop`. Sau đó mọi việc kỹ thuật còn lại phụ thuộc owner: staging thật **BLOCKED_EXTERNAL_CREDENTIAL** (xem `docs/STAGING.md`), nội dung CONTENT_PENDING, production BLOCKED_EXTERNAL_DNS.
 
-## Kỹ thuật (đo trên `develop` `7ce3b7d`)
+## Kỹ thuật (đo trên `develop` `bc6be7b`)
 
 | Hạng mục | Trạng thái | Căn cứ |
 |---|---|---|
-| Type check / build / test | PASS | verifier PR #5; CI 36589327008 |
+| Type check / build / test | PASS | verifier PR #6 lượt 2; CI 36593581246 |
 | Link nội bộ, sitemap, robots, canonical, OG, schema.org | PASS | verifier PR #5 |
 | Lighthouse | 100/100/100/100 trên 7 trang | đo cục bộ 29/09 (Lighthouse 13.5.0, mobile mặc định, không độ trễ mạng thật) — cần đo lại trên staging |
 | Form tắt JS | PASS — không dữ liệu nào vào URL | verifier PR #5 (Chrome CDP, JS tắt thật) |
 | Menu tắt JS, 404 noindex không canonical | PASS | verifier PR #5 |
-| CSP (`<meta>`, hash) + header bảo mật (`public/_headers`) | Thêm trong VIPG-WEB-003 | header chỉ có hiệu lực trên Cloudflare Pages — nghiệm thu trên staging |
+| CSP (`<meta>`, hash, không unsafe-inline) | PASS cục bộ | verifier PR #6: 0 vi phạm, script chèn bị chặn |
+| Header bảo mật (`public/_headers`) | Có trong repo, **chưa kiểm thật** | chỉ có hiệu lực trên Cloudflare Pages — nghiệm thu trên staging |
+| Workflow staging không deploy giả / không deploy production | PASS | verifier PR #6 lượt 2 (mô phỏng a/b/c + đối chứng âm) |
 
 ## CONTENT_PENDING — V-11501 (owner cung cấp; không được tự điền)
 
@@ -50,7 +53,7 @@ VIPG-WEB-003: chuẩn bị staging Cloudflare Pages trong repo → verifier → 
 
 ## Staging
 
-Nền tảng owner chọn: Cloudflare Pages (`*.pages.dev`). Workflow `.github/workflows/staging.yml` thêm trong VIPG-WEB-003. **Chưa deploy**: repo chưa có secret / biến Cloudflare (đo 29/09) → `BLOCKED_EXTERNAL_CREDENTIAL`. Việc owner phải làm: `docs/STAGING.md`.
+Nền tảng owner chọn: Cloudflare Pages (`*.pages.dev`). Workflow `.github/workflows/staging.yml` đã merge (`bc6be7b`). **Chưa deploy**: repo chưa có secret / biến Cloudflare (đo 29/09) → `BLOCKED_EXTERNAL_CREDENTIAL`. Việc owner phải làm: `docs/STAGING.md`.
 
 ## Production
 

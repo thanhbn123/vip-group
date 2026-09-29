@@ -20,8 +20,6 @@ const ui = t(locale);
 <html lang={htmlLang[locale]}>
   <head>
     <meta charset="utf-8" />
-    <!-- Đánh dấu có JS: menu mobile chỉ thu gọn khi JS chạy; tắt JS thì menu hiện sẵn. -->
-    <script is:inline>document.documentElement.classList.add('js')</script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#06101d" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -31,6 +29,9 @@ const ui = t(locale);
     <Seo title={title} description={description} locale={locale} noindex={noindex} />
   </head>
   <body>
+    <!-- Đánh dấu có JS: menu mobile chỉ thu gọn khi JS chạy; tắt JS thì menu hiện sẵn.
+         Đặt đầu <body> (SAU thẻ CSP trong <head>) để trình duyệt kiểm hash của script này. -->
+    <script is:inline>document.documentElement.classList.add('js')</script>
     <a class="skip-link" href="#main">{ui.skipToContent}</a>
     <Header locale={locale} />
     <main id="main" tabindex="-1">

@@ -37,7 +37,10 @@ jobs:
       CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
       WRANGLER_VERSION: 4.142.0
     steps:
+      # PR: checkout đúng PR HEAD (không phải merge ref) để bản preview == SHA đã verify và == --commit-hash.
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
