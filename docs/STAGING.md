@@ -2,6 +2,18 @@
 
 Owner chọn **Cloudflare Pages** ngày 29/09/2026 (VIPG-WEB-003, issue #4). URL `*.pages.dev` là **staging**, không phải production.
 
+## Hiện trạng (nghiệm thu 30/09/2026)
+
+| Mục | Giá trị |
+|---|---|
+| Trạng thái | **STAGING ACCEPTANCE: PASS** — `docs/verification/VIPG-WEB-003-STAGING-ACCEPTANCE.md` |
+| Staging URL | https://staging.vip-group.pages.dev |
+| Project Cloudflare Pages | `vip-group` (Direct Upload, tạo 30/09/2026) — production `vip-group.pages.dev` **chưa có deployment** |
+| SHA đã nghiệm thu | `920919b57fd60ff1e39218c25bad8dd53ea932fd` (run 36602899641) |
+| Credential GitHub | secret `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; biến `CF_PAGES_PROJECT=vip-group` |
+
+Mỗi lần push `develop`, alias `staging` được deploy lại với SHA mới; mỗi PR vào `develop` có preview `pr-<số>`.
+
 ## Thiết kế
 
 | Sự kiện GitHub | Nhánh Cloudflare | URL cố định |
@@ -24,7 +36,7 @@ Owner chọn **Cloudflare Pages** ngày 29/09/2026 (VIPG-WEB-003, issue #4). URL
 - `workflow_dispatch` chỉ chạy từ `develop`.
 - Chốt chặn production dựa vào tên nhánh: project Cloudflare **phải** đặt production branch = `main`. Khi nghiệm thu staging, kiểm lại cấu hình này trên dashboard.
 
-## Việc owner phải làm (Claude không có quyền, không tự làm)
+## Việc owner đã làm / phải làm khi cấp lại credential (Claude không tạo hay nhập token)
 
 1. Tạo tài khoản / đăng nhập Cloudflare.
 2. Tạo project Pages kiểu **Direct Upload** (không nối Git), tên gợi ý `vip-group`, production branch = `main`.
