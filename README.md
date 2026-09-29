@@ -28,6 +28,15 @@ npm run preview    # xem bản build tại http://localhost:4321
 
 CI (GitHub Actions, `.github/workflows/ci.yml`) chạy `npm ci → check → build → test` cho mọi Pull Request vào `develop` / `main`.
 
+## Staging (Cloudflare Pages)
+
+`.github/workflows/staging.yml` build + test rồi deploy **staging/preview** lên Cloudflare Pages (không bao giờ production): push `develop` → `staging.<project>.pages.dev`, mỗi PR → `pr-<số>.<project>.pages.dev`. Cần owner tạo project + secret — xem `docs/STAGING.md`. Thiếu credential thì workflow bỏ qua bước deploy và ghi `BLOCKED_EXTERNAL_CREDENTIAL`.
+
+## Bảo mật
+
+- CSP dạng thẻ `<meta>` do Astro sinh (`security.csp` trong `astro.config.mjs`), tự băm script/CSS nội tuyến. Script `is:inline` trong `BaseLayout.astro` được khai hash tay — **sửa script đó thì phải cập nhật hash** (`tests/security.test.mjs` sẽ báo).
+- `public/_headers` (Cloudflare Pages): `nosniff`, `Referrer-Policy`, `Permissions-Policy`, chặn nhúng khung (`X-Frame-Options`, `frame-ancestors`), `noindex` cho `*.pages.dev`.
+
 ## Deploy
 
 Website là thư mục tĩnh `dist/` — đưa lên bất kỳ hosting tĩnh nào (Nginx, Caddy, Cloudflare Pages, Netlify, cPanel `public_html`…):
@@ -39,7 +48,7 @@ Website là thư mục tĩnh `dist/` — đưa lên bất kỳ hosting tĩnh nà
 
 Năm © ở footer lấy lúc build — sang năm mới cần build lại (CI build mỗi lần merge).
 
-Không có biến môi trường hay secret nào. Tên miền cấu hình ở `astro.config.mjs` (`SITE_URL`).
+Build không cần biến môi trường hay secret nào. Riêng workflow staging cần secret/biến Cloudflare đặt trong GitHub (không nằm trong repo) — xem `docs/STAGING.md`. Tên miền cấu hình ở `astro.config.mjs` (`SITE_URL`).
 
 > Chưa deploy production. Việc deploy và DNS do chủ dự án quyết định.
 
@@ -117,6 +126,7 @@ Màu thương hiệu: biến CSS ở đầu `src/styles/global.css`.
 - `docs/PROJECT_CONTROLLER.md` — quy trình, quyền, chốt an toàn trước merge.
 - `docs/MASTER_STATUS.md` — ảnh chụp trạng thái (GitHub vẫn là nguồn chân lý).
 - `docs/verification/` — biên bản nghiệm thu từng PR.
+- `docs/STAGING.md` — thiết kế staging Cloudflare Pages và việc owner phải làm.
 
 ## Quy trình Git
 
