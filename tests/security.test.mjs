@@ -68,18 +68,45 @@ test('public/_headers: header bảo mật + noindex cho *.pages.dev', () => {
   assert.match(h, /https:\/\/:version\.:project\.pages\.dev\/\*\n\s+X-Robots-Tag: noindex/);
 });
 
-test('workflow staging không bao giờ deploy nhánh production và không lộ secret cho bước build', () => {
+// Tách workflow theo job: văn bản từ `  <tên>:` (thụt 2) tới job kế tiếp.
+function jobs(wf) {
+  const body = wf.slice(wf.indexOf('\njobs:') + 6);
+  const out = {};
+  const re = /^  ([a-z][\w-]*):\s*$/gm;
+  const marks = [...body.matchAll(re)];
+  marks.forEach((m, i) => { out[m[1]] = body.slice(m.index, i + 1 < marks.length ? marks[i + 1].index : undefined); });
+  return out;
+}
+
+test('workflow staging không bao giờ deploy nhánh production', () => {
   const wf = readFileSync(join(root, '.github/workflows/staging.yml'), 'utf8');
-  assert.match(wf, /case "\$BRANCH" in main\|master\|production\)/, 'phải chặn nhánh production');
+  assert.match(wf, /case "\$BRANCH" in main\|master\|production\)/, 'job build phải chặn nhánh production');
+  assert.ok(wf.includes('[[ "$TARGET_BRANCH" =~ ^(staging|pr-[0-9]+)$ ]]'), 'job deploy chỉ nhận đúng staging | pr-<số>');
   assert.doesNotMatch(wf, /--branch=["']?main/);
-  // Secret chỉ xuất hiện trong env của bước, không ở env cấp job.
-  const jobEnv = wf.split('steps:')[0];
-  assert.doesNotMatch(jobEnv, /secrets\./, 'secret không được đặt ở env cấp job');
   assert.match(wf, /--commit-hash=/, 'deploy phải gắn SHA thật');
   // Preview PR phải build từ đúng PR HEAD — trùng với SHA gắn vào --commit-hash.
   assert.match(wf, /uses: actions\/checkout@v\d+\s*\n\s+with:\s*\n\s+ref: \$\{\{ github\.event\.pull_request\.head\.sha \|\| github\.sha \}\}/);
   assert.match(wf, /SHA="\$\{\{ github\.event\.pull_request\.head\.sha \}\}"/);
   assert.match(wf, /SHA="\$\{\{ github\.sha \}\}"/);
+});
+
+test('workflow staging cô lập credential: job chạy mã repo không cầm secret, job cầm secret không chạy mã repo', () => {
+  const wf = readFileSync(join(root, '.github/workflows/staging.yml'), 'utf8');
+  const j = jobs(wf);
+  assert.deepEqual(Object.keys(j).sort(), ['build', 'deploy']);
+  assert.doesNotMatch(wf.slice(0, wf.indexOf('\njobs:')), /secrets\./, 'secret không được ở cấp workflow');
+  assert.doesNotMatch(j.build, /secrets\./, 'job build (chạy npm ci/build/test) không được cầm secret');
+  for (const bad of [/actions\/checkout/, /npm (ci|install|run)/, /node_modules/]) {
+    assert.doesNotMatch(j.deploy, bad, `job deploy không được chạy mã repo: ${bad}`);
+  }
+  assert.match(j.deploy, /needs: build/);
+  assert.match(j.deploy, /actions\/download-artifact@v\d+/, 'job deploy chỉ dùng artifact dist');
+  assert.match(j.build, /actions\/upload-artifact@v\d+/);
+  // Trong job deploy, secret chỉ ở env của bước kiểm credential và bước deploy.
+  const stepEnvSecrets = j.deploy.split('\n      - ').filter((st) => /secrets\./.test(st));
+  assert.equal(stepEnvSecrets.length, 2);
+  assert.ok(stepEnvSecrets.every((st) => /Kiểm credential|Deploy lên Cloudflare Pages/.test(st)));
+  assert.doesNotMatch(j.deploy.split('steps:')[0], /secrets\./, 'secret không được ở env cấp job deploy');
 });
 
 test('workflow staging: deploy hỏng thì bước phải FAIL, không báo deploy giả', () => {
@@ -94,5 +121,7 @@ test('workflow staging: deploy hỏng thì bước phải FAIL, không báo depl
 
 test('workflow staging: workflow_dispatch chỉ chạy từ develop', () => {
   const wf = readFileSync(join(root, '.github/workflows/staging.yml'), 'utf8');
-  assert.match(wf, /if: github\.event_name != 'workflow_dispatch' \|\| github\.ref == 'refs\/heads\/develop'/);
+  const j = jobs(wf);
+  assert.match(j.build, /if: github\.event_name != 'workflow_dispatch' \|\| github\.ref == 'refs\/heads\/develop'/);
+  assert.match(j.deploy, /needs: build/, 'deploy phụ thuộc build → build bị chặn thì deploy cũng không chạy');
 });
