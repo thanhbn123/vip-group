@@ -1,0 +1,67 @@
+// CSP + header bảo mật cho staging Cloudflare Pages (VIPG-WEB-003).
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const dist = join(root, 'dist');
+
+function allHtml(dir = dist) {
+  return readdirSync(dir).flatMap((name) => {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) return allHtml(p);
+    return p.endsWith('.html') ? [p] : [];
+  });
+}
+const sha256 = (s) => `sha256-${createHash('sha256').update(s).digest('base64')}`;
+const cspOf = (html) => html.match(/<meta http-equiv="content-security-policy" content="([^"]+)"/)?.[1];
+
+test('mọi trang có CSP <meta>, không có unsafe-inline / unsafe-eval', () => {
+  for (const file of allHtml()) {
+    const csp = cspOf(readFileSync(file, 'utf8'));
+    assert.ok(csp, `${file}: thiếu CSP`);
+    assert.match(csp, /default-src 'self'/);
+    assert.match(csp, /object-src 'none'/);
+    assert.match(csp, /base-uri 'self'/);
+    assert.match(csp, /form-action 'none'/, 'form chưa có backend → không cho submit đi đâu');
+    assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval/);
+  }
+});
+
+test('mọi script nội tuyến thực thi đều có hash trong CSP của trang đó', () => {
+  for (const file of allHtml()) {
+    const html = readFileSync(file, 'utf8');
+    const csp = cspOf(html);
+    for (const [, attrs, body] of html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/g)) {
+      if (/\ssrc=/.test(attrs) || /type="application\/ld\+json"/.test(attrs)) continue;
+      assert.ok(csp.includes(`'${sha256(body)}'`), `${file}: script nội tuyến không có hash: ${body.slice(0, 60)}`);
+    }
+  }
+});
+
+test('public/_headers: header bảo mật + noindex cho *.pages.dev', () => {
+  const p = join(dist, '_headers');
+  assert.ok(existsSync(p), 'dist/_headers phải được copy từ public/');
+  const h = readFileSync(p, 'utf8');
+  for (const line of [
+    'X-Content-Type-Options: nosniff',
+    'Referrer-Policy: strict-origin-when-cross-origin',
+    'X-Frame-Options: DENY',
+    "Content-Security-Policy: frame-ancestors 'none'",
+  ]) assert.ok(h.includes(line), `thiếu: ${line}`);
+  assert.match(h, /https:\/\/:project\.pages\.dev\/\*\n\s+X-Robots-Tag: noindex/);
+  assert.match(h, /https:\/\/:version\.:project\.pages\.dev\/\*\n\s+X-Robots-Tag: noindex/);
+});
+
+test('workflow staging không bao giờ deploy nhánh production và không lộ secret cho bước build', () => {
+  const wf = readFileSync(join(root, '.github/workflows/staging.yml'), 'utf8');
+  assert.match(wf, /case "\$BRANCH" in main\|master\|production\)/, 'phải chặn nhánh production');
+  assert.doesNotMatch(wf, /--branch=["']?main/);
+  // Secret chỉ xuất hiện trong env của bước, không ở env cấp job.
+  const jobEnv = wf.split('steps:')[0];
+  assert.doesNotMatch(jobEnv, /secrets\./, 'secret không được đặt ở env cấp job');
+  assert.match(wf, /--commit-hash=/, 'deploy phải gắn SHA thật');
+});

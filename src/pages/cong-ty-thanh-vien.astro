@@ -9,7 +9,7 @@ const { company, sectors, subsidiaries } = getContent('vi');
 const active = subsidiaries.filter((s) => s.status === 'active').map((s) => s.name);
 ---
 <BaseLayout title="Công ty thành viên" description={`Hệ sinh thái công ty thành viên của ${company.name}: ${active.join(', ')} và các đơn vị đang hoàn thiện.`}>
-  <PageHero kicker="Công ty thành viên" title={`Hệ sinh thái ${company.name}`} lead="Các công ty thành viên hoạt động theo ba trụ cột của VIP GROUP. Những đơn vị đang hoàn thiện pháp nhân sẽ được cập nhật khi chính thức." />
+  <PageHero kicker="Công ty thành viên" title={`Hệ sinh thái ${company.name}`} lead="Công ty thành viên được tổ chức theo ba trụ cột của VIP GROUP. Hiện VIPORDER là công ty thành viên chính thức; các đơn vị đang hoàn thiện pháp nhân sẽ được cập nhật khi chính thức." />
   <section class="section" aria-label="Danh sách công ty thành viên">
     <div class="container">
       <MemberGrid subsidiaries={subsidiaries} sectors={sectors} headingLevel="h2" />
