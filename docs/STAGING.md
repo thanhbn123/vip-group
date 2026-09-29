@@ -12,11 +12,12 @@ Owner chọn **Cloudflare Pages** ngày 29/09/2026 (VIPG-WEB-003, issue #4). URL
 
 - Workflow: `.github/workflows/staging.yml`, **hai job**:
   - `build` — checkout đúng SHA (PR: PR HEAD), `npm ci`, `check`, `build`, `test`, tải `dist` lên artifact. **Không có secret.**
-  - `deploy` (`needs: build`) — **không checkout, không `npm ci`**, chỉ tải artifact `dist` rồi Direct Upload (`wrangler pages deploy`), gắn `--commit-hash` = SHA thật. Secret chỉ ở job này. Mã của PR vì thế không thể chạm vào token.
+  - `deploy` (`needs: build`) — **không checkout, không `npm ci`**, chỉ tải artifact `dist` rồi Direct Upload (`wrangler pages deploy`), gắn `--commit-hash` = SHA thật. Secret chỉ ở job này.
 - Workflow **cấm** deploy vào `main` / `master` / `production`. Production là việc riêng, cần lệnh owner.
 - `public/_headers`: header bảo mật + `X-Robots-Tag: noindex` cho mọi host `*.pages.dev`.
 - CSP: thẻ `<meta>` do Astro sinh (`security.csp` trong `astro.config.mjs`).
-- Secret Cloudflare chỉ cấp cho bước kiểm credential và bước deploy của job `deploy`. Job `deploy` kiểm lại nhánh đích bằng regex `^(staging|pr-[0-9]+)$` và SHA 40 ký tự hex trước mọi việc khác.
+- Secret Cloudflare chỉ cấp cho bước kiểm credential và bước deploy của job `deploy`. Trước mọi việc khác, job `deploy` kiểm nhánh đích bằng regex `^(staging|pr-[0-9]+)$`, SHA 40 ký tự hex, **và tự tính lại nhánh + SHA mong đợi từ ngữ cảnh sự kiện** (`github.event_name`, số PR, PR head SHA, `github.sha`) rồi so khớp — output của job build lệch là dừng.
+- **Phạm vi bảo vệ (nói đúng, không nói rộng):** việc tách job chặn được mã chạy trong job build (kể cả gói npm bị chiếm) chạm vào token hay tự chọn alias/SHA. Nó **không** chặn người có quyền push sửa chính `staging.yml` trong một PR để lấy secret. Muốn chặn cả điều đó: đặt secret trong một GitHub **Environment** (ví dụ `staging`) có reviewer bắt buộc và gắn `environment: staging` cho job `deploy` — cần owner cấu hình, chưa làm.
 - PR từ fork không nhận secret → không deploy preview (hành vi mặc định của GitHub).
 - Thiếu credential → bước deploy bị bỏ qua, job summary ghi `BLOCKED_EXTERNAL_CREDENTIAL` và có annotation cảnh báo. **Job vẫn hiện dấu xanh** (build/test thật sự đạt) — dấu xanh đó KHÔNG có nghĩa staging đã deploy; phải đọc summary.
 - Mọi bước chạy `bash -eo pipefail`; deploy lỗi hoặc wrangler không in ra URL → bước FAIL, không in bảng "Staging deploy".

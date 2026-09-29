@@ -83,6 +83,11 @@ jobs:
       WRANGLER_VERSION: 4.142.0
       TARGET_BRANCH: ${{ needs.build.outputs.branch }}
       TARGET_SHA: ${{ needs.build.outputs.sha }}
+      # Giá trị mong đợi tính lại từ ngữ cảnh sự kiện — KHÔNG lấy từ job build (job build chạy mã không tin cậy).
+      EVENT_NAME: ${{ github.event_name }}
+      EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+      EVENT_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      EVENT_SHA: ${{ github.sha }}
     steps:
       - name: Kiểm lại nhánh đích (không bao giờ là production)
         run: |
@@ -90,6 +95,16 @@ jobs:
           # Chỉ nhận đúng "staging" hoặc "pr-<số>" — mọi tên khác (kể cả main/production) bị từ chối.
           [[ "$TARGET_BRANCH" =~ ^(staging|pr-[0-9]+)$ ]] || { echo "::error::Nhánh đích không hợp lệ: '$TARGET_BRANCH'"; exit 1; }
           [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::SHA đích không hợp lệ: '$TARGET_SHA'"; exit 1; }
+          # So khớp với giá trị tự tính: output của job build không được tự chọn alias hay SHA.
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            EXPECT_BRANCH="pr-${EVENT_PR_NUMBER}"; EXPECT_SHA="$EVENT_PR_HEAD_SHA"
+          else
+            EXPECT_BRANCH="staging"; EXPECT_SHA="$EVENT_SHA"
+          fi
+          if [ "$TARGET_BRANCH" != "$EXPECT_BRANCH" ] || [ "$TARGET_SHA" != "$EXPECT_SHA" ]; then
+            echo "::error::Output của job build lệch ngữ cảnh sự kiện: nhận ${TARGET_BRANCH}@${TARGET_SHA}, mong đợi ${EXPECT_BRANCH}@${EXPECT_SHA}"
+            exit 1
+          fi
 
       - name: Kiểm credential Cloudflare (thiếu → deploy bị BỎ QUA, không phải PASS)
         id: creds
