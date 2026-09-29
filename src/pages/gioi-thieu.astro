@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { getContent } from '../data';
+
+const { company, sectors } = getContent('vi');
+---
+<BaseLayout title="Giới thiệu" description={`Giới thiệu ${company.name}: ${company.about.heading.toLowerCase()} — ${sectors.map((s) => s.title).join(', ')}.`}>
+  <PageHero kicker="Giới thiệu" title={company.about.heading} lead={company.tagline} />
+
+  <section class="section" aria-labelledby="story-title">
+    <div class="container split">
+      <div>
+        <span class="kicker">Về chúng tôi</span>
+        <h2 id="story-title">{company.name}</h2>
+        <p class="slogan">{company.slogan}</p>
+      </div>
+      <div class="prose">
+        {company.intro.map((p) => <p>{p}</p>)}
+        {company.about.paragraphs.map((p) => <p>{p}</p>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="values-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker">Giá trị cốt lõi</span>
+          <h2 id="values-title">Nguyên tắc vận hành</h2>
+        </div>
+      </div>
+      <div class="grid grid-4">
+        {company.values.map((v, i) => (
+          <article class="card">
+            <span class="card-index">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{v.title}</h3>
+            <p>{v.text}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <CtaBand title="Tìm hiểu thêm về hệ sinh thái" text="Xem ba lĩnh vực hoạt động và các công ty thành viên của VIP GROUP." />
+</BaseLayout>
+<style>
+  .slogan { color: var(--gold-light); font-size: 18px; font-weight: 600; }
+</style>

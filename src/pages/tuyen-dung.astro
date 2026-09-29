@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { getContent } from '../data';
+
+const { company, careers, contact } = getContent('vi');
+const applyEmail = careers.applyEmail ?? contact.email;
+const subject = encodeURIComponent('Ứng tuyển - VIP GROUP');
+---
+<BaseLayout title="Tuyển dụng" description={`Cơ hội nghề nghiệp tại ${company.name}. ${careers.intro}`}>
+  <PageHero kicker="Tuyển dụng" title={`Gia nhập ${company.name}`} lead={careers.intro} />
+  <section class="section" aria-labelledby="openings-title">
+    <div class="container">
+      <h2 id="openings-title">Vị trí đang tuyển</h2>
+      {careers.openings.length === 0 ? (
+        <div class="empty-state">
+          <p><strong>Hiện chưa có vị trí tuyển dụng được công bố.</strong></p>
+          <p>Bạn vẫn có thể gửi hồ sơ tới <a class="text-link" href={`mailto:${applyEmail}?subject=${subject}`}>{applyEmail}</a>, chúng tôi sẽ liên hệ khi có vị trí phù hợp.</p>
+        </div>
+      ) : (
+        <div class="grid grid-3">
+          {careers.openings.map((job) => (
+            <article class="card">
+              <span class="card-index">{job.department}</span>
+              <h3>{job.title}</h3>
+              <p>{job.location} · {job.type}</p>
+              <p>{job.summary}</p>
+              <a class="text-link" href={`mailto:${applyEmail}?subject=${encodeURIComponent(`Ứng tuyển - ${job.title}`)}`}>Ứng tuyển →</a>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>

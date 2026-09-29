@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import MemberGrid from '../components/MemberGrid.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { getContent } from '../data';
+
+const { company, sectors, subsidiaries } = getContent('vi');
+const active = subsidiaries.filter((s) => s.status === 'active').map((s) => s.name);
+---
+<BaseLayout title="Công ty thành viên" description={`Hệ sinh thái công ty thành viên của ${company.name}: ${active.join(', ')} và các đơn vị đang hoàn thiện.`}>
+  <PageHero kicker="Công ty thành viên" title={`Hệ sinh thái ${company.name}`} lead="Các công ty thành viên hoạt động theo ba trụ cột của tập đoàn. Những đơn vị đang hoàn thiện pháp nhân sẽ được cập nhật khi chính thức." />
+  <section class="section" aria-label="Danh sách công ty thành viên">
+    <div class="container">
+      <MemberGrid subsidiaries={subsidiaries} sectors={sectors} headingLevel="h2" />
+    </div>
+  </section>
+  <CtaBand title="Trở thành đối tác" text="Liên hệ để trao đổi cơ hội hợp tác với VIP GROUP và các công ty thành viên." />
+</BaseLayout>

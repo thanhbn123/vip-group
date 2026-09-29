@@ -1,0 +1,26 @@
+---
+import type { Sector, Subsidiary } from '../data';
+interface Props { subsidiaries: Subsidiary[]; sectors: Sector[]; headingLevel?: 'h2' | 'h3' }
+const { subsidiaries, sectors, headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+const sectorTitle = (id: string) => sectors.find((s) => s.id === id)?.title ?? '';
+---
+<div class="grid grid-3">
+  {subsidiaries.map((m) => (
+    <article class:list={['card', 'member', { 'member-pending': m.status === 'placeholder' }]}>
+      <span class:list={['badge', m.status === 'active' ? 'badge-active' : 'badge-pending']}>
+        {m.status === 'active' ? 'Thành viên' : 'Đang hoàn thiện'}
+      </span>
+      <H>{m.name}</H>
+      {m.legalName && <p class="legal">{m.legalName}</p>}
+      <p>{m.description}</p>
+      <p class="sector">{sectorTitle(m.sectorId)}</p>
+      {m.url && <a class="text-link" href={m.url} rel="noopener" target="_blank">Website thành viên<span class="visually-hidden"> (mở tab mới)</span> →</a>}
+    </article>
+  ))}
+</div>
+<style>
+  .member-pending { border-style: dashed; background: transparent; }
+  .sector { font-size: 13px; color: var(--gold-light) !important; margin: 0; }
+  .legal { font-size: 14px; }
+</style>

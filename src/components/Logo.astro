@@ -1,0 +1,17 @@
+---
+/**
+ * Logo placeholder dạng chữ. Khi có logo chính thức: thay public/logo.svg
+ * và public/favicon.svg, rồi đổi phần <span class="logo-mark"> thành <img src="/logo.svg">.
+ */
+interface Props { name: string }
+const { name } = Astro.props;
+---
+<span class="logo">
+  <span class="logo-mark" aria-hidden="true">VIP</span>
+  <span class="logo-text">{name}</span>
+</span>
+<style>
+  .logo { display: inline-flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: .08em; }
+  .logo-mark { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 13px; color: var(--on-gold); background: linear-gradient(145deg, var(--gold), var(--gold-light)); }
+  .logo-text { font-size: 17px; white-space: nowrap; }
+</style>
