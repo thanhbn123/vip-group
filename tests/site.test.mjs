@@ -146,8 +146,9 @@ test('trang noindex (404) không phát canonical / og:url', () => {
 
 test('menu dùng được khi tắt JavaScript', () => {
   const html = read('/');
-  const head = html.slice(0, html.indexOf('</head>'));
-  assert.match(head, /document\.documentElement\.classList\.add\('js'\)/, 'đánh dấu html.js trong <head>');
+  // Script gắn html.js phải chạy TRƯỚC khi header/menu hiển thị (không nháy menu): ngay đầu <body>.
+  const bodyStart = html.slice(html.indexOf('<body'), html.indexOf('<header'));
+  assert.match(bodyStart, /document\.documentElement\.classList\.add\('js'\)/, 'đánh dấu html.js ở đầu <body>, trước <header>');
   // Chỉ ẩn menu khi có lớp js; không có JS thì mọi link menu vẫn nằm trong HTML và không bị ẩn.
   assert.match(html, /html\.js [^{]*\.menu[^{]*\{[^}]*display:\s*none/, 'ẩn menu phải gắn với html.js');
   assert.doesNotMatch(html, /(?<!html\.js )\.menu\[[^\]]*\]\s*\{[^}]*display:\s*none/, 'không được ẩn menu vô điều kiện');

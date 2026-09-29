@@ -42,6 +42,18 @@ test('mọi script nội tuyến thực thi đều có hash trong CSP của tran
   }
 });
 
+test('script nội tuyến thực thi nằm SAU thẻ CSP (để trình duyệt kiểm hash)', () => {
+  for (const file of allHtml()) {
+    const html = readFileSync(file, 'utf8');
+    const cspAt = html.indexOf('http-equiv="content-security-policy"');
+    assert.ok(cspAt > 0, `${file}: thiếu CSP`);
+    for (const m of html.matchAll(/<script([^>]*)>/g)) {
+      if (/type="application\/ld\+json"/.test(m[1])) continue;
+      assert.ok(m.index > cspAt, `${file}: <script${m[1]}> đứng trước thẻ CSP`);
+    }
+  }
+});
+
 test('public/_headers: header bảo mật + noindex cho *.pages.dev', () => {
   const p = join(dist, '_headers');
   assert.ok(existsSync(p), 'dist/_headers phải được copy từ public/');
@@ -64,6 +76,10 @@ test('workflow staging không bao giờ deploy nhánh production và không lộ
   const jobEnv = wf.split('steps:')[0];
   assert.doesNotMatch(jobEnv, /secrets\./, 'secret không được đặt ở env cấp job');
   assert.match(wf, /--commit-hash=/, 'deploy phải gắn SHA thật');
+  // Preview PR phải build từ đúng PR HEAD — trùng với SHA gắn vào --commit-hash.
+  assert.match(wf, /uses: actions\/checkout@v\d+\s*\n\s+with:\s*\n\s+ref: \$\{\{ github\.event\.pull_request\.head\.sha \|\| github\.sha \}\}/);
+  assert.match(wf, /SHA="\$\{\{ github\.event\.pull_request\.head\.sha \}\}"/);
+  assert.match(wf, /SHA="\$\{\{ github\.sha \}\}"/);
 });
 
 test('workflow staging: deploy hỏng thì bước phải FAIL, không báo deploy giả', () => {
