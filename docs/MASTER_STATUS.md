@@ -1,14 +1,14 @@
 # MASTER STATUS — VIP GROUP WEBSITE
 
 > Ảnh chụp trạng thái, **không phải nguồn chân lý**. GitHub là nguồn chân lý: đo lại (`git ls-remote`, `gh pr list`, `gh run list`) trước khi dựa vào bất kỳ SHA nào ở đây.
-> Cập nhật lần cuối: 29/09/2026, trong PR của VIPG-WEB-008 (#15). SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
+> Cập nhật lần cuối: 30/09/2026, trong PR của VIPG-WEB-009 (#17). SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
 
 ## Nhánh
 
 | Nhánh | SHA đo được | Ghi chú |
 |---|---|---|
 | `main` | `57214628acd7aa1f05e5d018cc3dee4ca8d4ed9e` | Chỉ có commit khởi tạo. Giữ nguyên tới khi staging PASS + owner ra lệnh production |
-| `develop` | `920919b57fd60ff1e39218c25bad8dd53ea932fd` (base của PR VIPG-WEB-008) | CI 36599295127 success · Staging run 36602899641 **deploy success** → staging |
+| `develop` | `1974fcd51b7fcd40b59fff13370408a5d1eb09ed` (base của PR VIPG-WEB-009) | CI 36606230900 + Staging 36606230918 (push → alias `staging`, deploy success) |
 
 ## Work item
 
@@ -16,18 +16,19 @@
 |---|---|---|---|
 | #1 | VIPG-WEB-001 — Official corporate website v1 | CLOSED — merged develop `5f34a0b` | #2 MERGED |
 | #3 | VIPG-WEB-002 — Hardening sau verifier + tài liệu điều phối | CLOSED — merged develop `7ce3b7d` | #5 MERGED |
-| #4 | VIPG-WEB-003 — Thiết lập môi trường staging | **STAGING ACCEPTANCE PASS** 30/09/2026 — đóng sau khi hồ sơ này merge | #6 MERGED |
+| #4 | VIPG-WEB-003 — Thiết lập môi trường staging | CLOSED — **STAGING ACCEPTANCE PASS** 30/09/2026 | #6 MERGED, hồ sơ #16 |
 | #7 | VIPG-WEB-004 — SHA preview chính xác + script inline nằm dưới CSP | CLOSED — merged develop `c50fb70` | #8 MERGED |
 | #9 | VIPG-WEB-005 — Tách job deploy staging khỏi job build (cô lập credential) | CLOSED — merged develop `e7c813f` | #10 MERGED |
 | #11 | VIPG-WEB-006 — Job deploy tự tính nhánh/SHA mong đợi | CLOSED — merged develop `cc55fac` | #12 MERGED |
 | #13 | VIPG-WEB-007 — Test hành vi: chạy thật script guard + deploy | CLOSED — merged develop `920919b` | #14 MERGED |
-| #15 | VIPG-WEB-008 — Hồ sơ nghiệm thu staging | Đang làm | (PR của chính thay đổi này) |
+| #15 | VIPG-WEB-008 — Hồ sơ nghiệm thu staging | CLOSED — merged develop `1974fcd` | #16 MERGED |
+| #17 | VIPG-WEB-009 — Siết test hành vi workflow + sửa tài liệu cũ | Đang làm | (PR của chính thay đổi này) |
 
 ## Gate hiện tại
 
 Staging **PASS**. Cổng kế tiếp là **production** — cần lệnh riêng của owner (merge `develop` → `main`, trỏ DNS `vipgroup.com.vn`). Nội dung vẫn CONTENT_PENDING.
 
-## Kỹ thuật (đo trên `develop` `cc55fac`)
+## Kỹ thuật (đo trên `develop` `920919b` và staging thật — nghiệm thu 30/09/2026)
 
 | Hạng mục | Trạng thái | Căn cứ |
 |---|---|---|

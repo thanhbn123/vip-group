@@ -17,8 +17,17 @@ function stepScript(name) {
   const lines = wf.split('\n');
   const start = lines.findIndex((l) => l.trimStart().startsWith(`- name: ${name}`));
   assert.ok(start >= 0, `không thấy bước "${name}"`);
-  const runAt = lines.findIndex((l, i) => i > start && /^\s+run: \|\s*$/.test(l));
-  assert.ok(runAt > start, `bước "${name}" không có run: |`);
+  // Chỉ tìm trong phạm vi bước này: tới `- ` (bước kế tiếp) cùng mức thụt, hoặc dòng thụt nông hơn (job kế tiếp).
+  const stepIndent = lines[start].match(/^\s*/)[0].length;
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i++) {
+    const l = lines[i];
+    if (l.trim() === '') continue;
+    const ind = l.match(/^\s*/)[0].length;
+    if (ind < stepIndent || (ind === stepIndent && l.trimStart().startsWith('- '))) { end = i; break; }
+  }
+  const runAt = lines.findIndex((l, i) => i > start && i < end && /^\s+run: \|\s*$/.test(l));
+  assert.ok(runAt > start, `bước "${name}" không có khối \`run: |\` trong phạm vi của nó`);
   const indent = lines[runAt].match(/^\s*/)[0].length + 2;
   const body = [];
   for (let i = runAt + 1; i < lines.length; i++) {
@@ -45,7 +54,8 @@ const bashRun = (file, env, cwd = tmp) =>
   });
 
 const A = 'a'.repeat(40);
-const B = 'b'.repeat(40);
+const B = 'b'.repeat(40); // SHA của merge ref (EVENT_SHA trong ca PR)
+const C = 'c'.repeat(40); // một SHA khác hẳn
 const push = (branch, sha) => ({ EVENT_NAME: 'push', EVENT_SHA: A, TARGET_BRANCH: branch, TARGET_SHA: sha });
 const pr = (branch, sha, num = '12') => ({ EVENT_NAME: 'pull_request', EVENT_PR_NUMBER: num, EVENT_PR_HEAD_SHA: A, EVENT_SHA: B, TARGET_BRANCH: branch, TARGET_SHA: sha });
 
@@ -64,7 +74,7 @@ test('guard: output bị sửa hoặc không hợp lệ bị chặn', () => {
   for (const [label, env] of [
     ['PR ghi đè alias staging', pr('staging', A)],
     ['PR trỏ sang pr-13', pr('pr-13', A)],
-    ['PR đổi SHA', pr('pr-12', B)],
+    ['PR đổi sang SHA lạ', pr('pr-12', C)],
     ['PR dùng SHA merge ref', pr('pr-12', B)],
     ['push đổi SHA', push('staging', B)],
     ['push đẩy main', push('main', A)],

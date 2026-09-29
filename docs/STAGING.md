@@ -12,7 +12,9 @@ Owner chọn **Cloudflare Pages** ngày 29/09/2026 (VIPG-WEB-003, issue #4). URL
 | SHA đã nghiệm thu | `920919b57fd60ff1e39218c25bad8dd53ea932fd` (run 36602899641) |
 | Credential GitHub | secret `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; biến `CF_PAGES_PROJECT=vip-group` |
 
-Mỗi lần push `develop`, alias `staging` được deploy lại với SHA mới; mỗi PR vào `develop` có preview `pr-<số>`.
+Khi repo còn đủ secret/biến Cloudflare: mỗi lần push `develop`, alias `staging` được deploy lại với SHA mới; mỗi PR vào `develop` có preview `pr-<số>`. Thiếu credential thì bước deploy bị bỏ qua và ghi `BLOCKED_EXTERNAL_CREDENTIAL`.
+
+Một số chi tiết trong bảng trên (project tạo ngày 30/09, môi trường Preview, "No production deployment yet") được đọc trên dashboard Cloudflare lúc nghiệm thu; phía công khai kiểm lại được bằng `https://vip-group.pages.dev/` trả 404 "Deployment Not Found".
 
 ## Thiết kế
 
