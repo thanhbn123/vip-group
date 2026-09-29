@@ -109,6 +109,18 @@ test('workflow staging cô lập credential: job chạy mã repo không cầm se
   assert.doesNotMatch(j.deploy.split('steps:')[0], /secrets\./, 'secret không được ở env cấp job deploy');
 });
 
+test('workflow staging: job deploy tự tính nhánh/SHA mong đợi và so khớp output của build', () => {
+  const wf = readFileSync(join(root, '.github/workflows/staging.yml'), 'utf8');
+  const d = jobs(wf).deploy;
+  for (const v of ['EVENT_NAME: ${{ github.event_name }}', 'EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}',
+                   'EVENT_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}', 'EVENT_SHA: ${{ github.sha }}']) {
+    assert.ok(d.includes(v), `job deploy thiếu ${v}`);
+  }
+  assert.match(d, /if \[ "\$TARGET_BRANCH" != "\$EXPECT_BRANCH" \] \|\| \[ "\$TARGET_SHA" != "\$EXPECT_SHA" \]; then[\s\S]*?exit 1/);
+  // Chốt so khớp phải đứng trước bước kiểm credential / deploy.
+  assert.ok(d.indexOf('EXPECT_BRANCH') < d.indexOf('Kiểm credential'));
+});
+
 test('workflow staging: deploy hỏng thì bước phải FAIL, không báo deploy giả', () => {
   const wf = readFileSync(join(root, '.github/workflows/staging.yml'), 'utf8');
   // shell: bash tường minh → GitHub chạy `bash -eo pipefail`, lỗi trong `| tee` không bị nuốt.
