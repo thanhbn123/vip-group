@@ -45,10 +45,12 @@
 
 ## 4. DNS — BLOCKED_EXTERNAL_DNS (owner quyết và làm)
 
+> **Owner đã chọn phương án A (30/09/2026) — chỉ là quyết định chuẩn bị.** Kế hoạch chi tiết, kiểm kê bản ghi, checklist email: **`docs/DNS_MIGRATION.md`**. Trình tự phát hành: **`docs/RELEASE_PLAN.md`**.
+
 **Hiện trạng (đo 30/09/2026, chỉ đọc):** NS `ns1/ns2.vclouddns.vn`; MX `1 SMTP.GOOGLE.COM`; TXT `google-site-verification=…`, `v=spf1 include:_spf.google.com ~all`; DKIM `google._domainkey`; **không** A/AAAA cho `vipgroup.com.vn` và `www`. Danh sách này chỉ gồm các tên đã dò — phải xuất toàn bộ zone từ vCloud trước khi đổi.
 
 **Ràng buộc Cloudflare Pages (tài liệu Custom domains):**
-- Tên miền **gốc** `vipgroup.com.vn` chỉ gắn được khi nó là **zone trên cùng account Cloudflare**, dùng **nameserver Cloudflare**. Không làm được bằng bản ghi A/CNAME ở vCloud.
+- Tên miền **gốc** `vipgroup.com.vn` chỉ gắn được khi nó là **zone trên Cloudflare**, dùng **nameserver Cloudflare**. Không làm được bằng bản ghi A/CNAME ở vCloud. *(Tài liệu Custom domains viết "that custom domain must be a zone on the Cloudflare account you have created your Pages project on" — tức cùng account với project `vip-group`; kế hoạch dưới đây theo đúng điều đó.)*
 - Subdomain `www.vipgroup.com.vn` gắn được với DNS ngoài bằng **CNAME `www` → `vip-group.pages.dev`**.
 - **Thứ tự bắt buộc:** thêm tên miền trong Pages (vip-group → Custom domains → Set up a domain) **trước**, rồi mới tạo bản ghi DNS; tạo CNAME trước sẽ gây lỗi 522.
 
@@ -63,14 +65,18 @@
 
 Controller **không** đổi DNS, nameserver, hay gắn tên miền.
 
-## 5. GitHub Environment `production` (V-11507 — owner cấu hình)
+## 5. GitHub Environment `production` (V-11507)
 
-GitHub → Settings → Environments → `production` (tự tạo ở lượt chạy đầu nếu chưa có; nên tạo trước) →
-- **Required reviewers:** thêm owner.
-- **Deployment branches and tags:** *Selected branches* → `main`.
-- (Tuỳ chọn, mạnh hơn) chuyển secret `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` từ repo sang **environment secret** của `production` và tạo token riêng cho staging.
+**Đã tạo 30/09/2026 theo lệnh owner** (qua API, đo lại sau khi tạo):
+- **Required reviewers:** `thanhbn123`.
+- **Deployment branches:** tuỳ chỉnh — **chỉ `main`**.
+- **Admin bypass:** tắt (`can_admins_bypass: false`).
+- **Prevent self-review:** **tắt có chủ đích** — repo chỉ có một người duyệt; bật sẽ khiến chính owner không duyệt được lượt owner tự bấm chạy. Muốn bật: thêm người duyệt thứ hai trước.
+- Secret vẫn ở cấp repo (owner yêu cầu không nhân bản). (Tuỳ chọn, mạnh hơn: chuyển sang environment secret của `production` và dùng token riêng cho staging.)
 
-Controller không tự cấu hình mục này và không nới lỏng cổng.
+Hai environment tạo nhầm tên `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` (trống: 0 secret, 0 biến, 0 deployment, không protection, không workflow nào dùng) đã được xoá cùng ngày theo lệnh owner; cấu hình của chúng được lưu trong nhật ký dự án trước khi xoá.
+
+Controller không nới lỏng cổng này.
 
 ## 6. Rollback
 
