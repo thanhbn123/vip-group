@@ -50,7 +50,7 @@ Năm © ở footer lấy lúc build — sang năm mới cần build lại (CI bu
 
 Build không cần biến môi trường hay secret nào. Riêng workflow staging cần secret/biến Cloudflare đặt trong GitHub (không nằm trong repo) — xem `docs/STAGING.md`. Tên miền cấu hình ở `astro.config.mjs` (`SITE_URL`).
 
-> Chưa deploy production. Việc deploy và DNS do chủ dự án quyết định.
+> Chưa deploy production. Production phát hành bằng `.github/workflows/production.yml` (chạy tay từ `main`, có cổng) — xem `docs/PRODUCTION.md`. DNS do chủ dự án quyết định.
 
 ## Cấu trúc
 
@@ -127,6 +127,9 @@ Màu thương hiệu: biến CSS ở đầu `src/styles/global.css`.
 - `docs/MASTER_STATUS.md` — ảnh chụp trạng thái (GitHub vẫn là nguồn chân lý).
 - `docs/verification/` — biên bản nghiệm thu từng PR.
 - `docs/STAGING.md` — thiết kế staging Cloudflare Pages và việc owner phải làm.
+- `docs/PRODUCTION.md` — kiến trúc production, quy trình phát hành, rollback, DNS (chưa phát hành).
+- `docs/PRODUCTION_READINESS.md` — checklist sẵn sàng phát hành.
+- `docs/CONTENT_INPUT_PACK.md` — dữ liệu owner cần cung cấp (V-11501).
 
 ## Quy trình Git
 

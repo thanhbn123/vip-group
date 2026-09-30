@@ -88,6 +88,8 @@ test('guard: output bị sửa hoặc không hợp lệ bị chặn', () => {
   ]) {
     const r = bashRun(guardFile, env);
     assert.notEqual(r.status, 0, `${label} phải bị chặn`);
+    // Bị chặn phải là do chính chốt của guard (in ::error::), không phải lỗi ngẫu nhiên của script.
+    assert.match(r.stdout, /::error::(Nhánh đích không hợp lệ|SHA đích không hợp lệ|Output của job build lệch ngữ cảnh sự kiện)/, `${label}: ${r.stdout}${r.stderr}`);
   }
 });
 
