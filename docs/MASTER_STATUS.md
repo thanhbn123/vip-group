@@ -43,7 +43,7 @@
 | Workflow staging: không deploy giả, không production, credential cô lập, không tin output build | PASS | verifier PR #6, #10, #12 |
 | Test hành vi workflow (chạy thật script) | PASS | verifier PR #14, #18; CI Ubuntu |
 | Chế độ production (noindex chỉ ở `*.pages.dev`, workflow production có cổng) | PASS | verifier PR #20 (7/7 đột biến) · verifier RC `5bb43bd` |
-| Token Cloudflare trong repo | **KHÔNG HỢP LỆ** (từ ~04:22Z 30/09) | log Staging: wrangler code 10000, preflight HTTP 401 |
+| Token Cloudflare trong repo | Hợp lệ — preflight `production_branch=main` (run 36670538125) | Sự cố 30/09 ~04:22Z–04:45Z: 401 / code 10000; owner đặt lại secret 04:45:06Z |
 
 ## CONTENT gate — V-11501 (chặn production về nội dung)
 
@@ -63,6 +63,5 @@ Chi tiết từng trường, chỗ dùng, định dạng và **phân loại (3 M
 |---|---|
 | CONTENT_PENDING | V-11501 — `docs/CONTENT_INPUT_PACK.md` |
 | BLOCKED_EXTERNAL_DNS | Owner chọn phương án A (Cloudflare DNS) — `DNS MIGRATION READY = NO` cho tới khi có bản xuất zone vCloud — `docs/DNS_MIGRATION.md` |
-| BLOCKED_EXTERNAL_CREDENTIAL | Token Cloudflare hiện không hợp lệ — owner đặt lại |
 | OWNER_APPROVAL | Merge `develop` → `main` và chạy workflow production |
 | OWNER_REVIEW | Environment `production` đã tạo 30/09 (reviewer owner, chỉ `main`) — owner xem lại |

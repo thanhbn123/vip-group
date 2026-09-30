@@ -32,7 +32,7 @@
 | B1 | CONTENT (V-11501) | **CHẶN** — 3 mục MUST_HAVE (địa chỉ, tên pháp lý, logo) | `docs/CONTENT_INPUT_PACK.md` mục Phân loại |
 | B2 | DNS | **BLOCKED_EXTERNAL_DNS** — owner chọn A; `DNS MIGRATION READY = NO` (thiếu bản xuất zone vCloud) | `docs/DNS_MIGRATION.md` |
 | B3 | GitHub Environment `production` (V-11507) | **Đã tạo 30/09** — reviewer owner, chỉ `main`, admin không bypass | Owner xem lại — `docs/PRODUCTION.md` mục 5 |
-| B3b | Token Cloudflare | **KHÔNG HỢP LỆ từ 30/09 ~04:22Z** (wrangler code 10000; preflight HTTP 401) — staging không deploy được | Owner tạo token mới (Pages Edit) và đặt lại secret |
+| B3b | Token Cloudflare | Hợp lệ (đo lần cuối: preflight run 36670538125 in `production_branch=main`). Sự cố 30/09: token không xác thực được khoảng 04:22Z–04:45Z (wrangler code 10000; preflight HTTP 401); owner đặt lại secret lúc 04:45:06Z | Nếu roll token lần sau: đặt secret mới ngay và chạy lại Staging để kiểm |
 | B4 | Duyệt merge `develop` → `main` | Chờ lệnh | PR → CI → verifier → owner duyệt |
 | B5 | Chạy workflow production | Chờ lệnh | `docs/PRODUCTION.md` mục 3 |
 
