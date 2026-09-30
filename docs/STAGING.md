@@ -14,7 +14,7 @@ Owner chọn **Cloudflare Pages** ngày 29/09/2026 (VIPG-WEB-003, issue #4). URL
 
 Khi repo còn đủ secret/biến Cloudflare: mỗi lần push `develop`, alias `staging` được deploy lại với SHA mới; mỗi PR vào `develop` có preview `pr-<số>`. Thiếu credential thì bước deploy bị bỏ qua và ghi `BLOCKED_EXTERNAL_CREDENTIAL`.
 
-Một số chi tiết trong bảng trên (project tạo ngày 30/09, môi trường Preview, "No production deployment yet") được đọc trên dashboard Cloudflare lúc nghiệm thu; phía công khai kiểm lại được bằng `https://vip-group.pages.dev/` trả 404 "Deployment Not Found".
+Một số chi tiết (project tạo ngày 30/09; lượt deploy staging hiện là môi trường **Preview**; "No production deployment yet") được đọc trên dashboard Cloudflare lúc nghiệm thu; phía công khai kiểm lại được bằng `https://vip-group.pages.dev/` trả 404 "Deployment Not Found".
 
 ## Thiết kế
 
@@ -27,7 +27,8 @@ Một số chi tiết trong bảng trên (project tạo ngày 30/09, môi trư�
 - Workflow: `.github/workflows/staging.yml`, **hai job**:
   - `build` — checkout đúng SHA (PR: PR HEAD), `npm ci`, `check`, `build`, `test`, tải `dist` lên artifact. **Không có secret.**
   - `deploy` (`needs: build`) — **không checkout, không `npm ci`**, chỉ tải artifact `dist` rồi Direct Upload (`wrangler pages deploy`), gắn `--commit-hash` = SHA thật. Secret chỉ ở job này.
-- Workflow **cấm** deploy vào `main` / `master` / `production`. Production là việc riêng, cần lệnh owner.
+- Workflow **cấm** deploy vào `main` / `master` / `production`. Production là workflow riêng `production.yml` (chạy tay từ `main`) — xem `docs/PRODUCTION.md`.
+- Trước khi deploy, job `deploy` **đọc** `production_branch` của project qua API Cloudflare và dừng nếu khác `main` (để nhánh `staging` không bao giờ thành production).
 - `public/_headers`: header bảo mật + `X-Robots-Tag: noindex` cho mọi host `*.pages.dev`.
 - CSP: thẻ `<meta>` do Astro sinh (`security.csp` trong `astro.config.mjs`).
 - Secret Cloudflare chỉ cấp cho bước kiểm credential và bước deploy của job `deploy`. Trước mọi việc khác, job `deploy` kiểm nhánh đích bằng regex `^(staging|pr-[0-9]+)$`, SHA 40 ký tự hex, **và tự tính lại nhánh + SHA mong đợi từ ngữ cảnh sự kiện** (`github.event_name`, số PR, PR head SHA, `github.sha`) rồi so khớp — output của job build lệch là dừng.

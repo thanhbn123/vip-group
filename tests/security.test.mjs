@@ -104,8 +104,8 @@ test('workflow staging cô lập credential: job chạy mã repo không cầm se
   assert.match(j.build, /actions\/upload-artifact@v\d+/);
   // Trong job deploy, secret chỉ ở env của bước kiểm credential và bước deploy.
   const stepEnvSecrets = j.deploy.split('\n      - ').filter((st) => /secrets\./.test(st));
-  assert.equal(stepEnvSecrets.length, 2);
-  assert.ok(stepEnvSecrets.every((st) => /Kiểm credential|Deploy lên Cloudflare Pages/.test(st)));
+  assert.equal(stepEnvSecrets.length, 3);
+  assert.ok(stepEnvSecrets.every((st) => /Kiểm credential|Kiểm production branch|Deploy lên Cloudflare Pages/.test(st)));
   assert.doesNotMatch(j.deploy.split('steps:')[0], /secrets\./, 'secret không được ở env cấp job deploy');
 });
 
