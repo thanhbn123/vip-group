@@ -129,7 +129,9 @@ Màu thương hiệu: biến CSS ở đầu `src/styles/global.css`.
 - `docs/STAGING.md` — thiết kế staging Cloudflare Pages và việc owner phải làm.
 - `docs/PRODUCTION.md` — kiến trúc production, quy trình phát hành, rollback, DNS (chưa phát hành).
 - `docs/PRODUCTION_READINESS.md` — checklist sẵn sàng phát hành.
-- `docs/CONTENT_INPUT_PACK.md` — dữ liệu owner cần cung cấp (V-11501).
+- `docs/CONTENT_INPUT_PACK.md` — dữ liệu owner cần cung cấp (V-11501) + phân loại trước production.
+- `docs/DNS_MIGRATION.md` — kiểm kê DNS, kế hoạch chuyển sang Cloudflare, checklist email.
+- `docs/RELEASE_PLAN.md` — trình tự phát hành (chưa thực hiện).
 
 ## Quy trình Git
 

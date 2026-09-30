@@ -29,9 +29,10 @@
 
 | # | Cổng | Trạng thái | Việc cần |
 |---|---|---|---|
-| B1 | CONTENT (V-11501) | **CHẶN** | Gửi 8 mục trong `docs/CONTENT_INPUT_PACK.md`, hoặc chấp nhận phát hành với placeholder |
-| B2 | DNS | **BLOCKED_EXTERNAL_DNS** | Chọn phương án A (chuyển zone sang Cloudflare) hoặc B (`www` + CNAME) — `docs/PRODUCTION.md` mục 4 |
-| B3 | GitHub Environment `production` có Required reviewers (V-11507) | Khuyến nghị làm trước lần phát hành đầu | `docs/PRODUCTION.md` mục 5 |
+| B1 | CONTENT (V-11501) | **CHẶN** — 3 mục MUST_HAVE (địa chỉ, tên pháp lý, logo) | `docs/CONTENT_INPUT_PACK.md` mục Phân loại |
+| B2 | DNS | **BLOCKED_EXTERNAL_DNS** — owner chọn A; `DNS MIGRATION READY = NO` (thiếu bản xuất zone vCloud) | `docs/DNS_MIGRATION.md` |
+| B3 | GitHub Environment `production` (V-11507) | **Đã tạo 30/09** — reviewer owner, chỉ `main`, admin không bypass | Owner xem lại — `docs/PRODUCTION.md` mục 5 |
+| B3b | Token Cloudflare | **KHÔNG HỢP LỆ từ 30/09 ~04:22Z** (wrangler code 10000; preflight HTTP 401) — staging không deploy được | Owner tạo token mới (Pages Edit) và đặt lại secret |
 | B4 | Duyệt merge `develop` → `main` | Chờ lệnh | PR → CI → verifier → owner duyệt |
 | B5 | Chạy workflow production | Chờ lệnh | `docs/PRODUCTION.md` mục 3 |
 

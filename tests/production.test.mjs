@@ -2,7 +2,7 @@
 // và kiểm workflow production chỉ phát hành được từ main, có cổng, không tự chạy.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, statSync, writeFileSync, mkdtempSync, mkdirSync, chmodSync, existsSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, writeFileSync, mkdtempSync, mkdirSync, chmodSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
@@ -160,14 +160,14 @@ function stepScript(wf, name) {
 const tmp = mkdtempSync(join(tmpdir(), 'vipg-prod-'));
 process.on('exit', () => rmSync(tmp, { recursive: true, force: true }));
 const FLAGS = (wf) => (/\ndefaults:\s*\n\s+run:\s*\n\s+shell: bash\b/.test(wf) ? ['-eo', 'pipefail'] : ['-e']);
-function runStep(wf, name, env, binDir) {
+function runStepFull(wf, name, env, binDir) {
   const f = join(tmp, `s-${Math.random().toString(36).slice(2)}.sh`);
   writeFileSync(f, stepScript(wf, name));
-  const r = spawnSync('bash', ['--noprofile', '--norc', ...FLAGS(wf), f], {
+  return spawnSync('bash', ['--noprofile', '--norc', ...FLAGS(wf), f], {
     cwd: tmp, encoding: 'utf8', env: { PATH: binDir ? `${binDir}:${process.env.PATH}` : process.env.PATH, ...env },
   });
-  return r.status;
 }
+const runStep = (wf, name, env, binDir) => runStepFull(wf, name, env, binDir).status;
 function fakeCurl(json, code = 0) {
   const bin = join(tmp, `curl-${Math.random().toString(36).slice(2)}`); mkdirSync(bin);
   writeFileSync(join(bin, 'curl'), `#!/bin/bash\n${code ? `exit ${code}` : `cat <<'J'\n${json}\nJ`}\n`); chmodSync(join(bin, 'curl'), 0o755);
@@ -197,10 +197,22 @@ test('production: ref khác main bị chặn; thiếu credential → FAIL', () =
 test('preflight production_branch (production + staging): chỉ "main" mới qua', () => {
   const stg = readFileSync(join(root, '.github/workflows/staging.yml'), 'utf8');
   const name = 'Kiểm production branch của project Cloudflare = main';
+  const REASON = /::error::Project Cloudflare có production branch '([^']*)', phải là 'main'/;
   for (const wf of [wfText, stg]) {
-    assert.equal(runStep(wf, name, CRED, fakeCurl('{"success":true,"result":{"production_branch":"main"}}')), 0);
-    assert.notEqual(runStep(wf, name, CRED, fakeCurl('{"success":true,"result":{"production_branch":"staging"}}')), 0);
-    assert.notEqual(runStep(wf, name, CRED, fakeCurl('{"success":false,"errors":[{"code":10000}]}')), 0);
-    assert.notEqual(runStep(wf, name, CRED, fakeCurl('', 22)), 0, 'curl lỗi HTTP phải FAIL');
+    const ok = runStepFull(wf, name, CRED, fakeCurl('{"success":true,"result":{"production_branch":"main"}}'));
+    assert.equal(ok.status, 0);
+    assert.match(ok.stdout, /production_branch=main/);
+    // Chặn vì production branch sai → phải in đúng lý do, kèm giá trị đọc được.
+    const wrong = runStepFull(wf, name, CRED, fakeCurl('{"success":true,"result":{"production_branch":"staging"}}'));
+    assert.notEqual(wrong.status, 0);
+    assert.equal(wrong.stdout.match(REASON)?.[1], 'staging', wrong.stdout);
+    // API trả success=false → giá trị rỗng → chặn với đúng lý do.
+    const apiFail = runStepFull(wf, name, CRED, fakeCurl('{"success":false,"errors":[{"code":10000}]}'));
+    assert.notEqual(apiFail.status, 0);
+    assert.equal(apiFail.stdout.match(REASON)?.[1], '', apiFail.stdout);
+    // curl lỗi HTTP (401/403…) → dừng ngay ở pipefail, TRƯỚC khi in production_branch=.
+    const httpFail = runStepFull(wf, name, CRED, fakeCurl('', 22));
+    assert.notEqual(httpFail.status, 0, 'curl lỗi HTTP phải FAIL');
+    assert.doesNotMatch(httpFail.stdout, /production_branch=/, 'không được đi tiếp khi curl lỗi');
   }
 });
