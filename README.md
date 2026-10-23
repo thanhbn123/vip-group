@@ -22,7 +22,7 @@ npm run dev        # http://localhost:4321
 ```bash
 npm run build      # xuất ra dist/
 npm run check      # kiểm tra kiểu (astro check) cho file .astro / .ts
-npm test           # kiểm tra bản build (SEO, link, sitemap, form, CSP, nội dung) + hành vi workflow staging
+npm test           # tự build (pretest) rồi kiểm bản build (SEO, link, sitemap, form, CSP, nội dung) + hành vi workflow
 npm run preview    # xem bản build tại http://localhost:4321
 ```
 
