@@ -2,8 +2,15 @@ import type { CompanyProfile } from '../types';
 
 export const company: CompanyProfile = {
   name: 'VIP GROUP',
-  legalName: null,
-  slogan: 'Kết nối giá trị – Kiến tạo tương lai',
+  // Nguồn: Giấy CN ĐKDN + công bố đăng ký thành lập (MSDN 4900951703, 21/10/2026).
+  legalName: 'CÔNG TY TNHH VIP GROUP',
+  englishName: 'VIP GROUP COMPANY LIMITED',
+  shortName: 'VIP GROUP CO., LTD',
+  taxId: '4900951703',
+  foundingDate: '2026-10-21',
+  legalRepresentative: { name: 'Dương Văn Thành', title: 'Giám đốc' },
+  // Slogan chính thức trên logo — owner chốt 24/10/2026.
+  slogan: 'Con người - Công nghệ - Cơ hội',
   tagline:
     'VIP GROUP phát triển hệ sinh thái doanh nghiệp dựa trên ba trụ cột: Xuất nhập khẩu – Hải quan – Logistics, Công nghệ – Phần mềm – AI và Bất động sản.',
   intro: [

@@ -58,7 +58,18 @@ for (const path of PAGES) {
     assert.equal(org['@type'], 'Organization');
     assert.equal(org.name, 'VIP GROUP');
     assert.equal(org.url, `${SITE}/`);
-    assert.equal(org.email, 'contact@vipgroup.com.vn');
+    assert.equal(org.email, 'viporder@vipgroup.com.vn');
+    assert.equal(org.legalName, 'CÔNG TY TNHH VIP GROUP');
+    assert.equal(org.taxID, '4900951703');
+    assert.equal(org.foundingDate, '2026-10-21');
+    assert.equal(org.telephone, '+84968961962');
+    assert.deepEqual(org.alternateName, ['VIP GROUP COMPANY LIMITED', 'VIP GROUP CO., LTD']);
+    assert.equal(org.address['@type'], 'PostalAddress');
+    assert.equal(org.address.streetAddress, 'Số 183 đường Bắc Sơn, Phường Kỳ Lừa');
+    assert.equal(org.address.addressRegion, 'Tỉnh Lạng Sơn');
+    assert.equal(org.address.addressCountry, 'VN');
+    assert.equal(org.slogan, 'Con người - Công nghệ - Cơ hội');
+    assert.equal(org.logo, `${SITE}/logo-vip-group.png`);
     for (const [k, v] of Object.entries(org)) assert.ok(v !== null && v !== '', `schema có trường rỗng: ${k}`);
 
     assert.match(html, /aria-current="page"/, 'menu đánh dấu trang hiện tại');
@@ -110,7 +121,7 @@ test('trang 404 có noindex và không nằm trong sitemap', () => {
 });
 
 test('favicon, logo và ảnh Open Graph tồn tại', () => {
-  for (const f of ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'logo.svg', 'og-image.jpg']) {
+  for (const f of ['favicon.ico', 'favicon-32.png', 'apple-touch-icon.png', 'logo-vip-group.png', 'logo-vip-group.webp', 'logo-mark.png', 'logo-mark.webp', 'og-image.jpg']) {
     assert.ok(existsSync(join(dist, f)), `thiếu ${f}`);
   }
 });

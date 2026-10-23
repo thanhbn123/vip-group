@@ -7,25 +7,26 @@ import CtaBand from '../components/CtaBand.astro';
 import { getContent } from '../data';
 
 const { company, sectors, subsidiaries, news, careers } = getContent('vi');
-const [sloganA, sloganB] = company.slogan.split('–').map((s) => s.trim());
+const sloganParts = company.slogan.split(' - ').map((s) => s.trim());
+const sloganLast = sloganParts.pop();
 ---
 <BaseLayout title="Trang chủ" description={company.tagline}>
   <section class="hero" aria-labelledby="hero-title">
     <div class="container hero-grid">
       <div>
-        <span class="kicker">{company.name} · Hệ sinh thái doanh nghiệp</span>
-        <h1 id="hero-title">{sloganA}.<br /><span class="gold">{sloganB}.</span></h1>
+        <span class="kicker">{company.legalName ?? company.name}</span>
+        <h1 id="hero-title">{sloganParts.map((p) => <>{p}.<br /></>)}<span class="gold">{sloganLast}.</span></h1>
         <p class="lead">{company.tagline}</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="/linh-vuc-hoat-dong/">Khám phá hệ sinh thái</a>
           <a class="btn btn-ghost" href="/lien-he/">Liên hệ hợp tác</a>
         </div>
       </div>
-      <div class="hero-card" aria-hidden="true">
-        <div class="orbit">
-          <div class="orbit-core">VIP</div>
-          {sectors.map((s, i) => <div class={`orbit-item item-${i}`}>{s.title.split('–')[0].trim()}</div>)}
-        </div>
+      <div class="hero-card">
+        <picture>
+          <source srcset="/logo-vip-group-400.webp 400w, /logo-vip-group-600.webp 600w, /logo-vip-group.webp 720w" sizes="(max-width: 900px) min(420px, calc(100vw - 72px)), 400px" type="image/webp" />
+          <img src="/logo-vip-group.png" alt={`Logo ${company.name} — ${company.slogan}`} width="720" height="690" fetchpriority="high" />
+        </picture>
       </div>
     </div>
   </section>
@@ -103,15 +104,8 @@ const [sloganA, sloganB] = company.slogan.split('–').map((s) => s.trim());
   .hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; padding: 72px 0; }
   .gold { color: var(--gold-light); }
   .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
-  .hero-card { border: 1px solid var(--line); border-radius: 32px; padding: 28px; background: linear-gradient(155deg, rgba(255,255,255,.07), rgba(255,255,255,.02)); box-shadow: var(--shadow); }
-  .orbit { position: relative; aspect-ratio: 1; max-width: 380px; margin: auto; display: grid; place-items: center; }
-  .orbit::before, .orbit::after { content: ''; position: absolute; border: 1px solid rgba(217,182,111,.25); border-radius: 50%; }
-  .orbit::before { inset: 14%; } .orbit::after { inset: 0; }
-  .orbit-core { width: 30%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(145deg, var(--gold), var(--gold-light)); color: var(--on-gold); font-size: clamp(20px, 2.4vw, 30px); font-weight: 900; z-index: 1; }
-  .orbit-item { position: absolute; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--navy-800); font-size: 12px; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
-  .item-0 { top: 4%; left: 50%; transform: translateX(-50%); }
-  .item-1 { bottom: 14%; left: 0; }
-  .item-2 { bottom: 14%; right: 0; }
+  .hero-card { border-radius: 32px; padding: clamp(20px, 3vw, 36px); background: #fff; box-shadow: var(--shadow); max-width: 460px; justify-self: center; width: 100%; }
+  .hero-card img { width: 100%; height: auto; display: block; }
   @media (max-width: 900px) {
     .hero { min-height: auto; }
     .hero-grid { grid-template-columns: 1fr; gap: 32px; padding: 56px 0; }

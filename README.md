@@ -92,23 +92,11 @@ Mọi nội dung nằm trong `src/data/vi/`. Quy ước: **thông tin chưa ch�
 
 ## Form liên hệ
 
-Giai đoạn 1 **chỉ có giao diện**: form không có `action`, các ô nhập không có `name` và nút gửi `disabled` sẵn trong HTML — nên kể cả khi trình duyệt tắt JavaScript cũng không dữ liệu nào lọt vào URL. Bật JS thì nút gửi mở, bấm gửi chỉ hiện thông báo dữ liệu chưa được gửi, kèm email `contact@vipgroup.com.vn`. Khi có backend: nối API trong `src/components/ContactForm.astro` (thêm `action`/`method`) rồi đặt `formBackendReady: true` — ô nhập sẽ tự có `name` trong `contact.ts` (test sẽ cần cập nhật theo).
+Giai đoạn 1 **chỉ có giao diện**: form không có `action`, các ô nhập không có `name` và nút gửi `disabled` sẵn trong HTML — nên kể cả khi trình duyệt tắt JavaScript cũng không dữ liệu nào lọt vào URL. Bật JS thì nút gửi mở, bấm gửi chỉ hiện thông báo dữ liệu chưa được gửi, kèm email công khai (`contact.email` — hiện `viporder@vipgroup.com.vn`). Khi có backend: nối API trong `src/components/ContactForm.astro` (thêm `action`/`method`) rồi đặt `formBackendReady: true` — ô nhập sẽ tự có `name` trong `contact.ts` (test sẽ cần cập nhật theo).
 
-## Thay logo / favicon
+## Logo / favicon
 
-Logo hiện là placeholder dạng chữ.
-
-1. Thay `public/logo.svg`, `public/favicon.svg`, `design/og-image.svg`.
-2. Sinh lại ảnh JPG/PNG/ICO (cần Chrome và ImageMagick; Chrome headless có lúc chụp xong không tự thoát — thấy file ảnh đã ra thì bấm Ctrl+C):
-   ```bash
-   CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-   "$CHROME" --headless=new --hide-scrollbars --window-size=1200,630 --screenshot=/tmp/og.png "file://$PWD/design/og-image.svg"
-   magick /tmp/og.png -strip -quality 86 public/og-image.jpg
-   "$CHROME" --headless=new --hide-scrollbars --default-background-color=00000000 --window-size=540,540 --screenshot=/tmp/fav.png "file://$PWD/public/favicon.svg"
-   magick /tmp/fav.png -resize 180x180 public/apple-touch-icon.png
-   magick /tmp/fav.png -define icon:auto-resize=32,16 public/favicon.ico
-   ```
-3. Muốn dùng ảnh logo trong header: sửa `src/components/Logo.astro`.
+Logo chính thức (owner gửi 24/10/2026, PNG nền trong suốt 2000×2000) nằm ở `design/logo-vip-group-goc-2000.webp`. Mọi ảnh trong `public/` (logo đầy đủ nhiều cỡ, biểu tượng tròn ở header, favicon, apple-touch-icon, ảnh OG) sinh từ file đó chỉ bằng cắt + đổi kích thước — lệnh và bảng file ở `design/README.md`. Đổi logo: thay file gốc rồi chạy lại các lệnh đó.
 
 Màu thương hiệu: biến CSS ở đầu `src/styles/global.css`.
 

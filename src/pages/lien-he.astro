@@ -19,6 +19,8 @@ const ui = t('vi');
           <div><dt>Hotline</dt><dd>{contact.hotline ? <a href={`tel:${contact.hotline.replace(/\s/g, '')}`}>{contact.hotline}</a> : ui.updating}</dd></div>
           <div><dt>Địa chỉ</dt><dd>{contact.address ?? ui.updating}</dd></div>
           <div><dt>Website</dt><dd>{contact.domain}</dd></div>
+          {company.legalName && <div><dt>Doanh nghiệp</dt><dd>{company.legalName}</dd></div>}
+          {company.taxId && <div><dt>Mã số doanh nghiệp</dt><dd>{company.taxId}</dd></div>}
         </dl>
       </div>
       <div>
