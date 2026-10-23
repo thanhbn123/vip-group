@@ -1,0 +1,11 @@
+---
+import { getContent } from '../data';
+const { company } = getContent('vi');
+// Nguồn: Giấy chứng nhận ĐKDN VIP GROUP 21/10/2026 — ngành CNTT (5829, 6219, 6220, 6290…) và BĐS (6810, 6821, 6829).
+---
+<p class="member-note">
+  Trụ cột Công nghệ – Phần mềm – AI và Bất động sản hiện chưa có công ty thành viên riêng; các ngành này nằm trong ngành nghề đăng ký của {company.legalName}. Khi có công ty thành viên, thông tin sẽ được cập nhật tại đây.
+</p>
+<style>
+  .member-note { margin: 20px 0 0; font-size: 14px; color: var(--muted); max-width: 72ch; }
+</style>

@@ -15,7 +15,7 @@
 | — | Email công khai | **Owner chốt** `viporder@vipgroup.com.vn` (thay `contact@vipgroup.com.vn`) | footer, liên hệ, schema.org |
 | — | Slogan | **Owner chốt** "CON NGƯỜI - CÔNG NGHỆ - CƠ HỘI" (trên logo; thay slogan dự kiến) | hero, tiêu đề trang chủ, footer, schema.org |
 
-**MUST_HAVE trước production (#2, #3, #7): đã có đủ.** Còn placeholder có chủ đích: #4, #5.
+**MUST_HAVE trước production (#2, #3, #7): đã có đủ.** #4, #5, #8 xử lý ngày 24/10/2026 (VIPG-WEB-013, owner giao Controller đề xuất): bỏ hai thẻ giữ chỗ công ty thành viên khối Công nghệ và Bất động sản — thay bằng một câu ghi rằng hai trụ cột này chưa có công ty thành viên riêng và nằm trong ngành nghề đăng ký của VIP GROUP (nguồn: Giấy CN ĐKDN 21/10/2026); email tuyển dụng = `viporder@vipgroup.com.vn`. **Không còn placeholder nội dung nào.** Có pháp nhân thành viên mới thì thêm vào `src/data/vi/subsidiaries.ts` với `status: 'active'`.
 
 ---
 

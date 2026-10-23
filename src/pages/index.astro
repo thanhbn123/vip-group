@@ -4,6 +4,7 @@ import SectorGrid from '../components/SectorGrid.astro';
 import MemberGrid from '../components/MemberGrid.astro';
 import NewsList from '../components/NewsList.astro';
 import CtaBand from '../components/CtaBand.astro';
+import MemberNote from '../components/MemberNote.astro';
 import { getContent } from '../data';
 
 const { company, sectors, subsidiaries, news, careers } = getContent('vi');
@@ -67,6 +68,7 @@ const sloganLast = sloganParts.pop();
         <a class="text-link" href="/cong-ty-thanh-vien/">Xem tất cả →</a>
       </div>
       <MemberGrid subsidiaries={subsidiaries} sectors={sectors} />
+      <MemberNote />
     </div>
   </section>
 

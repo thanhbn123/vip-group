@@ -64,3 +64,15 @@ test('dữ liệu pháp nhân hiển thị trên site (không còn "Đang cập 
     assert.doesNotMatch(t, /Hotline:\s*Đang cập nhật|Địa chỉ:\s*Đang cập nhật/, file);
   }
 });
+
+test('VIPG-WEB-013: trang chủ + công ty thành viên không còn thẻ "Đang hoàn thiện", có ghi chú nguồn ĐKDN', () => {
+  for (const f of ['index.html', 'cong-ty-thanh-vien/index.html']) {
+    const t = text(readFileSync(join(dist, f), 'utf8'));
+    assert.ok(!t.includes('Đang hoàn thiện'), `${f}: còn thẻ giữ chỗ`);
+    assert.ok(!t.includes('Công ty thành viên khối'), `${f}: còn nhãn giữ chỗ`);
+    assert.ok(t.includes('chưa có công ty thành viên riêng'), `${f}: thiếu ghi chú`);
+    assert.ok(t.includes('ngành nghề đăng ký của CÔNG TY TNHH VIP GROUP'), `${f}: ghi chú thiếu nguồn`);
+  }
+  const tuyen = readFileSync(join(dist, 'tuyen-dung/index.html'), 'utf8');
+  assert.ok(tuyen.includes('mailto:viporder@vipgroup.com.vn'), 'tuyển dụng phải gửi về email chính thức');
+});
