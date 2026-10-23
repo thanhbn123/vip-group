@@ -24,11 +24,22 @@ const organization = Object.fromEntries(
     '@id': `${site.href}#organization`,
     name: company.name,
     legalName: company.legalName,
+    alternateName: [company.englishName, company.shortName].filter(Boolean),
+    taxID: company.taxId,
+    foundingDate: company.foundingDate,
     url: site.href,
-    logo: new URL('/logo.svg', site).href,
+    logo: new URL('/logo-vip-group.png', site).href,
     email: contact.email,
-    telephone: contact.hotline,
-    address: contact.address,
+    // Số Việt Nam 0xxxxxxxxx → dạng quốc tế +84xxxxxxxxx (cùng một số).
+    telephone: contact.hotline ? contact.hotline.replace(/\s/g, '').replace(/^0/, '+84') : null,
+    address: contact.addressParts
+      ? {
+          '@type': 'PostalAddress',
+          streetAddress: `${contact.addressParts.street}, ${contact.addressParts.ward}`,
+          addressRegion: contact.addressParts.region,
+          addressCountry: contact.addressParts.country,
+        }
+      : null,
     slogan: company.slogan,
   }).filter(([, v]) => v !== null && v !== undefined),
 );

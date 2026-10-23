@@ -25,13 +25,20 @@ test('công ty thành viên placeholder không có tên pháp lý hay website', 
     }
   }
   assert.match(src('subsidiaries.ts'), /name: 'VIPORDER'[\s\S]*?status: 'active'/);
+  // Owner chốt 24/10/2026: VIPORDER và VIP GROUP là hai công ty CÙNG CHỦ SỞ HỮU, không phải mẹ – con.
+  assert.match(src('subsidiaries.ts'), /relation: 'Cùng chủ sở hữu với VIP GROUP'/);
 });
 
-test('liên hệ: email chính thức, hotline/địa chỉ chưa chốt để null, form chưa có backend', () => {
+test('liên hệ: đúng dữ liệu giấy ĐKDN + owner chốt 24/10/2026, form chưa có backend', () => {
   const c = src('contact.ts');
-  assert.match(c, /email: 'contact@vipgroup\.com\.vn'/);
-  assert.match(c, /hotline: null/);
-  assert.match(c, /address: null/);
+  assert.match(c, /email: 'viporder@vipgroup\.com\.vn'/);
+  assert.match(c, /hotline: '0968961962'/);
+  assert.match(c, /address: 'Số 183 đường Bắc Sơn, Phường Kỳ Lừa, Tỉnh Lạng Sơn, Việt Nam'/);
+  const co = src('company.ts');
+  assert.match(co, /legalName: 'CÔNG TY TNHH VIP GROUP'/);
+  assert.match(co, /taxId: '4900951703'/);
+  assert.match(co, /foundingDate: '2026-10-21'/);
+  assert.match(co, /slogan: 'Con người - Công nghệ - Cơ hội'/);
   assert.match(c, /formBackendReady: false/);
 });
 

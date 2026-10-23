@@ -1,14 +1,14 @@
 # MASTER STATUS — VIP GROUP WEBSITE
 
 > Ảnh chụp trạng thái, **không phải nguồn chân lý**. GitHub là nguồn chân lý: đo lại (`git ls-remote`, `gh pr list`, `gh run list`) trước khi dựa vào bất kỳ SHA nào ở đây.
-> Cập nhật lần cuối: 30/09/2026, trong PR của VIPG-WEB-011 (#21). SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
+> Cập nhật lần cuối: 24/10/2026, trong PR của VIPG-WEB-012 (#23). SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
 
 ## Nhánh
 
 | Nhánh | SHA đo được | Ghi chú |
 |---|---|---|
 | `main` | `57214628acd7aa1f05e5d018cc3dee4ca8d4ed9e` | Chỉ có commit khởi tạo. Giữ nguyên tới khi owner ra lệnh production |
-| `develop` | `5bb43bd6d7f00a395a48a5c9f1ccff5355a1f985` (base của PR VIPG-WEB-011) | CI 36667603110 success · Staging 36667603028 lần 1 success (04:10Z), **lần chạy lại 2 FAIL** (04:28Z, token Cloudflare 401) |
+| `develop` | `55f5011d185fd404e3a785fda38d31799f597ef7` (base của PR VIPG-WEB-012) — bảng dòng dưới là lịch sử base của VIPG-WEB-011: `5bb43bd` | CI 36667603110 success · Staging 36667603028 lần 1 success (04:10Z), **lần chạy lại 2 FAIL** (04:28Z, token Cloudflare 401) |
 
 ## Work item
 
@@ -24,7 +24,8 @@
 | #15 | VIPG-WEB-008 — Hồ sơ nghiệm thu staging | CLOSED — `1974fcd` | #16 |
 | #17 | VIPG-WEB-009 — Siết test hành vi + sửa tài liệu | CLOSED — `393cadd` | #18 |
 | #19 | VIPG-WEB-010 — Chuẩn bị production (không phát hành) | CLOSED — `5bb43bd`; READINESS kỹ thuật PASS | #20 |
-| #21 | VIPG-WEB-011 — Chuẩn bị cuối: V-11510, DNS, email, nội dung, kế hoạch phát hành | Đang làm | (PR của chính thay đổi này) |
+| #21 | VIPG-WEB-011 — Chuẩn bị cuối: V-11510, DNS, email, nội dung, kế hoạch phát hành | CLOSED — `55f5011` | #22 |
+| #23 | VIPG-WEB-012 — Nội dung thật: pháp nhân, hotline, email, slogan, logo | Đang làm | (PR của chính thay đổi này) |
 
 ## Gate hiện tại
 
@@ -45,9 +46,9 @@
 | Chế độ production (noindex chỉ ở `*.pages.dev`, workflow production có cổng) | PASS | verifier PR #20 (7/7 đột biến) · verifier RC `5bb43bd` |
 | Token Cloudflare trong repo | Hợp lệ — preflight `production_branch=main` (run 36670538125) | Sự cố 30/09 ~04:22Z–04:45Z: 401 / code 10000; owner đặt lại secret 04:45:06Z |
 
-## CONTENT gate — V-11501 (chặn production về nội dung)
+## CONTENT gate — V-11501
 
-Chi tiết từng trường, chỗ dùng, định dạng và **phân loại (3 MUST_HAVE: địa chỉ, tên pháp lý, logo)**: **`docs/CONTENT_INPUT_PACK.md`**. Tóm tắt: hotline · địa chỉ pháp lý · tên pháp lý VIP GROUP · pháp nhân khối Công nghệ · pháp nhân khối Bất động sản · website VIPORDER · logo chính thức · email tuyển dụng. Site hiện hiển thị placeholder rõ ràng cho cả 8.
+**3 mục MUST_HAVE đã có đủ (24/10/2026):** tên pháp lý, địa chỉ, logo — cùng hotline, email, slogan owner chốt. Còn placeholder có chủ đích: pháp nhân khối Công nghệ và khối Bất động sản. Chi tiết: `docs/CONTENT_INPUT_PACK.md`.
 
 ## Staging
 

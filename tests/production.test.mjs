@@ -194,7 +194,12 @@ test('production: ref khác main bị chặn; thiếu credential → FAIL', () =
   assert.notEqual(runStep(wfText, c, { HAS_TOKEN: 'true', HAS_ACCOUNT: 'true', CF_PAGES_PROJECT: '' }), 0);
 });
 
-test('preflight production_branch (production + staging): chỉ "main" mới qua', () => {
+// Script preflight dùng python3 (có sẵn trên runner GitHub ubuntu-latest, nơi workflow thật chạy).
+// Máy chạy test không có python3 (vd. image node:22-bookworm-slim của staging-hub) thì không thể
+// chạy đúng script đó → BỎ QUA kèm lý do, không báo hỏng giả. Trên CI GitHub test này luôn chạy.
+const HAS_PYTHON3 = spawnSync('python3', ['-c', 'import json'], { encoding: 'utf8' }).status === 0;
+
+test('preflight production_branch (production + staging): chỉ "main" mới qua', { skip: HAS_PYTHON3 ? false : 'máy chạy test không có python3 — script preflight chỉ kiểm được trên runner có python3 (GitHub ubuntu-latest)' }, () => {
   const stg = readFileSync(join(root, '.github/workflows/staging.yml'), 'utf8');
   const name = 'Kiểm production branch của project Cloudflare = main';
   const REASON = /::error::Project Cloudflare có production branch '([^']*)', phải là 'main'/;

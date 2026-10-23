@@ -9,6 +9,15 @@ export interface CompanyProfile {
   name: string;
   /** Tên pháp lý đầy đủ — null cho tới khi chủ dự án cung cấp. */
   legalName: string | null;
+  /** Tên tiếng nước ngoài và tên viết tắt trên Giấy CN ĐKDN. */
+  englishName: string | null;
+  shortName: string | null;
+  /** Mã số doanh nghiệp (đồng thời là mã số thuế). */
+  taxId: string | null;
+  /** Ngày thành lập, ISO 8601 (YYYY-MM-DD). */
+  foundingDate: string | null;
+  /** Người đại diện theo pháp luật. */
+  legalRepresentative: { name: string; title: string } | null;
   slogan: string;
   tagline: string;
   intro: string[];
@@ -33,6 +42,8 @@ export interface Subsidiary {
   sectorId: string;
   description: string;
   url: string | null;
+  /** Quan hệ với VIP GROUP, viết đúng như giấy tờ cho phép (ví dụ: cùng chủ sở hữu). */
+  relation: string | null;
   status: 'active' | 'placeholder';
 }
 
@@ -65,6 +76,8 @@ export interface ContactInfo {
   email: string;
   hotline: string | null;
   address: string | null;
+  /** Địa chỉ tách trường cho schema.org PostalAddress. */
+  addressParts: { street: string; ward: string; region: string; country: string } | null;
   domain: string;
   /** Form liên hệ đã có máy chủ nhận dữ liệu chưa. v1: false. */
   formBackendReady: boolean;

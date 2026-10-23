@@ -1,5 +1,27 @@
 # CONTENT INPUT PACK — dữ liệu owner cần cung cấp (V-11501)
 
+> **Cập nhật 24/10/2026 (VIPG-WEB-012, issue #23):** owner đã gửi Giấy CN ĐKDN + công bố đăng ký thành lập Công ty TNHH VIP GROUP (MSDN 4900951703, 21/10/2026), logo chính thức, và chốt hotline/email/slogan. Bảng trạng thái hiện hành ngay dưới; các mục phía sau giữ làm lịch sử.
+
+| # | Trường | Trạng thái 24/10/2026 | Giá trị trên site |
+|---|---|---|---|
+| 1 | Hotline | **ĐÃ CÓ** (owner chốt) | `0968961962` |
+| 2 | Địa chỉ pháp lý | **ĐÃ CÓ** (Giấy CN ĐKDN) | Số 183 đường Bắc Sơn, Phường Kỳ Lừa, Tỉnh Lạng Sơn, Việt Nam |
+| 3 | Tên pháp lý VIP GROUP | **ĐÃ CÓ** (Giấy CN ĐKDN) | CÔNG TY TNHH VIP GROUP · VIP GROUP COMPANY LIMITED · VIP GROUP CO., LTD · MSDN 4900951703 |
+| 4 | Pháp nhân khối Công nghệ | Chưa có — giữ placeholder | "Công ty thành viên khối Công nghệ" · Đang hoàn thiện |
+| 5 | Pháp nhân khối Bất động sản | Chưa có — giữ placeholder | "Công ty thành viên khối Bất động sản" · Đang hoàn thiện |
+| 6 | Website VIPORDER | **ĐÃ CÓ** | `https://viporder.com.vn` (nguồn chân lý thương hiệu VIPORDER của owner); VIPORDER = công ty **cùng chủ sở hữu** (owner chốt), tên pháp lý CÔNG TY TNHH XUẤT NHẬP KHẨU LOGISTICS VIP ORDER |
+| 7 | Logo chính thức | **ĐÃ CÓ** (owner gửi PNG nền trong suốt 2000×2000) | header, hero, favicon, apple-touch-icon, ảnh OG, schema.org — `design/README.md` |
+| 8 | Email tuyển dụng | Dùng email công khai | `viporder@vipgroup.com.vn` |
+| — | Email công khai | **Owner chốt** `viporder@vipgroup.com.vn` (thay `contact@vipgroup.com.vn`) | footer, liên hệ, schema.org |
+| — | Slogan | **Owner chốt** "CON NGƯỜI - CÔNG NGHỆ - CƠ HỘI" (trên logo; thay slogan dự kiến) | hero, tiêu đề trang chủ, footer, schema.org |
+
+**MUST_HAVE trước production (#2, #3, #7): đã có đủ.** Còn placeholder có chủ đích: #4, #5.
+
+---
+
+## Lịch sử (30/09/2026)
+
+
 > **Gate chặn production về nội dung.** Controller không tự điền, không suy đoán. Cột "Ví dụ định dạng" chỉ minh hoạ khuôn — **không phải dữ liệu thật và không được đưa vào website**.
 > Quét toàn bộ `src/` ngày 30/09/2026.
 

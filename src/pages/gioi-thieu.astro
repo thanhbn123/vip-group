@@ -4,7 +4,22 @@ import PageHero from '../components/PageHero.astro';
 import CtaBand from '../components/CtaBand.astro';
 import { getContent } from '../data';
 
-const { company, sectors } = getContent('vi');
+const { company, sectors, contact } = getContent('vi');
+const founded = company.foundingDate
+  ? new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(`${company.foundingDate}T00:00:00+07:00`))
+  : null;
+const facts = [
+  ['Tên doanh nghiệp', company.legalName],
+  ['Tên tiếng Anh', company.englishName],
+  ['Tên viết tắt', company.shortName],
+  ['Mã số doanh nghiệp', company.taxId],
+  ['Ngày thành lập', founded],
+  ['Trụ sở chính', contact.address],
+  ['Người đại diện theo pháp luật', company.legalRepresentative ? `${company.legalRepresentative.name} — ${company.legalRepresentative.title}` : null],
+  ['Hotline', contact.hotline],
+  ['Email', contact.email],
+  ['Website', contact.domain],
+].filter(([, v]) => v) as [string, string][];
 ---
 <BaseLayout title="Giới thiệu" description={`Giới thiệu ${company.name}: ${company.about.heading.toLowerCase()} — ${sectors.map((s) => s.title).join(', ')}.`}>
   <PageHero kicker="Giới thiệu" title={company.about.heading} lead={company.tagline} />
@@ -23,7 +38,20 @@ const { company, sectors } = getContent('vi');
     </div>
   </section>
 
-  <section class="section section-alt" aria-labelledby="values-title">
+  <section class="section section-alt" aria-labelledby="facts-title">
+    <div class="container split">
+      <div>
+        <span class="kicker">Pháp nhân</span>
+        <h2 id="facts-title">Thông tin doanh nghiệp</h2>
+        <p class="muted">Theo Giấy chứng nhận đăng ký doanh nghiệp do Phòng Đăng ký kinh doanh tỉnh Lạng Sơn cấp.</p>
+      </div>
+      <dl class="facts">
+        {facts.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+      </dl>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="values-title">
     <div class="container">
       <div class="section-head">
         <div>
@@ -46,5 +74,10 @@ const { company, sectors } = getContent('vi');
   <CtaBand title="Tìm hiểu thêm về hệ sinh thái" text="Xem ba lĩnh vực hoạt động và các công ty thành viên của VIP GROUP." />
 </BaseLayout>
 <style>
-  .slogan { color: var(--gold-light); font-size: 18px; font-weight: 600; }
+  .slogan { color: var(--gold-light); font-size: 18px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .facts { margin: 0; display: grid; }
+  .facts div { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 4px 20px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .facts dt { color: var(--muted); font-size: 14px; }
+  .facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+  @media (max-width: 560px) { .facts div { grid-template-columns: 1fr; } }
 </style>
