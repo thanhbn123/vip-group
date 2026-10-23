@@ -1,7 +1,7 @@
 # MASTER STATUS — VIP GROUP WEBSITE
 
 > Ảnh chụp trạng thái, **không phải nguồn chân lý**. GitHub là nguồn chân lý: đo lại (`git ls-remote`, `gh pr list`, `gh run list`) trước khi dựa vào bất kỳ SHA nào ở đây.
-> Cập nhật lần cuối: 24/10/2026, trong PR của VIPG-WEB-012 (#23). SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
+> Cập nhật lần cuối: 24/10/2026, trong PR của VIPG-WEB-013. SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
 
 ## Nhánh
 
@@ -48,7 +48,7 @@
 
 ## CONTENT gate — V-11501
 
-**3 mục MUST_HAVE đã có đủ (24/10/2026):** tên pháp lý, địa chỉ, logo — cùng hotline, email, slogan owner chốt. Còn placeholder có chủ đích: pháp nhân khối Công nghệ và khối Bất động sản. Chi tiết: `docs/CONTENT_INPUT_PACK.md`.
+**3 mục MUST_HAVE đã có đủ (24/10/2026):** tên pháp lý, địa chỉ, logo — cùng hotline, email, slogan owner chốt. Từ VIPG-WEB-013 không còn placeholder nội dung: hai khối Công nghệ và Bất động sản ghi rõ là chưa có công ty thành viên riêng. Chi tiết: `docs/CONTENT_INPUT_PACK.md`.
 
 ## Staging
 

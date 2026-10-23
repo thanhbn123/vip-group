@@ -3,8 +3,9 @@ import type { Subsidiary } from '../types';
 /**
  * Chỉ VIPORDER là công ty thành viên đã chốt — quan hệ với VIP GROUP: hai công ty CÙNG CHỦ SỞ HỮU
  * (owner chốt 24/10/2026, đúng như giấy tờ). Không viết là công ty mẹ – con.
- * Các mục `placeholder` là chỗ giữ cho pháp nhân chưa chốt — KHÔNG đặt tên pháp lý giả.
- * Khi có pháp nhân thật: đổi `name`, điền `legalName`, `url`, chuyển `status` sang 'active'.
+ * Khối Công nghệ và Bất động sản CHƯA có công ty thành viên riêng → không đặt thẻ giữ chỗ
+ * (owner giao em đề xuất 24/10/2026, VIPG-WEB-013). Khi có pháp nhân thật: thêm mục mới
+ * với `legalName`, `url`, `status: 'active'`. KHÔNG đặt tên pháp lý giả.
  */
 export const subsidiaries: Subsidiary[] = [
   {
@@ -16,25 +17,5 @@ export const subsidiaries: Subsidiary[] = [
     url: 'https://viporder.com.vn',
     relation: 'Cùng chủ sở hữu với VIP GROUP',
     status: 'active',
-  },
-  {
-    id: 'technology-member',
-    name: 'Công ty thành viên khối Công nghệ',
-    legalName: null,
-    sectorId: 'technology',
-    description: 'Pháp nhân đang được hoàn thiện. Thông tin sẽ cập nhật khi chính thức.',
-    url: null,
-    relation: null,
-    status: 'placeholder',
-  },
-  {
-    id: 'real-estate-member',
-    name: 'Công ty thành viên khối Bất động sản',
-    legalName: null,
-    sectorId: 'real-estate',
-    description: 'Pháp nhân đang được hoàn thiện. Thông tin sẽ cập nhật khi chính thức.',
-    url: null,
-    relation: null,
-    status: 'placeholder',
   },
 ];

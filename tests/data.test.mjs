@@ -51,3 +51,9 @@ test('không có secret trong mã nguồn', () => {
     assert.doesNotMatch(text, /(api[_-]?key|secret|password|token)\s*[:=]\s*['"][^'"]{8,}/i, f);
   }
 });
+
+test('VIPG-WEB-013: không còn thẻ giữ chỗ công ty thành viên; email tuyển dụng là email chính thức', () => {
+  // Owner giao đề xuất 24/10/2026: khối Công nghệ và Bất động sản chưa có pháp nhân riêng → không đặt thẻ giữ chỗ.
+  assert.doesNotMatch(src('subsidiaries.ts'), /status: 'placeholder'/);
+  assert.match(src('careers.ts'), /applyEmail: 'viporder@vipgroup\.com\.vn'/);
+});
