@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
-const SITE = 'https://vipgroup.com.vn';
+const SITE = 'https://www.vipgroup.com.vn';
 
 const PAGES = ['/', '/gioi-thieu/', '/linh-vuc-hoat-dong/', '/cong-ty-thanh-vien/', '/tin-tuc/', '/tuyen-dung/', '/lien-he/'];
 
@@ -111,7 +111,7 @@ test('sitemap.xml liệt kê đủ 7 trang, robots.txt trỏ sitemap', () => {
   for (const path of PAGES) assert.ok(sitemap.includes(`<loc>${SITE}${path}</loc>`), `sitemap thiếu ${path}`);
   assert.equal((sitemap.match(/<loc>/g) ?? []).length, PAGES.length);
   const robots = readFileSync(join(dist, 'robots.txt'), 'utf8');
-  assert.match(robots, /Sitemap: https:\/\/vipgroup\.com\.vn\/sitemap\.xml/);
+  assert.match(robots, /Sitemap: https:\/\/www\.vipgroup\.com\.vn\/sitemap\.xml/);
 });
 
 test('trang 404 có noindex và không nằm trong sitemap', () => {

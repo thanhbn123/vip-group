@@ -2,7 +2,9 @@
 import { defineConfig } from 'astro/config';
 
 // Tên miền chính thức — dùng cho canonical, Open Graph, sitemap.
-export const SITE_URL = 'https://vipgroup.com.vn';
+// Owner chọn 24/10/2026 phương án B (giữ DNS iNET): web chạy ở www — tên miền gốc không gắn được
+// vào Cloudflare Pages khi DNS không nằm ở Cloudflare. Xem docs/DNS_MIGRATION.md.
+export const SITE_URL = 'https://www.vipgroup.com.vn';
 
 export default defineConfig({
   site: SITE_URL,
