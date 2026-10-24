@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
-const PROD = 'https://vipgroup.com.vn';
+const PROD = 'https://www.vipgroup.com.vn';
 
 // ---------- _headers: mô phỏng cách Cloudflare Pages áp header theo host ----------
 function parseHeaders(text) {
