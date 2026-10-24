@@ -3,6 +3,8 @@
 > Owner chọn **OPTION A — Cloudflare là DNS có thẩm quyền** ngày 30/09/2026 như **quyết định chuẩn bị**. Không bước nào ở đây được Controller tự thực hiện. **Không đổi nameserver, không sửa DNS** khi chưa có lệnh riêng của owner.
 > Nguồn Cloudflare (đọc nguyên văn từ developers.cloudflare.com ngày 30/09/2026): Pages → Custom domains; DNS → Full setup.
 
+> **CẬP NHẬT 24/10/2026 — owner đổi sang PHƯƠNG ÁN B (giữ DNS iNET/vCloudDNS).** Lý do: dashboard Cloudflare không thêm được zone `.com.vn` (bước kiểm tra nhà đăng ký `registrar/domains/batch_check` trả 422, trang treo — đo 2 lần 24/10). Bản xuất zone đầy đủ đã lấy từ iNET OnePortal (18 bản ghi, khớp 18/18 với `ns1.vclouddns.vn`; lưu trong vault `raw/dns-vipgroup-com-vn/zone-inet-2026-10-24.txt`). Đã làm: Pages `vip-group` → Custom domain `www.vipgroup.com.vn` (CNAME setup) + bản ghi mới tại iNET `www CNAME vip-group.pages.dev` (OneShield tắt). Không đổi nameserver, không sửa bản ghi email hay 14 bản ghi A sẵn có. Canonical/sitemap/robots chuyển sang `https://www.vipgroup.com.vn` (VIPG-WEB-014). **Tên miền gốc `vipgroup.com.vn` chưa có web**: OneShield DNS của iNET không có loại bản ghi chuyển hướng URL — cần quyết định riêng (xem `docs/PRODUCTION.md`). Phần dưới giữ làm lịch sử phương án A.
+
 ## 1. Kiểm kê DNS hiện tại (đo 30/09/2026, chỉ đọc)
 
 **Phương pháp:** truy vấn thẳng nameserver có thẩm quyền `ns1.vclouddns.vn` (`dig +norecurse`) cho tên gốc và hơn 40 tên hay gặp (www, mail, webmail, autodiscover, `_dmarc`, các selector DKIM, SRV email, mta-sts…), đủ loại A, AAAA, CNAME, MX, TXT, SRV, CAA, NS. `ns2.vclouddns.vn` trả cùng serial SOA `2026092910`. Tên không tồn tại trả `NXDOMAIN` → **không có bản ghi wildcard**. **Không** thử zone transfer (AXFR).
