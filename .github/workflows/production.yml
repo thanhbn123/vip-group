@@ -1,0 +1,141 @@
+name: Production (Cloudflare Pages) — chạy tay từ main
+
+# PHÁT HÀNH PRODUCTION. Chỉ chạy khi owner bấm "Run workflow" trên nhánh main và gõ lại đúng SHA.
+# - Không có trigger push / pull_request: không thể tự chạy.
+# - Workflow này chỉ tồn tại trên main sau khi develop được merge vào main (việc của owner).
+# - Job deploy dùng GitHub Environment "production" — owner nên đặt Required reviewers (docs/PRODUCTION.md).
+# - Thiếu credential → FAIL (production không được "bỏ qua cho qua").
+# - Preflight: project Cloudflare phải có production_branch = main.
+# - KHÔNG gắn tên miền, KHÔNG đổi DNS — việc đó owner làm trên dashboard (docs/PRODUCTION.md).
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_sha:
+        description: 'Gõ lại đúng SHA 40 ký tự của main muốn phát hành'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Xác nhận SHA phát hành
+        env:
+          CONFIRM_SHA: ${{ inputs.confirm_sha }}
+          RUN_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$RUN_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::SHA của lượt chạy không hợp lệ"; exit 1; }
+          if [ "$CONFIRM_SHA" != "$RUN_SHA" ]; then
+            echo "::error::SHA gõ vào không khớp main hiện tại (${RUN_SHA}) — dừng"
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - run: npm test
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-production
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+
+  deploy:
+    needs: build
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
+      WRANGLER_VERSION: 4.142.0
+      EVENT_REF: ${{ github.ref }}
+      EVENT_SHA: ${{ github.sha }}
+    steps:
+      - name: Kiểm lại ref và SHA (chỉ main)
+        run: |
+          set -euo pipefail
+          [ "$EVENT_REF" = "refs/heads/main" ] || { echo "::error::Production chỉ phát hành từ main, nhận '$EVENT_REF'"; exit 1; }
+          [[ "$EVENT_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::SHA không hợp lệ: '$EVENT_SHA'"; exit 1; }
+
+      - name: Kiểm credential Cloudflare (thiếu → FAIL)
+        env:
+          HAS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+          HAS_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        run: |
+          set -euo pipefail
+          if [ "$HAS_TOKEN" != "true" ] || [ "$HAS_ACCOUNT" != "true" ] || [ -z "$CF_PAGES_PROJECT" ]; then
+            echo "::error::Thiếu credential Cloudflare — production không được bỏ qua"
+            exit 1
+          fi
+
+      - name: Kiểm production branch của project Cloudflare = main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          PB=$(curl -fsS -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CF_PAGES_PROJECT}" \
+            | python3 -c 'import sys, json; d = json.load(sys.stdin); print(d["result"]["production_branch"] if d.get("success") else "")')
+          echo "production_branch=${PB}"
+          if [ "$PB" != "main" ]; then
+            echo "::error::Project Cloudflare có production branch '${PB}', phải là 'main' — dừng"
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist-production
+          path: dist
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Deploy production lên Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx --yes "wrangler@${WRANGLER_VERSION}" pages deploy dist \
+            --project-name="$CF_PAGES_PROJECT" \
+            --branch=main \
+            --commit-hash="$EVENT_SHA" \
+            --commit-dirty=false | tee deploy.log
+          URL=$(grep -oE 'https://[a-z0-9.-]+\.pages\.dev' deploy.log | tail -1 || true)
+          if [ -z "$URL" ]; then
+            echo "::error::wrangler không in ra URL deployment — coi như deploy KHÔNG thành công"
+            exit 1
+          fi
+          {
+            echo "## Production deploy"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| SHA | \`${EVENT_SHA}\` |"
+            echo "| URL lượt deploy | ${URL} |"
+            echo "| Rollback | dashboard Cloudflare → vip-group → Deployments → bản production trước → Rollback (docs/PRODUCTION.md) |"
+          } >> "$GITHUB_STEP_SUMMARY"

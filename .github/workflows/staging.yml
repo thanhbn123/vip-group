@@ -1,0 +1,183 @@
+name: Staging (Cloudflare Pages)
+
+# Deploy STAGING / PREVIEW lên Cloudflare Pages (Direct Upload), KHÔNG BAO GIỜ deploy production.
+# - push develop  → nhánh Cloudflare "staging"  → https://staging.<project>.pages.dev
+# - pull_request  → nhánh Cloudflare "pr-<số>"  → https://pr-<số>.<project>.pages.dev
+# Nhánh production của project Cloudflare là "main" và workflow này bị cấm dùng tên đó.
+# Thiếu secret/biến Cloudflare → bỏ qua bước deploy và ghi BLOCKED_EXTERNAL_CREDENTIAL, không báo PASS giả.
+# Thiết lập: docs/STAGING.md
+#
+# Hai job, cô lập credential:
+# - build : chạy mã của repo/PR (npm ci, build, test) — KHÔNG có secret.
+# - deploy: KHÔNG checkout, KHÔNG npm ci — chỉ tải artifact dist rồi deploy. Secret chỉ ở đây.
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# bash của GitHub khi khai báo tường minh chạy với `-eo pipefail`: lệnh hỏng trong ống `| tee` sẽ làm bước FAIL.
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: staging-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # workflow_dispatch chỉ được chạy từ develop — không ghi đè alias staging bằng mã nhánh khác.
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      branch: ${{ steps.target.outputs.branch }}
+      sha: ${{ steps.target.outputs.sha }}
+    steps:
+      # PR: checkout đúng PR HEAD (không phải merge ref) để bản preview == SHA đã verify và == --commit-hash.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - run: npm test
+
+      - name: Chọn nhánh Cloudflare (không bao giờ là production)
+        id: target
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BRANCH="pr-${{ github.event.pull_request.number }}"
+            SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BRANCH="staging"
+            SHA="${{ github.sha }}"
+          fi
+          case "$BRANCH" in main|master|production) echo "::error::Cấm deploy nhánh production ($BRANCH)"; exit 1;; esac
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
+      WRANGLER_VERSION: 4.142.0
+      TARGET_BRANCH: ${{ needs.build.outputs.branch }}
+      TARGET_SHA: ${{ needs.build.outputs.sha }}
+      # Giá trị mong đợi tính lại từ ngữ cảnh sự kiện — KHÔNG lấy từ job build (job build chạy mã không tin cậy).
+      EVENT_NAME: ${{ github.event_name }}
+      EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+      EVENT_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      EVENT_SHA: ${{ github.sha }}
+    steps:
+      - name: Kiểm lại nhánh đích (không bao giờ là production)
+        run: |
+          set -euo pipefail
+          # Chỉ nhận đúng "staging" hoặc "pr-<số>" — mọi tên khác (kể cả main/production) bị từ chối.
+          [[ "$TARGET_BRANCH" =~ ^(staging|pr-[0-9]+)$ ]] || { echo "::error::Nhánh đích không hợp lệ: '$TARGET_BRANCH'"; exit 1; }
+          [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::SHA đích không hợp lệ: '$TARGET_SHA'"; exit 1; }
+          # So khớp với giá trị tự tính: output của job build không được tự chọn alias hay SHA.
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            EXPECT_BRANCH="pr-${EVENT_PR_NUMBER}"; EXPECT_SHA="$EVENT_PR_HEAD_SHA"
+          else
+            EXPECT_BRANCH="staging"; EXPECT_SHA="$EVENT_SHA"
+          fi
+          if [ "$TARGET_BRANCH" != "$EXPECT_BRANCH" ] || [ "$TARGET_SHA" != "$EXPECT_SHA" ]; then
+            echo "::error::Output của job build lệch ngữ cảnh sự kiện: nhận ${TARGET_BRANCH}@${TARGET_SHA}, mong đợi ${EXPECT_BRANCH}@${EXPECT_SHA}"
+            exit 1
+          fi
+
+      - name: Kiểm credential Cloudflare (thiếu → deploy bị BỎ QUA, không phải PASS)
+        id: creds
+        env:
+          HAS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+          HAS_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        run: |
+          if [ "$HAS_TOKEN" = "true" ] && [ "$HAS_ACCOUNT" = "true" ] && [ -n "$CF_PAGES_PROJECT" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "## Staging: BLOCKED_EXTERNAL_CREDENTIAL"
+              echo ""
+              echo "Chưa deploy. Thiếu secret \`CLOUDFLARE_API_TOKEN\` / \`CLOUDFLARE_ACCOUNT_ID\` hoặc biến \`CF_PAGES_PROJECT\`."
+              echo "Job build/test là thật. Xem docs/STAGING.md."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Staging chưa deploy: thiếu credential Cloudflare (BLOCKED_EXTERNAL_CREDENTIAL)"
+          fi
+
+      - name: Kiểm production branch của project Cloudflare = main
+        if: steps.creds.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          # Chỉ ĐỌC cấu hình project. Nếu production branch không phải main thì nhánh "staging"
+          # hay "pr-<số>" có thể trở thành production — dừng trước khi deploy.
+          PB=$(curl -fsS -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CF_PAGES_PROJECT}" \
+            | python3 -c 'import sys, json; d = json.load(sys.stdin); print(d["result"]["production_branch"] if d.get("success") else "")')
+          echo "production_branch=${PB}"
+          if [ "$PB" != "main" ]; then
+            echo "::error::Project Cloudflare có production branch '${PB}', phải là 'main' — dừng deploy"
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v8
+        if: steps.creds.outputs.ready == 'true'
+        with:
+          name: dist
+          path: dist
+
+      - uses: actions/setup-node@v7
+        if: steps.creds.outputs.ready == 'true'
+        with:
+          node-version: 22
+
+      - name: Deploy lên Cloudflare Pages
+        if: steps.creds.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx --yes "wrangler@${WRANGLER_VERSION}" pages deploy dist \
+            --project-name="$CF_PAGES_PROJECT" \
+            --branch="$TARGET_BRANCH" \
+            --commit-hash="$TARGET_SHA" \
+            --commit-dirty=false | tee deploy.log
+          URL=$(grep -oE 'https://[a-z0-9.-]+\.pages\.dev' deploy.log | tail -1 || true)
+          if [ -z "$URL" ]; then
+            echo "::error::wrangler không in ra URL deployment — coi như deploy KHÔNG thành công"
+            exit 1
+          fi
+          {
+            echo "## Staging deploy"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Nhánh Cloudflare | \`${TARGET_BRANCH}\` |"
+            echo "| SHA | \`${TARGET_SHA}\` |"
+            echo "| URL lượt deploy | ${URL} |"
+            echo "| URL cố định | https://${TARGET_BRANCH}.${CF_PAGES_PROJECT}.pages.dev |"
+          } >> "$GITHUB_STEP_SUMMARY"

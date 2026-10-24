@@ -1,0 +1,25 @@
+---
+import type { NewsItem } from '../data';
+interface Props { items: NewsItem[]; limit?: number; headingLevel?: 'h2' | 'h3' }
+const { items, limit, headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+const sorted = [...items].sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit ?? items.length);
+const fmt = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' });
+---
+{sorted.length === 0 ? (
+  <div class="empty-state">
+    <p><strong>Chưa có tin tức.</strong></p>
+    <p>Thông tin chính thức từ VIP GROUP sẽ được đăng tại đây.</p>
+  </div>
+) : (
+  <div class="grid grid-3">
+    {sorted.map((n) => (
+      <article class="card">
+        <span class="card-index">{n.tag}</span>
+        <H>{n.title}</H>
+        <time datetime={n.date} class="muted">{fmt.format(new Date(`${n.date}T00:00:00+07:00`))}</time>
+        <p>{n.summary}</p>
+      </article>
+    ))}
+  </div>
+)}

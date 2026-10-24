@@ -1,0 +1,17 @@
+# Header bảo mật cho Cloudflare Pages (file này bị máy chủ khác bỏ qua).
+# CSP chính nằm ở thẻ <meta> do Astro sinh (security.csp trong astro.config.mjs);
+# frame-ancestors không đặt được bằng <meta> nên đặt ở đây.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  Cross-Origin-Opener-Policy: same-origin
+
+# Mọi URL *.pages.dev là staging/preview — không cho máy tìm kiếm lập chỉ mục.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex

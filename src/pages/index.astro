@@ -1,0 +1,116 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectorGrid from '../components/SectorGrid.astro';
+import MemberGrid from '../components/MemberGrid.astro';
+import NewsList from '../components/NewsList.astro';
+import CtaBand from '../components/CtaBand.astro';
+import MemberNote from '../components/MemberNote.astro';
+import { getContent } from '../data';
+
+const { company, sectors, subsidiaries, news, careers } = getContent('vi');
+const sloganParts = company.slogan.split(' - ').map((s) => s.trim());
+const sloganLast = sloganParts.pop();
+---
+<BaseLayout title="Trang chủ" description={company.tagline}>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero-grid">
+      <div>
+        <span class="kicker">{company.legalName ?? company.name}</span>
+        <h1 id="hero-title">{sloganParts.map((p) => <>{p}.<br /></>)}<span class="gold">{sloganLast}.</span></h1>
+        <p class="lead">{company.tagline}</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="/linh-vuc-hoat-dong/">Khám phá hệ sinh thái</a>
+          <a class="btn btn-ghost" href="/lien-he/">Liên hệ hợp tác</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <picture>
+          <source srcset="/logo-vip-group-400.webp 400w, /logo-vip-group-600.webp 600w, /logo-vip-group.webp 720w" sizes="(max-width: 900px) min(420px, calc(100vw - 72px)), 400px" type="image/webp" />
+          <img src="/logo-vip-group.png" alt={`Logo ${company.name} — ${company.slogan}`} width="720" height="690" fetchpriority="high" />
+        </picture>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="about-title">
+    <div class="container split">
+      <div>
+        <span class="kicker">Giới thiệu</span>
+        <h2 id="about-title">{company.about.heading}</h2>
+      </div>
+      <div class="prose">
+        {company.intro.map((p) => <p>{p}</p>)}
+        <a class="text-link" href="/gioi-thieu/">Tìm hiểu thêm về {company.name} →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="sectors-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker">Lĩnh vực hoạt động</span>
+          <h2 id="sectors-title">Ba trụ cột phát triển</h2>
+        </div>
+        <a class="text-link" href="/linh-vuc-hoat-dong/">Xem chi tiết →</a>
+      </div>
+      <SectorGrid sectors={sectors} />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="members-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker">Hệ sinh thái</span>
+          <h2 id="members-title">Công ty thành viên</h2>
+        </div>
+        <a class="text-link" href="/cong-ty-thanh-vien/">Xem tất cả →</a>
+      </div>
+      <MemberGrid subsidiaries={subsidiaries} sectors={sectors} />
+      <MemberNote />
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="news-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker">Tin tức</span>
+          <h2 id="news-title">Tin mới</h2>
+        </div>
+        <a class="text-link" href="/tin-tuc/">Xem tất cả →</a>
+      </div>
+      <NewsList items={news} limit={3} />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="careers-title">
+    <div class="container split">
+      <div>
+        <span class="kicker">Tuyển dụng</span>
+        <h2 id="careers-title">Gia nhập {company.name}</h2>
+      </div>
+      <div class="prose">
+        <p>{careers.intro}</p>
+        <a class="btn btn-ghost" href="/tuyen-dung/">Cơ hội nghề nghiệp</a>
+      </div>
+    </div>
+  </section>
+
+  <CtaBand title="Hợp tác cùng VIP GROUP" text="Kết nối với chúng tôi để trao đổi về cơ hội hợp tác trong ba lĩnh vực hoạt động." />
+</BaseLayout>
+
+<style>
+  .hero { min-height: calc(100svh - var(--header-h)); display: flex; align-items: center; background: radial-gradient(circle at 15% 20%, rgba(217,182,111,.13), transparent 30%), radial-gradient(circle at 85% 25%, rgba(61,108,168,.2), transparent 30%), linear-gradient(145deg, var(--navy-950), var(--navy-900)); }
+  .hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; padding: 72px 0; }
+  .gold { color: var(--gold-light); }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+  .hero-card { border-radius: 32px; padding: clamp(20px, 3vw, 36px); background: #fff; box-shadow: var(--shadow); max-width: 460px; justify-self: center; width: 100%; }
+  .hero-card img { width: 100%; height: auto; display: block; }
+  @media (max-width: 900px) {
+    .hero { min-height: auto; }
+    .hero-grid { grid-template-columns: 1fr; gap: 32px; padding: 56px 0; }
+    .hero-card { max-width: 420px; width: 100%; }
+  }
+</style>

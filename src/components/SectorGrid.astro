@@ -1,0 +1,19 @@
+---
+import type { Sector } from '../data';
+interface Props { sectors: Sector[]; headingLevel?: 'h2' | 'h3' }
+const { sectors, headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+const items = [...sectors].sort((a, b) => a.order - b.order);
+---
+<div class="grid grid-3">
+  {items.map((s) => (
+    <article class="card" id={s.id}>
+      <span class="card-index">{String(s.order).padStart(2, '0')}</span>
+      <H>{s.title}</H>
+      <p>{s.summary}</p>
+      <ul class="chip-list" aria-label={`Trọng tâm: ${s.title}`}>
+        {s.focus.map((f) => <li>{f}</li>)}
+      </ul>
+    </article>
+  ))}
+</div>
