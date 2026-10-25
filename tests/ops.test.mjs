@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), '..', 'ops', 'apex-redirect', 'noi-caddy-apex-root.sh');
 const BASE = 'vip-hq.example {\n\treverse_proxy 127.0.0.1:9000\n}\n';
 
-function setup({ uid = '0', ip = '160.22.170.20', validateOk = true, reloadOk = true, http = '301 https://www.vipgroup.com.vn/lien-he/?b=2', https = '301 https://www.vipgroup.com.vn/gioi-thieu/?a=1', caddy = BASE } = {}) {
+function setup({ uid = '0', ip = '160.22.170.20', validateOk = true, reloadOk = true, cpOk = true, http = '301 https://www.vipgroup.com.vn/lien-he/?b=2', https = '301 https://www.vipgroup.com.vn/gioi-thieu/?a=1', caddy = BASE } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'vipg-apex-'));
   const bin = join(dir, 'bin');
   mkdirSync(bin);
@@ -22,7 +22,7 @@ function setup({ uid = '0', ip = '160.22.170.20', validateOk = true, reloadOk = 
   };
   stub('id', `echo ${uid}`);
   stub('getent', ip ? `echo "${ip}   $2"` : 'exit 2');
-  stub('docker', `echo "$*" >> "${dir}/docker.log"; case "$*" in *validate*) ${validateOk ? 'exit 0' : 'exit 1'};; *reload*) ${reloadOk ? 'exit 0' : 'exit 1'};; esac; exit 0`);
+  stub('docker', `echo "$*" >> "${dir}/docker.log"; case "$*" in "cp "*) ${cpOk ? 'exit 0' : 'exit 1'};; *validate*) ${validateOk ? 'exit 0' : 'exit 1'};; *reload*) ${reloadOk ? 'exit 0' : 'exit 1'};; esac; exit 0`);
   // Giả lập theo TỪNG URL: http và https của tên miền gốc trả lời khác nhau như Caddy thật.
   stub('curl', `echo "$*" >> "${dir}/curl.log"; case "$*" in *http://vipgroup.com.vn/*) printf '%s' "${http}";; *) printf '%s' "${https}";; esac`);
   stub('sleep', 'exit 0');
@@ -49,16 +49,44 @@ test('apex: chạy đúng → nối đúng MỘT khối redir 301 sang www, vali
   assert.equal(readFileSync(join(t.dir, t.backups()[0]), 'utf8'), BASE);
 });
 
-test('apex: chạy lại → không nối đôi, không reload thêm', () => {
+test('apex: chạy lại → không nối đôi, nhưng VẪN nạp lại tệp máy chủ rồi đo (lượt trước có thể đứt trước reload)', () => {
   const t = setup();
   assert.equal(t.run().status, 0);
   const sau1 = readFileSync(t.cf, 'utf8');
   const r = t.run();
   assert.equal(r.status, 0);
-  assert.match(r.stdout, /không nối lại, chỉ đo lại/);
-  assert.match(t.curlLog().split('\n').slice(-3).join('\n'), /vipgroup\.com\.vn/);
+  assert.match(r.stdout, /không nối lại; nạp lại tệp máy chủ rồi đo/);
   assert.equal(readFileSync(t.cf, 'utf8'), sau1);
-  assert.equal(count(t.dockerLog(), 'reload'), 1);
+  assert.equal(count(t.dockerLog(), 'reload'), 2);
+});
+
+test('apex (V-13417): KHÔNG BAO GIỜ nạp /etc/caddy/Caddyfile — chép tệp máy chủ vào /tmp rồi validate/reload đúng bản đó', () => {
+  const t = setup();
+  assert.equal(t.run().status, 0);
+  const log = t.dockerLog();
+  assert.ok(log.includes(`cp ${t.cf} vip-staging-caddy:/tmp/Caddyfile.host`), log);
+  assert.match(log, /validate --config \/tmp\/Caddyfile\.host/);
+  assert.match(log, /reload --config \/tmp\/Caddyfile\.host/);
+  assert.doesNotMatch(log, /\/etc\/caddy\/Caddyfile/);
+  assert.ok(log.indexOf('cp ') < log.indexOf('validate') && log.indexOf('validate') < log.indexOf('reload'), 'thứ tự cp → validate → reload');
+});
+
+test('apex: chép vào container hỏng → khôi phục file, mã 6, không reload', () => {
+  const t = setup({ cpOk: false });
+  assert.equal(t.run().status, 6);
+  assert.equal(readFileSync(t.cf, 'utf8'), BASE);
+  assert.doesNotMatch(t.dockerLog(), /reload/);
+});
+
+test('apex: khối đã có mà validate hỏng (người khác làm hỏng file) → mã 5, KHÔNG reload, không sửa file', () => {
+  const t = setup();
+  assert.equal(t.run().status, 0);
+  const sau1 = readFileSync(t.cf, 'utf8');
+  writeFileSync(join(t.dir, 'bin', 'docker'), `#!/bin/bash\necho "$*" >> "${t.dir}/docker2.log"; case "$*" in *validate*) exit 1;; esac; exit 0\n`);
+  const r = t.run();
+  assert.equal(r.status, 5);
+  assert.equal(readFileSync(t.cf, 'utf8'), sau1);
+  assert.doesNotMatch(readFileSync(join(t.dir, 'docker2.log'), 'utf8'), /reload/);
 });
 
 test('apex: validate hỏng → KHÔI PHỤC Caddyfile nguyên byte, KHÔNG reload, mã 5', () => {
@@ -149,7 +177,7 @@ test('apex: chạy lại khi khối đã có mà đo hỏng → mã 7 (không đ
   writeFileSync(join(t.dir, 'bin', 'curl'), '#!/bin/bash\nprintf "%s" "200 "\n');
   const r = t.run();
   assert.equal(r.status, 7);
-  assert.match(r.stdout, /chỉ đo lại/);
+  assert.match(r.stdout, /nạp lại tệp máy chủ rồi đo/);
 });
 
 test('apex: chú thích cuối dòng sau { vẫn nhận ra khối tên miền gốc', () => {

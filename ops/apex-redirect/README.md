@@ -27,12 +27,26 @@ Nên tên miền gốc trỏ về VPS `160.22.170.20`, nơi Caddy dùng chung ch
 | 3 | DNS tên miền gốc chưa trỏ về 160.22.170.20 |
 | 4 | Caddyfile đã có khối KHÁC khai báo tên miền gốc — cần người xem |
 | 5 | validate hỏng — Caddyfile đã khôi phục, chưa reload |
-| 6 | reload hỏng — Caddy vẫn chạy cấu hình cũ, Caddyfile đã khôi phục |
+| 6 | chép vào container hoặc reload hỏng — Caddy vẫn chạy cấu hình cũ, Caddyfile đã khôi phục |
 | 7 | đã nạp cấu hình nhưng **chưa đo được 301 sang www** (thường là chứng chỉ đang cấp — chạy lại sau ít phút) |
 
-**Lùi lại:** chép đè Caddyfile bằng bản `Caddyfile.bak-truoc-vipg-web-015-<ngày giờ>` rồi `caddy validate` + `caddy reload`; xoá bản ghi `A @` ở iNET nếu muốn bỏ hẳn.
+**Lùi lại:** chép đè Caddyfile bằng bản `Caddyfile.bak-truoc-vipg-web-015-<ngày giờ>`, rồi nạp theo đường `/tmp` (xem bẫy dưới); xoá bản ghi `A @` ở iNET nếu muốn bỏ hẳn.
 
-Bộ thử: `tests/ops.test.mjs` chạy thật script dưới `/bin/bash`, giả lập `id/getent/docker/curl/sleep` (13 ca; curl giả lập theo từng URL như Caddy thật; đột biến ở mọi cửa chặn đều bị bắt).
+## BẪY V-13417 — đừng nạp `/etc/caddy/Caddyfile`
+
+Container `vip-staging-caddy` gắn Caddyfile **theo tệp**. Tệp máy chủ đã bị thay inode (đo 24/10 và 25/10/2026: máy chủ inode 528439, container inode 528434), nên
+`docker exec vip-staging-caddy caddy reload --config /etc/caddy/Caddyfile` nạp **bản cũ** mà vẫn báo thành công — và **gỡ mất mọi khối thêm sau**.
+Ngày 25/10 chính lệnh đó đã gỡ nhầm `ai-thu.vipgroup.com.vn` từ 14:35 tới 17:03. Script này vì vậy luôn làm:
+
+```bash
+docker cp /srv/vip-staging-proxy/Caddyfile vip-staging-caddy:/tmp/Caddyfile.host
+docker exec vip-staging-caddy caddy validate --config /tmp/Caddyfile.host --adapter caddyfile
+docker exec vip-staging-caddy caddy reload --config /tmp/Caddyfile.host --adapter caddyfile
+```
+
+Vá gốc (đổi mount sang thư mục rồi dựng lại container, gián đoạn ngắn các site dùng chung) là việc riêng V-13417, chờ owner.
+
+Bộ thử: `tests/ops.test.mjs` chạy thật script dưới `/bin/bash`, giả lập `id/getent/docker/curl/sleep` (16 ca; curl giả lập theo từng URL như Caddy thật; khoá luôn đường nạp `/tmp`; đột biến ở mọi cửa chặn đều bị bắt).
 
 **Chưa đo (không đọc được Caddyfile dùng chung khi không có root):** tuỳ chọn toàn cục (`auto_https`…) hoặc khối bắt-mọi-tên `http://`/`:80`
 có thể làm http đi khác. Khi đó script trả **mã 7** kèm các dòng đo — không tự kết luận đạt.
