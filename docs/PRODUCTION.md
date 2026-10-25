@@ -1,6 +1,6 @@
 # PRODUCTION — kiến trúc, quy trình phát hành, rollback, DNS
 
-> **Chưa phát hành.** Tài liệu này mô tả cách phát hành khi owner ra lệnh. Không có bước nào ở đây được Controller tự chạy.
+> **Đã phát hành 24/10/2026** (biên bản `docs/verification/PRODUCTION-RELEASE-2026-10-24.md`). Mỗi lần phát hành sau vẫn chỉ chạy khi owner ra lệnh. Tên miền: phương án B (giữ DNS iNET, web ở `www`) — mục 4 dưới đây viết trước quyết định đó, xem ghi chú 24/10 trong `docs/DNS_MIGRATION.md`.
 > Lập 30/09/2026 (VIPG-WEB-010, issue #19). Nguồn Cloudflare: developers.cloudflare.com/pages (Custom domains, Direct Upload, Rollbacks), đọc 30/09/2026.
 
 ## 1. Kiến trúc đích
@@ -23,10 +23,10 @@
 ## 2. Cổng bảo vệ của workflow production
 
 1. Chỉ `workflow_dispatch` — không có trigger push / PR / lịch.
-2. File workflow chỉ chạy được từ nhánh được chọn; hiện `main` **chưa có** file này → chỉ dùng được sau khi owner merge `develop` → `main`.
+2. File workflow chỉ chạy được từ nhánh được chọn; `main` có file này từ lần phát hành 24/10/2026 (PR #27).
 3. Job `build` chỉ chạy khi `github.ref == refs/heads/main`; job `deploy` kiểm lại ref.
 4. Owner phải **gõ lại đúng SHA 40 ký tự** của `main` khi bấm Run.
-5. Job `deploy` dùng GitHub Environment **`production`**. Owner nên cấu hình *Required reviewers* (mục 5) — khi đó mỗi lần phát hành phải có người duyệt trên GitHub.
+5. Job `deploy` dùng GitHub Environment **`production`**. *Required reviewers* đã cấu hình (mục 5) — mỗi lần phát hành phải có người duyệt trên GitHub.
 6. Thiếu credential → **FAIL**, không bỏ qua.
 7. Preflight: `production_branch` của project phải là `main`.
 8. `bash -eo pipefail`; wrangler lỗi hoặc không in URL → FAIL, không in bảng deploy.
@@ -39,7 +39,7 @@
 1. PR `develop` → `main` → CI → verifier độc lập → **owner** duyệt merge.
 2. Ghi lại SHA mới của `main`: `git ls-remote https://github.com/thanhbn123/vip-group.git refs/heads/main`.
 3. GitHub → Actions → "Production (Cloudflare Pages) — chạy tay từ main" → Run workflow trên `main`, dán SHA ở bước 2.
-4. Nếu đã cấu hình Required reviewers: duyệt deployment `production`.
+4. Duyệt deployment `production` (Required reviewers = owner).
 5. Kiểm `https://vip-group.pages.dev/` phục vụ đúng bản (so byte với build của SHA đó; vẫn có noindex vì là host pages.dev).
 6. Gắn tên miền (mục 4) → kiểm `https://vipgroup.com.vn/`: 200, HTTPS hợp lệ, **không có** `X-Robots-Tag`, còn đủ header bảo mật, canonical đúng, 7 route, sitemap, robots, OG, form JS bật/tắt, Lighthouse (SEO kỳ vọng 100 vì không còn noindex).
 
