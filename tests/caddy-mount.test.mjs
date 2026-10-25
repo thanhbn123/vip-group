@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, chmodSync, existsSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), '..', 'ops', 'caddy-dung-chung', 'doi-mount-thu-muc-root.sh');
@@ -50,6 +50,7 @@ if (cmd === 'inspect') {
   }
 } else if (cmd === 'stop') {
   const c = s.c[a[a.length - 1]]; if (!c) process.exit(1);
+  if (O.slowStop && c.role === 'old' && !s.slept) { s.slept = 1; save(); Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, O.slowStop); }
   if (!(O.newStopFails && c.role === 'new')) c.running = false; save();
 } else if (cmd === 'rename') {
   if (O.renameFails && !s.renamed) { s.renamed = 1; save(); process.exit(1); }
@@ -92,15 +93,25 @@ function setup(o = {}) {
   w('docker', DOCKER); w('curl', CURL); w('python3', PY);
   w('id', `#!/bin/bash\necho ${uid}\n`); w('stat', '#!/bin/bash\necho 528439\n'); w('sleep', '#!/bin/bash\nexit 0\n');
   const dlog = join(dir, 'docker.log');
-  const run = () => spawnSync('/bin/bash', [SCRIPT], {
-    encoding: 'utf8',
-    env: { PATH: `${bin}:${dirname(process.execPath)}:/usr/bin:/bin`, CADDY_DIR: srv, TRASH_ROOT: join(dir, 'thung-rac'),
-      WAIT_TRIES: '2', CMP_TRIES: '2', ST_FILE: st, DOCKER_LOG: dlog, STUB_OPT: JSON.stringify({ ...o, srv }), ...env },
+  const ENV = { PATH: `${bin}:${dirname(process.execPath)}:/usr/bin:/bin`, CADDY_DIR: srv, TRASH_ROOT: join(dir, 'thung-rac'),
+    WAIT_TRIES: '2', CMP_TRIES: '2', ST_FILE: st, DOCKER_LOG: dlog, STUB_OPT: JSON.stringify({ ...o, srv }), CHAY_NGOAI_TMUX: '1', ...env };
+  for (const k of Object.keys(ENV)) if (ENV[k] === undefined) delete ENV[k];
+  const run = () => spawnSync('/bin/bash', [SCRIPT], { encoding: 'utf8', env: ENV });
+  // Chạy trong NHÓM TIẾN TRÌNH riêng rồi gửi tín hiệu cho cả nhóm (giống ssh đứt / Ctrl-C) sau `sauMs`.
+  const runSignal = (sig, sauMs) => new Promise((res) => {
+    const p = spawn('/bin/bash', [SCRIPT], { env: ENV, detached: true });
+    let out = ''; p.stdout.on('data', (d) => (out += d)); p.stderr.on('data', (d) => (out += d));
+    // Gửi đúng lúc docker stop container cũ đang chạy (stub ghi cờ `slept`), cộng thêm `sauMs`.
+    const tm = setInterval(() => {
+      try { if (JSON.parse(readFileSync(st, 'utf8')).slept) { clearInterval(tm); setTimeout(() => { try { process.kill(-p.pid, sig); } catch {} }, sauMs); } } catch {}
+    }, 50);
+    const giet = setTimeout(() => { try { process.kill(-p.pid, 'SIGKILL'); } catch {} }, 30000);
+    p.on('close', (code, signal) => { clearInterval(tm); clearTimeout(giet); res({ code, signal, out }); });
   });
   const log = () => (existsSync(dlog) ? readFileSync(dlog, 'utf8') : '');
   const state = () => JSON.parse(readFileSync(st, 'utf8'));
   const boxes = () => (existsSync(join(dir, 'thung-rac')) ? readdirSync(join(dir, 'thung-rac')) : []);
-  return { dir, srv, run, log, state, boxes };
+  return { dir, srv, run, runSignal, log, state, boxes };
 }
 const daDung = (log) => /^(stop|run -d|rename|update|start) /m.test(log);
 const all = (r) => r.stdout + r.stderr;
@@ -233,6 +244,28 @@ test('mount: trả về nhưng container cũ bật lên mà cổng 2019 không l
   assert.match(all(r), /cổng 2019 không lên/);
   assert.doesNotMatch(t.log(), /caddy reload/);
 });
+
+test('mount: chạy thật ngoài tmux/screen → mã 2, không đụng gì; chạy khô thì được', () => {
+  const t = setup({ env: { CHAY_NGOAI_TMUX: undefined } });
+  const r = t.run();
+  assert.equal(r.status, 2, all(r)); assert.match(all(r), /tmux/); assert.equal(daDung(t.log()), false);
+  const t2 = setup({ env: { CHAY_NGOAI_TMUX: undefined, DRY_RUN: '1' } });
+  assert.equal(t2.run().status, 0);
+  const t3 = setup({ env: { CHAY_NGOAI_TMUX: undefined, TMUX: '/tmp/tmux-0/default,1,0' } });
+  assert.equal(t3.run().status, 0);
+});
+
+for (const sig of ['SIGHUP', 'SIGINT', 'SIGTERM']) {
+  test(`mount: ${sig} gửi cho cả nhóm tiến trình lúc đang dừng container cũ → script KHÔNG chết bỏ dở: kết thúc 0 hoặc trả về (6), đúng MỘT Caddy chạy`, async () => {
+    const t = setup({ slowStop: 1500 });
+    const r = await t.runSignal(sig, 300);
+    assert.ok(r.signal === null && [0, 6].includes(r.code), `code=${r.code} signal=${r.signal}\n${r.out}`);
+    const s = t.state();
+    assert.equal(Object.values(s.c).filter((c) => c.running).length, 1, JSON.stringify(s));
+    assert.ok(s.c['vip-staging-caddy'] && s.c['vip-staging-caddy'].running, 'tên vip-staging-caddy phải đang chạy');
+    if (sig !== 'SIGHUP') assert.equal(r.code, 6, r.out);
+  });
+}
 
 test('mount: không phải root → mã 2', () => {
   const t = setup({ uid: '1000' });
