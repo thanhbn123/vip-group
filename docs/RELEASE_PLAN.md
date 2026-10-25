@@ -1,6 +1,6 @@
-# RELEASE PLAN — trình tự phát hành production (CHƯA THỰC HIỆN)
+# RELEASE PLAN — trình tự phát hành production
 
-> **RELEASE AUTHORIZATION: NOT AUTHORIZED.** Chỉ thực hiện khi owner ra lệnh phát hành rõ ràng. PASS kỹ thuật không phải lệnh phát hành.
+> **Lần phát hành đầu: 24/10/2026, theo lệnh owner** — biên bản `docs/verification/PRODUCTION-RELEASE-2026-10-24.md` (DNS đi phương án B nên bước 9–12 khác bảng dưới). Mỗi lần phát hành sau vẫn **NOT AUTHORIZED cho tới khi owner ra lệnh**. Chỉ thực hiện khi owner ra lệnh phát hành rõ ràng. PASS kỹ thuật không phải lệnh phát hành.
 > Rollback phải sẵn sàng **trước bước 4** — `docs/PRODUCTION.md` mục 6.
 
 | # | Bước | Ai | Điều kiện / bằng chứng |
