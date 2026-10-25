@@ -23,7 +23,7 @@
 ## 2. Cổng bảo vệ của workflow production
 
 1. Chỉ `workflow_dispatch` — không có trigger push / PR / lịch.
-2. File workflow chỉ chạy được từ nhánh được chọn; hiện `main` **chưa có** file này → chỉ dùng được sau khi owner merge `develop` → `main`.
+2. File workflow chỉ chạy được từ nhánh được chọn; `main` có file này từ lần phát hành 24/10/2026 (PR #27).
 3. Job `build` chỉ chạy khi `github.ref == refs/heads/main`; job `deploy` kiểm lại ref.
 4. Owner phải **gõ lại đúng SHA 40 ký tự** của `main` khi bấm Run.
 5. Job `deploy` dùng GitHub Environment **`production`**. *Required reviewers* đã cấu hình (mục 5) — mỗi lần phát hành phải có người duyệt trên GitHub.

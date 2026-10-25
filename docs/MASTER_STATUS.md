@@ -8,7 +8,7 @@
 | Nhánh | SHA đo được | Ghi chú |
 |---|---|---|
 | `main` | `552a2bda2f539cd31573c8c90a79fba809bc5fe7` (đo 24/10) | Production. Chỉ cập nhật qua PR `develop → main` khi owner ra lệnh phát hành |
-| `develop` | `55f5011d185fd404e3a785fda38d31799f597ef7` (base của PR VIPG-WEB-012) — bảng dòng dưới là lịch sử base của VIPG-WEB-011: `5bb43bd` | CI 36667603110 success · Staging 36667603028 lần 1 success (04:10Z), **lần chạy lại 2 FAIL** (04:28Z, token Cloudflare 401) |
+| `develop` | `03f9e213a1d85e40b28b63dbbcfed145d8b9d147` (đo 25/10, sau khi merge PR #33) | Đo lại bằng `git ls-remote` trước khi dựa vào SHA này |
 
 ## Work item
 
