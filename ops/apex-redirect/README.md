@@ -44,7 +44,7 @@ docker exec vip-staging-caddy caddy validate --config /tmp/Caddyfile.host --adap
 docker exec vip-staging-caddy caddy reload --config /tmp/Caddyfile.host --adapter caddyfile
 ```
 
-Vá gốc (đổi mount sang thư mục rồi dựng lại container, gián đoạn ngắn các site dùng chung) là việc riêng V-13417, chờ owner.
+Vá gốc (đổi mount sang thư mục rồi dựng lại container): `ops/caddy-dung-chung/` (V-13417).
 
 Bộ thử: `tests/ops.test.mjs` chạy thật script dưới `/bin/bash`, giả lập `id/getent/docker/curl/sleep` (16 ca; curl giả lập theo từng URL như Caddy thật; khoá luôn đường nạp `/tmp`; đột biến ở mọi cửa chặn đều bị bắt).
 
