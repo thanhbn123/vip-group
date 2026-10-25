@@ -4,7 +4,12 @@
 # Web thật nằm ở Cloudflare Pages (www CNAME → vip-group.pages.dev); VPS chỉ làm chuyển hướng, không phục vụ nội dung.
 # Trước khi chạy: DNS A  @ (vipgroup.com.vn) → 160.22.170.20 tại iNET. KHÔNG đụng MX/TXT/DKIM.
 # Thứ tự: sao lưu → nối → validate (hỏng: khôi phục, không reload) → reload (hỏng: khôi phục) → ĐO 301 (không đạt: mã 7).
-# Idempotent: Caddyfile đã có khối này thì không nối lại, chỉ đo lại.
+# Idempotent: Caddyfile đã có khối này thì không nối lại — vẫn NẠP LẠI file máy chủ rồi đo (lượt trước có thể đứt giữa chừng).
+#
+# BẪY V-13417 (đo 24/10 và 25/10/2026): Caddyfile được bind-mount vào container THEO TỆP. Khi tệp máy chủ bị thay inode,
+# container giữ bản CŨ — `caddy validate/reload --config /etc/caddy/Caddyfile` đều "thành công" trên bản cũ và GỠ MẤT
+# mọi khối mới (25/10 đã gỡ nhầm ai-thu 14:35→17:03). Nên script KHÔNG BAO GIỜ nạp /etc/caddy/Caddyfile:
+# nó chép tệp MÁY CHỦ vào /tmp trong container rồi validate/reload đúng bản đó.
 set -euo pipefail
 CF="${CADDYFILE:-/srv/vip-staging-proxy/Caddyfile}"
 CONTAINER="${CADDY_CONTAINER:-vip-staging-caddy}"
@@ -13,6 +18,7 @@ APEX=vipgroup.com.vn
 WWW=www.vipgroup.com.vn
 VPS_IP=160.22.170.20
 MARK="# VIPG-WEB-015 apex-redirect $APEX"
+TMPCF=/tmp/Caddyfile.host
 
 [ "$(id -u)" = 0 ] || { echo "cần root (file $CF do root sở hữu)" >&2; exit 2; }
 [ -f "$CF" ] || { echo "không thấy $CF" >&2; exit 2; }
@@ -44,7 +50,19 @@ ket_thuc() {
   exit 7
 }
 
-if grep -qF "$MARK" "$CF"; then echo "Caddyfile đã có khối $APEX — không nối lại, chỉ đo lại"; ket_thuc; fi
+# Nạp ĐÚNG tệp máy chủ (không qua bind-mount theo tệp). Trả 5 nếu validate hỏng, 6 nếu reload hỏng.
+nap() {
+  docker cp "$CF" "$CONTAINER:$TMPCF" || return 6
+  docker exec "$CONTAINER" caddy validate --config "$TMPCF" --adapter caddyfile || return 5
+  docker exec "$CONTAINER" caddy reload --config "$TMPCF" --adapter caddyfile || return 6
+}
+
+if grep -qF "$MARK" "$CF"; then
+  echo "Caddyfile đã có khối $APEX — không nối lại; nạp lại tệp máy chủ rồi đo"
+  rc=0; nap || rc=$?
+  [ "$rc" = 0 ] || { echo "nạp lại HỎNG (mã $rc) — không sửa gì thêm, cần người xem." >&2; exit "$rc"; }
+  ket_thuc
+fi
 
 # Khối site khác đã khai báo đúng tên miền gốc thì dừng (nối thêm sẽ thành hai khối trùng tên).
 # Tách từng địa chỉ ở dòng mở khối: bỏ scheme, cổng, đường dẫn; so không phân biệt hoa thường.
@@ -74,11 +92,12 @@ $APEX, http://$APEX {
 }
 EOF2
 
-if ! docker exec "$CONTAINER" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile; then
+rc=0; nap || rc=$?
+if [ "$rc" = 5 ]; then
   cp -p "$BAK" "$CF"
   echo "validate HỎNG — đã khôi phục $CF từ $BAK, KHÔNG reload." >&2; exit 5
 fi
-if ! docker exec "$CONTAINER" caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile; then
+if [ "$rc" != 0 ]; then
   # reload của Caddy là nguyên tử: hỏng thì cấu hình đang chạy vẫn là bản cũ → trả file về đúng bản cũ.
   cp -p "$BAK" "$CF"
   echo "reload HỎNG — Caddy vẫn chạy cấu hình cũ; đã khôi phục $CF từ $BAK." >&2; exit 6
