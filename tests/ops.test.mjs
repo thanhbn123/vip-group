@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), '..', 'ops', 'apex-redirect', 'noi-caddy-apex-root.sh');
 const BASE = 'vip-hq.example {\n\treverse_proxy 127.0.0.1:9000\n}\n';
 
-function setup({ uid = '0', ip = '160.22.170.20', validateOk = true, caddy = BASE } = {}) {
+function setup({ uid = '0', ip = '160.22.170.20', validateOk = true, reloadOk = true, curlOut = '301 https://www.vipgroup.com.vn/', caddy = BASE } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'vipg-apex-'));
   const bin = join(dir, 'bin');
   mkdirSync(bin);
@@ -22,15 +22,16 @@ function setup({ uid = '0', ip = '160.22.170.20', validateOk = true, caddy = BAS
   };
   stub('id', `echo ${uid}`);
   stub('getent', ip ? `echo "${ip}   $2"` : 'exit 2');
-  stub('docker', `echo "$*" >> "${dir}/docker.log"; case "$*" in *validate*) ${validateOk ? 'exit 0' : 'exit 1'};; esac; exit 0`);
-  stub('curl', 'echo "301 https://www.vipgroup.com.vn/"');
+  stub('docker', `echo "$*" >> "${dir}/docker.log"; case "$*" in *validate*) ${validateOk ? 'exit 0' : 'exit 1'};; *reload*) ${reloadOk ? 'exit 0' : 'exit 1'};; esac; exit 0`);
+  stub('curl', `echo "$*" >> "${dir}/curl.log"; printf '%s' "${curlOut}"`);
   stub('sleep', 'exit 0');
   const cf = join(dir, 'Caddyfile');
   writeFileSync(cf, caddy);
-  const run = () => spawnSync('/bin/bash', [SCRIPT], { encoding: 'utf8', env: { PATH: `${bin}:/usr/bin:/bin`, CADDYFILE: cf } });
+  const run = () => spawnSync('/bin/bash', [SCRIPT], { encoding: 'utf8', env: { PATH: `${bin}:/usr/bin:/bin`, CADDYFILE: cf, PROBE_TRIES: '2' } });
   const dockerLog = () => (existsSync(join(dir, 'docker.log')) ? readFileSync(join(dir, 'docker.log'), 'utf8') : '');
+  const curlLog = () => (existsSync(join(dir, 'curl.log')) ? readFileSync(join(dir, 'curl.log'), 'utf8') : '');
   const backups = () => readdirSync(dir).filter((f) => f.startsWith('Caddyfile.bak-truoc-vipg-web-015-'));
-  return { dir, cf, run, dockerLog, backups };
+  return { dir, cf, run, dockerLog, curlLog, backups };
 }
 const count = (s, sub) => s.split(sub).length - 1;
 
@@ -53,7 +54,8 @@ test('apex: chạy lại → không nối đôi, không reload thêm', () => {
   const sau1 = readFileSync(t.cf, 'utf8');
   const r = t.run();
   assert.equal(r.status, 0);
-  assert.match(r.stdout, /không nối lại/);
+  assert.match(r.stdout, /không nối lại, chỉ đo lại/);
+  assert.match(t.curlLog().split('\n').slice(-3).join('\n'), /vipgroup\.com\.vn/);
   assert.equal(readFileSync(t.cf, 'utf8'), sau1);
   assert.equal(count(t.dockerLog(), 'reload'), 1);
 });
@@ -83,7 +85,8 @@ test('apex: DNS chưa trỏ về VPS (sai IP hoặc rỗng) → mã 3, không đ
 });
 
 test('apex: Caddyfile đã có khối khác khai báo tên miền gốc → mã 4, không nối trùng', () => {
-  for (const head of ['vipgroup.com.vn {', 'https://vipgroup.com.vn, other.example {', '  vipgroup.com.vn']) {
+  for (const head of ['vipgroup.com.vn {', 'https://vipgroup.com.vn, other.example {', 'vipgroup.com.vn:443 {', 'http://vipgroup.com.vn:80 {',
+    'www.vipgroup.com.vn, vipgroup.com.vn {', 'a.example vipgroup.com.vn {', 'VIPGROUP.COM.VN {', 'vipgroup.com.vn{']) {
     const caddy = BASE + `\n${head}\n\trespond "cu"\n}\n`;
     const t = setup({ caddy });
     assert.equal(t.run().status, 4, head);
@@ -92,7 +95,7 @@ test('apex: Caddyfile đã có khối khác khai báo tên miền gốc → mã 
 });
 
 test('apex: khối www / tên miền con / tên gần giống KHÔNG bị nhận nhầm là tên miền gốc', () => {
-  const caddy = BASE + '\nwww.vipgroup.com.vn {\n\trespond "x"\n}\nhq.vipgroup.com.vn {\n\trespond "y"\n}\nvipgroupXcomXvn {\n\trespond "z"\n}\n';
+  const caddy = BASE + '\nwww.vipgroup.com.vn {\n\trespond "x"\n}\nhq.vipgroup.com.vn {\n\trespond "y"\n}\nvipgroupXcomXvn {\n\trespond "z"\n}\n*.vipgroup.com.vn {\n\trespond "w"\n}\n# vipgroup.com.vn {\n';
   const t = setup({ caddy });
   assert.equal(t.run().status, 0);
 });
@@ -101,4 +104,23 @@ test('apex: phần lệnh của script không xoá file, không tắt tiến tr�
   const lenh = readFileSync(SCRIPT, 'utf8').replace(/^\s*#.*$/gm, '');
   const cam = [/\brm\s/, new RegExp('\\b(p' + 'kill|kill' + 'all)\\b'), /\b(dig|nsupdate)\b/];
   for (const re of cam) assert.doesNotMatch(lenh, re);
+});
+
+test('apex: reload hỏng → khôi phục file nguyên byte, mã 6; chạy lại KHÔNG báo thành công giả', () => {
+  const t = setup({ reloadOk: false });
+  assert.equal(t.run().status, 6);
+  assert.equal(readFileSync(t.cf, 'utf8'), BASE);
+  const r2 = t.run();
+  assert.equal(r2.status, 6, 'lần chạy lại vẫn phải thử nối + reload, không được rơi vào nhánh "đã có"');
+  assert.doesNotMatch(r2.stdout, /không nối lại/);
+});
+
+test('apex: đo không ra 301 sang www (200, 502, TLS hỏng, 301 sai đích) → mã 7, cấu hình giữ nguyên đã nạp', () => {
+  for (const curlOut of ['200 ', '502 ', '000 -', '301 https://evil.example/', '302 https://www.vipgroup.com.vn/']) {
+    const t = setup({ curlOut });
+    const r = t.run();
+    assert.equal(r.status, 7, curlOut);
+    assert.match(r.stderr, /CHƯA ĐẠT/);
+    assert.match(t.dockerLog(), /reload/);
+  }
 });
