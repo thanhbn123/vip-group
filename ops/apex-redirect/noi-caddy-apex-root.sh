@@ -25,11 +25,12 @@ probe() {
   local i u out code loc ok
   for i in $(seq 1 "$PROBE_TRIES"); do
     ok=1
-    for u in "http://$APEX/" "https://$APEX/gioi-thieu/?a=1"; do
+    for u in "http://$APEX/lien-he/?b=2" "https://$APEX/gioi-thieu/?a=1"; do
       out=$(curl -s -o /dev/null -w "%{http_code} %{redirect_url}" --max-time 20 "$u" || echo "000 -")
       code=${out%% *}; loc=${out#* }
       echo "  lượt $i: $u → $out"
-      if [ "$code" != 301 ] || [ "${loc#https://"$WWW"/}" = "$loc" ]; then ok=0; fi
+      # Phải là 301 thẳng sang www, GIỮ NGUYÊN đường dẫn + tham số (không chấp nhận 308 sang https của chính tên miền gốc).
+      if [ "$code" != 301 ] || [ "$loc" != "https://$WWW/${u#*://"$APEX"/}" ]; then ok=0; fi
     done
     [ "$ok" = 1 ] && return 0
     [ "$i" -lt "$PROBE_TRIES" ] && sleep 10
@@ -38,7 +39,8 @@ probe() {
 }
 ket_thuc() {
   if probe; then echo "XONG — $APEX chuyển 301 sang https://$WWW/"; exit 0; fi
-  echo "CHƯA ĐẠT — cấu hình đã nạp nhưng chưa đo được 301 sang www (xem các dòng trên; chứng chỉ có thể đang cấp — chạy lại sau ít phút)." >&2
+  echo "CHƯA ĐẠT — cấu hình đã nạp nhưng chưa đo được 301 sang https://$WWW/<cùng đường dẫn> ở cả http lẫn https (xem các dòng trên)." >&2
+  echo "  https lỗi kết nối (000) thường là chứng chỉ đang cấp → chạy lại sau ít phút; mã khác thì cần người xem cấu hình Caddy." >&2
   exit 7
 }
 
@@ -46,11 +48,12 @@ if grep -qF "$MARK" "$CF"; then echo "Caddyfile đã có khối $APEX — không
 
 # Khối site khác đã khai báo đúng tên miền gốc thì dừng (nối thêm sẽ thành hai khối trùng tên).
 # Tách từng địa chỉ ở dòng mở khối: bỏ scheme, cổng, đường dẫn; so không phân biệt hoa thường.
+# Chỉ dùng [ \t] (không dùng lớp [[:space:]]) để chạy được cả trên mawk cũ.
 if awk -v apex="$APEX" '
-  /^[[:space:]]*#/ { next }
-  /\{[[:space:]]*$/ {
-    line = $0; sub(/\{[[:space:]]*$/, "", line); gsub(/,/, " ", line)
-    n = split(line, a, /[[:space:]]+/)
+  { line = $0; sub(/[ \t]#.*$/, "", line); sub(/^[ \t]*#.*$/, "", line) }
+  line ~ /\{[ \t]*$/ {
+    sub(/\{[ \t]*$/, "", line); gsub(/,/, " ", line)
+    n = split(line, a, /[ \t]+/)
     for (i = 1; i <= n; i++) {
       h = tolower(a[i]); sub(/^[a-z]+:\/\//, "", h); sub(/\/.*$/, "", h); sub(/:[0-9]*$/, "", h)
       if (h == apex) found = 1
@@ -65,7 +68,8 @@ cp -p "$CF" "$BAK"
 cat >> "$CF" <<EOF2
 
 $MARK — web thật ở Cloudflare Pages ($WWW), đây chỉ chuyển hướng.
-$APEX {
+# Khai báo thẳng http:// để Caddy KHÔNG tự chèn 308 sang https://$APEX trước khi redir chạy.
+$APEX, http://$APEX {
 	redir https://$WWW{uri} permanent
 }
 EOF2
