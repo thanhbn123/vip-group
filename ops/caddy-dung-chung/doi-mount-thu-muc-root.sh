@@ -173,7 +173,7 @@ docker update --restart=no "$OLD" >/dev/null
 echo "[6] đã dừng + đổi tên container cũ → $OLD (restart=no)"
 
 # ---------- 7. dựng mới ----------
-docker run -d --name "$C" --network host --restart unless-stopped \
+docker run -d --name "$C" --network host --ipc private --restart unless-stopped \
   -v vip-staging-caddy-config:/config -v vip-staging-caddy-data:/data -v "$DIR:/etc/caddy:ro" \
   "$IMAGE_ID" caddy run --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
 cho_2019 || tra_ve "cổng quản trị 2019 không lên"

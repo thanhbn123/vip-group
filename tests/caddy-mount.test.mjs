@@ -136,7 +136,7 @@ test('mount: chạy thật đúng → giữ cũ (đổi tên, restart=no), dựn
   assert.match(log, /^rename vip-staging-caddy vip-staging-caddy-cu-\d{8}-\d{6}$/m);
   assert.match(log, /^update --restart=no vip-staging-caddy-cu-/m);
   const runLine = log.split('\n').find((l) => l.startsWith('run -d'));
-  for (const p of ['--name vip-staging-caddy', '--network host', '--restart unless-stopped', '-v vip-staging-caddy-config:/config',
+  for (const p of ['--name vip-staging-caddy', '--network host', '--ipc private', '--restart unless-stopped', '-v vip-staging-caddy-config:/config',
     '-v vip-staging-caddy-data:/data', `-v ${t.srv}:/etc/caddy:ro`, `${IMG} caddy run --config /etc/caddy/Caddyfile --adapter caddyfile`]) {
     assert.ok(runLine.includes(p), `thiếu "${p}" trong: ${runLine}`);
   }
