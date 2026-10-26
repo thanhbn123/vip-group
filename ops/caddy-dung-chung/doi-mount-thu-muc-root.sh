@@ -60,6 +60,8 @@ for f in .HostConfig.CapAdd .HostConfig.CapDrop .HostConfig.Ulimits .HostConfig.
          .HostConfig.Init .HostConfig.SecurityOpt .HostConfig.Sysctls .HostConfig.Devices .HostConfig.LogConfig.Config \
          .HostConfig.Memory .HostConfig.NanoCpus .HostConfig.PidMode .HostConfig.IpcMode .Config.StopSignal .Config.StopTimeout; do
   v=$(docker inspect "$C" --format "{{json $f}}")
+  # IpcMode: Docker đời mới gán mặc định "private" cho MỌI container `docker run` (đo 26/10 trên VPS) ⇒ chấp nhận đúng giá trị đó.
+  if [ "$f" = .HostConfig.IpcMode ] && [ "$v" = '"private"' ]; then continue; fi
   case "$v" in null|'[]'|'{}'|'""'|0|false) ;; *) rong_lech="$rong_lech $f=$v";; esac
 done
 if [ "$got" != "$want" ] || [ "$cur_mounts" != "$want_mounts" ] || [ "$envs" != "$want_envs" ] || [ -n "$rong_lech" ]; then

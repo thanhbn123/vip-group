@@ -33,6 +33,7 @@ if (cmd === 'inspect') {
     if (O.extraEnv) out('SECRET_X=1');
   } else if (f === '{{.State.Running}}') out(String(c.running));
   else if (f.startsWith('{{.State.Running}}|')) out(c.running + '|' + (O.image || '${IMG}') + '|host|unless-stopped|["caddy","run","--config","/etc/caddy/Caddyfile","--adapter","caddyfile"]|null||/srv|false|false|json-file');
+  else if (f.includes('IpcMode')) out(JSON.stringify(O.ipcMode === undefined ? 'private' : O.ipcMode));
   else if (f.startsWith('{{json ')) out(O.nonDefault && f.includes(O.nonDefault) ? '[{"Name":"nofile"}]' : (f.includes('Memory') || f.includes('NanoCpus') ? '0' : 'null'));
   else out('?');
 } else if (cmd === 'exec') {
@@ -153,6 +154,14 @@ test('mount: chạy thật đúng → giữ cũ (đổi tên, restart=no), dựn
   assert.doesNotMatch(truoc, /\*|http:/);
 });
 
+test('mount: IpcMode "private" (mặc định Docker, đo 26/10) hoặc rỗng → không bị coi là lệch', () => {
+  for (const ipcMode of ['private', '']) {
+    const t = setup({ ipcMode, env: { DRY_RUN: '1' } });
+    const r = t.run();
+    assert.equal(r.status, 0, ipcMode + '\n' + all(r));
+  }
+});
+
 test('mount: đã gắn thư mục từ trước → mã 0, không làm gì', () => {
   const t = setup({ mountMode: 'dir' });
   const r = t.run();
@@ -162,7 +171,7 @@ test('mount: đã gắn thư mục từ trước → mã 0, không làm gì', ()
 for (const [ten, o] of [
   ['ảnh khác', { image: 'sha256:deadbeef' }], ['thêm biến môi trường', { extraEnv: true }],
   ['XDG_DATA_HOME khác (mất chứng chỉ)', { dataHome: '/khac' }], ['ulimit không mặc định', { nonDefault: 'Ulimits' }],
-  ['ổ dữ liệu khác tên', { volName: 'caddy-config-khac' }], ['container đang dừng', { running: false }], ['không có container', { noContainer: true }],
+  ['ổ dữ liệu khác tên', { volName: 'caddy-config-khac' }], ['IpcMode host', { ipcMode: 'host' }], ['IpcMode shareable', { ipcMode: 'shareable' }], ['container đang dừng', { running: false }], ['không có container', { noContainer: true }],
 ]) {
   test(`mount: cấu hình lệch — ${ten} → mã 3, không đụng gì`, () => {
     const t = setup(o);
