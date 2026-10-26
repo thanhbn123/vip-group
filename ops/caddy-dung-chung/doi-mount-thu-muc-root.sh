@@ -60,6 +60,8 @@ for f in .HostConfig.CapAdd .HostConfig.CapDrop .HostConfig.Ulimits .HostConfig.
          .HostConfig.Init .HostConfig.SecurityOpt .HostConfig.Sysctls .HostConfig.Devices .HostConfig.LogConfig.Config \
          .HostConfig.Memory .HostConfig.NanoCpus .HostConfig.PidMode .HostConfig.IpcMode .Config.StopSignal .Config.StopTimeout; do
   v=$(docker inspect "$C" --format "{{json $f}}")
+  # IpcMode: Docker đời mới gán mặc định "private" cho MỌI container `docker run` (đo 26/10 trên VPS) ⇒ chấp nhận đúng giá trị đó.
+  if [ "$f" = .HostConfig.IpcMode ] && [ "$v" = '"private"' ]; then continue; fi
   case "$v" in null|'[]'|'{}'|'""'|0|false) ;; *) rong_lech="$rong_lech $f=$v";; esac
 done
 if [ "$got" != "$want" ] || [ "$cur_mounts" != "$want_mounts" ] || [ "$envs" != "$want_envs" ] || [ -n "$rong_lech" ]; then
@@ -171,7 +173,7 @@ docker update --restart=no "$OLD" >/dev/null
 echo "[6] đã dừng + đổi tên container cũ → $OLD (restart=no)"
 
 # ---------- 7. dựng mới ----------
-docker run -d --name "$C" --network host --restart unless-stopped \
+docker run -d --name "$C" --network host --ipc private --restart unless-stopped \
   -v vip-staging-caddy-config:/config -v vip-staging-caddy-data:/data -v "$DIR:/etc/caddy:ro" \
   "$IMAGE_ID" caddy run --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
 cho_2019 || tra_ve "cổng quản trị 2019 không lên"
