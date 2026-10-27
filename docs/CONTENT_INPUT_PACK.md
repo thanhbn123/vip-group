@@ -10,7 +10,7 @@
 | 4 | Pháp nhân khối Công nghệ | Chưa có — giữ placeholder | "Công ty thành viên khối Công nghệ" · Đang hoàn thiện |
 | 5 | Pháp nhân khối Bất động sản | Chưa có — giữ placeholder | "Công ty thành viên khối Bất động sản" · Đang hoàn thiện |
 | 6 | Website VIPORDER | **ĐÃ CÓ** | `https://viporder.com.vn` (nguồn chân lý thương hiệu VIPORDER của owner); VIPORDER = công ty **cùng chủ sở hữu** (owner chốt), tên pháp lý CÔNG TY TNHH XUẤT NHẬP KHẨU LOGISTICS VIP ORDER |
-| 7 | Logo chính thức | **ĐÃ CÓ** (owner gửi PNG nền trong suốt 2000×2000) | header, hero, favicon, apple-touch-icon, ảnh OG, schema.org — `design/README.md` |
+| 7 | Logo chính thức | **ĐÃ CÓ** — bản đỏ – trắng owner gửi 27/10/2026 (thay bản navy – vàng 24/10) | header, hero, favicon, apple-touch-icon, ảnh OG, schema.org — `design/README.md` |
 | 8 | Email tuyển dụng | Dùng email công khai | `viporder@vipgroup.com.vn` |
 | — | Email công khai | **Owner chốt** `viporder@vipgroup.com.vn` (thay `contact@vipgroup.com.vn`) | footer, liên hệ, schema.org |
 | — | Slogan | **Owner chốt** "CON NGƯỜI - CÔNG NGHỆ - CƠ HỘI" (trên logo; thay slogan dự kiến) | hero, tiêu đề trang chủ, footer, schema.org |

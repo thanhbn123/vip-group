@@ -35,13 +35,14 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
 </header>
 
 <style>
-  .site-header { position: sticky; top: 0; z-index: 50; background: rgba(6, 16, 29, .88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+  .site-header { position: sticky; top: 0; z-index: 50; background: rgba(255, 255, 255, .96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 3px solid var(--brand); }
   .nav { height: var(--header-h); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
   .menu ul { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 4px; }
-  .menu a { display: block; padding: 10px 12px; border-radius: 10px; font-size: 14px; color: #d8e0ea; }
-  .menu a:hover, .menu a[aria-current='page'] { color: var(--gold-light); }
-  .menu a[aria-current='page']:not(.nav-cta) { background: rgba(255,255,255,.05); }
-  .nav-cta { margin-left: 8px; border: 1px solid rgba(217, 182, 111, .45); }
+  .menu a { display: block; padding: 10px 12px; border-radius: 10px; font-size: 14px; color: var(--text-2); font-weight: 600; }
+  .menu a:hover, .menu a[aria-current='page'] { color: var(--brand-ink); }
+  .menu a[aria-current='page']:not(.nav-cta) { background: rgba(208, 7, 26, .06); }
+  .nav-cta { margin-left: 8px; background: var(--brand); color: var(--on-brand) !important; }
+  .nav-cta:hover { background: var(--brand-dark); }
   .menu-toggle { display: none; width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 10px; background: transparent; cursor: pointer; place-items: center; }
   .bars { display: grid; gap: 5px; width: 20px; }
   .bars span { height: 2px; background: var(--text); border-radius: 2px; transition: transform .2s ease, opacity .2s ease; }
@@ -52,7 +53,7 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
   /* Có JS: thu menu vào nút ☰. */
   @media (max-width: 1080px) {
     :global(html.js) .menu-toggle { display: grid; }
-    :global(html.js) .menu { position: fixed; inset: var(--header-h) 0 auto 0; max-height: calc(100dvh - var(--header-h)); overflow-y: auto; background: var(--navy-950); border-bottom: 1px solid var(--line); display: none; }
+    :global(html.js) .menu { position: fixed; inset: var(--header-h) 0 auto 0; max-height: calc(100dvh - var(--header-h)); overflow-y: auto; background: var(--bg); border-bottom: 3px solid var(--brand); display: none; }
     :global(html.js) .menu.is-open { display: block; }
     :global(html.js) .menu ul { flex-direction: column; align-items: stretch; padding: 12px 16px 24px; gap: 2px; }
     :global(html.js) .menu a { padding: 14px 12px; font-size: 16px; }
