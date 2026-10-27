@@ -52,3 +52,10 @@ test('chân trang + dải CTA nền đỏ: chữ phụ (.muted) phải đổi sa
     assert.match(s, /\.muted \{ color: rgba\(255, 255, 255, \.9\); \}/, f);
   }
 });
+
+test('khả năng truy cập phi chữ (≥ 3:1): viền ô nhập trên nền trắng; khung focus trắng ở chân trang đỏ', () => {
+  assert.ok(tuongPhan(token('line-strong'), token('bg')) >= 3, 'viền ô nhập');
+  assert.match(readFileSync(join(root, 'src/components/ContactForm.astro'), 'utf8'), /border: 1px solid var\(--line-strong\)/);
+  assert.match(readFileSync(join(root, 'src/components/Footer.astro'), 'utf8'), /\.site-footer :focus-visible \{ outline-color: #fff; \}/);
+  assert.ok(tuongPhan('#ffffff', token('brand-dark')) >= 3, 'focus trắng trên nền chân trang');
+});

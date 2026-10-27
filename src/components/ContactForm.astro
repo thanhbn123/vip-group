@@ -51,7 +51,7 @@ const nameAttr = (n: string) => (backendReady ? n : undefined);
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
   label { font-size: 14px; font-weight: 600; }
-  input, textarea { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+  input, textarea { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: var(--bg); color: var(--text); }
   input:focus-visible, textarea:focus-visible { border-color: var(--brand); }
   textarea { resize: vertical; }
   button[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
