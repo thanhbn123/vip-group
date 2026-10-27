@@ -1,8 +1,7 @@
 ---
 /**
- * Logo chính thức VIP GROUP (owner gửi 24/10/2026, PNG nền trong suốt 2000×2000;
- * bản gốc trong design/). Header dùng biểu tượng tròn cắt từ logo gốc, đặt trên
- * huy hiệu nền trắng để giữ đúng màu xanh navy của chữ V, P trên header tối.
+ * Logo chính thức VIP GROUP bản đỏ – trắng (owner gửi 27/10/2026, JPEG 1254×1254; bản gốc
+ * trong design/). Header dùng biểu tượng tròn đỏ (chim chữ V) cắt từ logo gốc.
  */
 interface Props { name: string }
 const { name } = Astro.props;
@@ -18,7 +17,7 @@ const { name } = Astro.props;
 </span>
 <style>
   .logo { display: inline-flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: .08em; }
-  .logo-badge { width: 48px; height: 48px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 0 0 1px rgba(217,182,111,.5); }
+  .logo-badge { width: 48px; height: 48px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 0 0 1px var(--line); }
   .logo-badge img { width: 40px; height: 40px; display: block; }
   .logo-text { font-size: 17px; white-space: nowrap; }
 </style>

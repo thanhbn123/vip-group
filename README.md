@@ -96,7 +96,7 @@ Giai đoạn 1 **chỉ có giao diện**: form không có `action`, các ô nh�
 
 ## Logo / favicon
 
-Logo chính thức (owner gửi 24/10/2026, PNG nền trong suốt 2000×2000) nằm ở `design/logo-vip-group-goc-2000.webp`. Mọi ảnh trong `public/` (logo đầy đủ nhiều cỡ, biểu tượng tròn ở header, favicon, apple-touch-icon, ảnh OG) sinh từ file đó chỉ bằng cắt + đổi kích thước — lệnh và bảng file ở `design/README.md`. Đổi logo: thay file gốc rồi chạy lại các lệnh đó.
+Logo chính thức bản đỏ – trắng (owner gửi 27/10/2026, JPEG 1254×1254) nằm ở `design/logo-vip-group-do-trang-goc-1254.jpg`. Mọi ảnh trong `public/` (logo đầy đủ, biểu tượng tròn, favicon, icon iOS, ảnh OG) sinh từ bản đó bằng lệnh trong `design/README.md`. Giao diện tông trắng – đỏ, đỏ thương hiệu `#D0071A` đo trên logo (biến `--brand` trong `src/styles/global.css`).
 
 Màu thương hiệu: biến CSS ở đầu `src/styles/global.css`.
 
