@@ -3,7 +3,7 @@ name: Production (Cloudflare Pages) — chạy tay từ main
 # PHÁT HÀNH PRODUCTION. Chỉ chạy khi owner bấm "Run workflow" trên nhánh main và gõ lại đúng SHA.
 # - Không có trigger push / pull_request: không thể tự chạy.
 # - Workflow này chỉ tồn tại trên main sau khi develop được merge vào main (việc của owner).
-# - Job deploy dùng GitHub Environment "production" — owner nên đặt Required reviewers (docs/PRODUCTION.md).
+# - Job deploy dùng GitHub Environment "production" — có Required reviewers = owner (docs/PRODUCTION.md).
 # - Thiếu credential → FAIL (production không được "bỏ qua cho qua").
 # - Preflight: project Cloudflare phải có production_branch = main.
 # - KHÔNG gắn tên miền, KHÔNG đổi DNS — việc đó owner làm trên dashboard (docs/PRODUCTION.md).

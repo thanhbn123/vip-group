@@ -1,14 +1,14 @@
 # MASTER STATUS — VIP GROUP WEBSITE
 
 > Ảnh chụp trạng thái, **không phải nguồn chân lý**. GitHub là nguồn chân lý: đo lại (`git ls-remote`, `gh pr list`, `gh run list`) trước khi dựa vào bất kỳ SHA nào ở đây.
-> Cập nhật lần cuối: 24/10/2026, trong PR của VIPG-WEB-013. SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
+> Cập nhật lần cuối: 25/10/2026, trong PR của VIPG-WEB-017 (biên bản phát hành). SHA của chính PR này và commit merge của nó không ghi được ở đây — xem PR trên GitHub.
 
 ## Nhánh
 
 | Nhánh | SHA đo được | Ghi chú |
 |---|---|---|
-| `main` | `57214628acd7aa1f05e5d018cc3dee4ca8d4ed9e` | Chỉ có commit khởi tạo. Giữ nguyên tới khi owner ra lệnh production |
-| `develop` | `55f5011d185fd404e3a785fda38d31799f597ef7` (base của PR VIPG-WEB-012) — bảng dòng dưới là lịch sử base của VIPG-WEB-011: `5bb43bd` | CI 36667603110 success · Staging 36667603028 lần 1 success (04:10Z), **lần chạy lại 2 FAIL** (04:28Z, token Cloudflare 401) |
+| `main` | `552a2bda2f539cd31573c8c90a79fba809bc5fe7` (đo 24/10) | Production. Chỉ cập nhật qua PR `develop → main` khi owner ra lệnh phát hành |
+| `develop` | `03f9e213a1d85e40b28b63dbbcfed145d8b9d147` (đo 25/10, sau khi merge PR #33) | Đo lại bằng `git ls-remote` trước khi dựa vào SHA này |
 
 ## Work item
 
@@ -56,13 +56,11 @@
 
 ## Production
 
-**NOT DEPLOYED.** Kiến trúc, quy trình, rollback, DNS: `docs/PRODUCTION.md`. Host production của project `vip-group.pages.dev` trả 404 (chưa có deployment production).
+**ĐÃ PHÁT HÀNH 24/10/2026** theo lệnh owner — web chạy ở **https://www.vipgroup.com.vn** (DNS giữ ở iNET, `www` CNAME → `vip-group.pages.dev`); tên miền gốc 301 sang `www` từ 25/10 (`ops/apex-redirect/`). Biên bản: `docs/verification/PRODUCTION-RELEASE-2026-10-24.md`. Kiến trúc, rollback: `docs/PRODUCTION.md`.
 
 ## Blocker
 
 | Loại | Nội dung |
 |---|---|
-| CONTENT_PENDING | V-11501 — `docs/CONTENT_INPUT_PACK.md` |
-| BLOCKED_EXTERNAL_DNS | Owner chọn phương án A (Cloudflare DNS) — `DNS MIGRATION READY = NO` cho tới khi có bản xuất zone vCloud — `docs/DNS_MIGRATION.md` |
-| OWNER_APPROVAL | Merge `develop` → `main` và chạy workflow production |
-| OWNER_REVIEW | Environment `production` đã tạo 30/09 (reviewer owner, chỉ `main`) — owner xem lại |
+| OWNER_DECISION | V-13417 (hạ tầng VPS, ngoài repo): Caddy dùng chung gắn Caddyfile theo tệp — vá gốc cần dựng lại container, gián đoạn ngắn |
+| NOT_MEASURED | Lighthouse trên tên miền thật |

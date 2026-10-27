@@ -46,16 +46,16 @@ const nameAttr = (n: string) => (backendReady ? n : undefined);
 
 <style>
   .contact-form { display: grid; gap: 16px; }
-  .notice { margin: 0; padding: 12px 16px; border-radius: var(--radius-sm); background: rgba(217,182,111,.1); border: 1px solid rgba(217,182,111,.35); font-size: 14px; color: #e9dcc0; }
+  .notice { margin: 0; padding: 12px 16px; border-radius: var(--radius-sm); background: rgba(208, 7, 26, .05); border: 1px solid rgba(208, 7, 26, .25); font-size: 14px; color: var(--text-2); }
   .field { display: grid; gap: 6px; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
   label { font-size: 14px; font-weight: 600; }
-  input, textarea { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--text); }
-  input:focus-visible, textarea:focus-visible { border-color: var(--gold); }
+  input, textarea { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: var(--bg); color: var(--text); }
+  input:focus-visible, textarea:focus-visible { border-color: var(--brand); }
   textarea { resize: vertical; }
   button[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
-  .form-status { margin: 0; font-size: 14px; color: var(--gold-light); min-height: 1.4em; }
+  .form-status { margin: 0; font-size: 14px; color: var(--brand-ink); min-height: 1.4em; }
 </style>
 
 <script>

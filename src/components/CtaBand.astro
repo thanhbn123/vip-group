@@ -15,7 +15,13 @@ const { title, text } = Astro.props;
   </div>
 </section>
 <style>
-  .cta-band { padding: clamp(48px, 7vw, 80px) 0; background: linear-gradient(135deg, var(--navy-800), var(--navy-950)); border-top: 1px solid var(--line); }
+  .cta-band { padding: clamp(48px, 7vw, 80px) 0; background: var(--brand); color: var(--on-brand); }
+  .cta-band .muted { color: rgba(255, 255, 255, .9); }
+  .cta-band .btn-primary { background: #fff; color: var(--brand-ink); }
+  .cta-band .btn-primary:hover { background: #fff3f4; }
+  .cta-band .btn-ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .7); }
+  .cta-band .btn-ghost:hover { border-color: #fff; color: #fff; }
+  .cta-band :focus-visible { outline-color: #fff; }
   .cta-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px 48px; flex-wrap: wrap; }
   .cta-inner h2 { margin-bottom: 8px; }
   .cta-inner p { margin: 0; max-width: 560px; }
