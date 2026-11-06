@@ -5,5 +5,6 @@ import { subsidiaries } from './subsidiaries';
 import { news } from './news';
 import { careers } from './careers';
 import { contact } from './contact';
+import { pricing } from './pricing';
 
-export const content: SiteContent = { company, sectors, subsidiaries, news, careers, contact };
+export const content: SiteContent = { company, sectors, subsidiaries, news, careers, contact, pricing };

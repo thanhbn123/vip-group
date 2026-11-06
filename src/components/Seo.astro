@@ -7,9 +7,11 @@ interface Props {
   description: string;
   locale?: Locale;
   noindex?: boolean;
+  /** JSON-LD bổ sung (đặt SAU Organization). */
+  jsonLd?: Record<string, unknown>[];
 }
 
-const { title, description, locale = defaultLocale, noindex = false } = Astro.props;
+const { title, description, locale = defaultLocale, noindex = false, jsonLd = [] } = Astro.props;
 const { company, contact } = getContent(locale);
 const site = Astro.site!;
 const canonical = new URL(Astro.url.pathname, site).href;
@@ -60,3 +62,4 @@ const organization = Object.fromEntries(
 <meta property="og:image:alt" content={`${company.name} — ${company.slogan}`} />
 <meta name="twitter:card" content="summary_large_image" />
 <script type="application/ld+json" set:html={JSON.stringify(organization)} />
+{jsonLd.map((d) => <script type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', ...d })} />)}
