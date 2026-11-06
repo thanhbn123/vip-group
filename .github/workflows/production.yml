@@ -30,7 +30,7 @@ concurrency:
 jobs:
   build:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Xác nhận SHA phát hành
@@ -65,7 +65,7 @@ jobs:
   deploy:
     needs: build
     environment: production
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
       CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}

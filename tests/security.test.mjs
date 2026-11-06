@@ -137,3 +137,14 @@ test('workflow staging: workflow_dispatch chỉ chạy từ develop', () => {
   assert.match(j.build, /if: github\.event_name != 'workflow_dispatch' \|\| github\.ref == 'refs\/heads\/develop'/);
   assert.match(j.deploy, /needs: build/, 'deploy phụ thuộc build → build bị chặn thì deploy cũng không chạy');
 });
+
+// ubuntu-latest chuyển sang 26.04 (image 20261101) làm test caddy-mount #27 (SIGINT) trượt: tee mới không giữ
+// tín hiệu bị bỏ qua → script chết vì SIGPIPE. Ghim runner đúng môi trường đã kiểm chứng; nâng cấp phải có chủ đích.
+test('mọi job workflow ghim runner ubuntu-24.04 (không dùng ubuntu-latest)', () => {
+  for (const wf of ['ci.yml', 'staging.yml', 'production.yml']) {
+    const s = readFileSync(join(root, '.github/workflows', wf), 'utf8');
+    const runs = [...s.matchAll(/runs-on:\s*(\S+)/g)].map((m) => m[1]);
+    assert.ok(runs.length > 0, wf);
+    for (const r of runs) assert.equal(r, 'ubuntu-24.04', `${wf}: runs-on ${r}`);
+  }
+});

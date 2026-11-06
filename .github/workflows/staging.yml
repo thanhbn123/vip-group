@@ -34,7 +34,7 @@ jobs:
   build:
     # workflow_dispatch chỉ được chạy từ develop — không ghi đè alias staging bằng mã nhánh khác.
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/develop'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     outputs:
       branch: ${{ steps.target.outputs.branch }}
@@ -76,7 +76,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
       CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}

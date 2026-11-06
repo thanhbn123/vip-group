@@ -11,9 +11,10 @@ interface Props {
   description: string;
   locale?: Locale;
   noindex?: boolean;
+  jsonLd?: Record<string, unknown>[];
 }
 
-const { title, description, locale = defaultLocale, noindex } = Astro.props;
+const { title, description, locale = defaultLocale, noindex, jsonLd } = Astro.props;
 const ui = t(locale);
 ---
 <!doctype html>
@@ -26,7 +27,7 @@ const ui = t(locale);
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap.xml" />
-    <Seo title={title} description={description} locale={locale} noindex={noindex} />
+    <Seo title={title} description={description} locale={locale} noindex={noindex} jsonLd={jsonLd} />
   </head>
   <body>
     <!-- Đánh dấu có JS: menu mobile chỉ thu gọn khi JS chạy; tắt JS thì menu hiện sẵn.
