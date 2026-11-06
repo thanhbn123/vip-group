@@ -216,3 +216,38 @@ test('Apps Script → CRM V5: chữ ký HMAC khớp thuật toán CRM; payload �
   assert.ok(Buffer.byteLength(ctx.crmPayload_(row)) < 16 * 1024, 'body ≤ 16 KB');
   assert.equal(JSON.parse(ctx.crmPayload_([...row.slice(0, 6), '', ...row.slice(7)])).weight_kg, null);
 });
+
+test('Apps Script đồng bộ CRM: nghỉ 2,5 s/lead; 401 dừng lượt, 3 lượt liên tiếp mới cảnh báo MỘT lần; thành công thì xoá đếm', async () => {
+  const vm = await import('node:vm');
+  const gs = readFileSync(join(root, 'ops/lead-sheet/Code.gs'), 'utf8');
+  const props = { CRM_INTAKE_URL: 'https://crm.example/api/intake/leads', LEAD_INTAKE_SECRET: 's' };
+  const header = ['lead_id'];
+  const mkRow = (id) => [id, '2026-11-06T07:30:01.000Z', 'A B', '0961102655', '', 'khac', '', '', '/', '', '', '', '2026-11-06T07:30:00.000Z', 'k' + id, 'chờ đồng bộ', '', 0, '', ''];
+  let data = [mkRow('VG-1'), mkRow('VG-2'), mkRow('VG-3')];
+  let codes = []; const sleeps = []; const alerts = []; let fetched = 0;
+  const sheet = {
+    getLastRow: () => data.length + 1,
+    getRange: (r, c, nr, nc) => nr ? { getValues: () => data.slice(r - 2, r - 2 + nr).map((x) => x.slice(0, nc)) } : { setValue: (v) => { data[r - 2][c - 1] = v; } },
+    appendRow() {}, setFrozenRows() {},
+  };
+  const ctx = {
+    JSON, String, Number, Math, Date,
+    Utilities: { sleep: (ms) => sleeps.push(ms), Charset: { UTF_8: 'u' }, computeHmacSha256Signature: () => [1, 2, 3] },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => props[k] ?? null, setProperty: (k, v) => { props[k] = v; }, deleteProperty: (k) => { delete props[k]; } }) },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: () => sheet }) },
+    UrlFetchApp: { fetch: (url) => { fetched++; if (url.includes('zapps')) { alerts.push('zalo'); return {}; } const c = codes.shift() ?? 201; return { getResponseCode: () => c, getContentText: () => (c === 201 ? '{"crm_lead_id":"LD-1"}' : '{}') }; } },
+    MailApp: { sendEmail: () => alerts.push('mail') }, Session: { getEffectiveUser: () => ({ getEmail: () => 'o@x' }) },
+  };
+  vm.createContext(ctx); vm.runInContext(gs, ctx);
+  void header;
+
+  // Lượt 1–3: 401 ngay lead đầu → dừng lượt (không gửi lead 2, 3); cảnh báo đúng 1 lần ở lượt 3.
+  for (let k = 1; k <= 4; k++) { codes = [401]; fetched = 0; ctx.syncPendingToCrm(); assert.equal(fetched, 1, `lượt ${k} chỉ gửi 1 lead rồi dừng`); assert.equal(alerts.length, k >= 3 ? 1 : 0, `lượt ${k}: số cảnh báo`); }
+  assert.deepEqual(alerts, ['mail'], 'cảnh báo một lần (email vì chưa cấu hình Zalo)');
+  assert.equal(data[0][14], 'lỗi tạm'); assert.equal(data[1][14], 'chờ đồng bộ');
+  // Sửa khoá: cả 3 lead đồng bộ, nghỉ 2,5 s giữa các lần gửi, xoá bộ đếm.
+  sleeps.length = 0; codes = [201, 201, 201]; ctx.syncPendingToCrm();
+  assert.deepEqual(data.map((r) => r[14]), ['đã đồng bộ', 'đã đồng bộ', 'đã đồng bộ']);
+  assert.deepEqual(sleeps, [2500, 2500]);
+  assert.equal(props.CRM_AUTH_FAIL_STREAK, undefined); assert.equal(props.CRM_AUTH_ALERTED, undefined);
+});

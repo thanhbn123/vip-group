@@ -6,6 +6,8 @@
  *   SHEET_WEBHOOK_SECRET   chuỗi bí mật dài, trùng với biến SHEET_WEBHOOK_SECRET trên Cloudflare (bắt buộc)
  *   CRM_INTAKE_URL         https://…/api/intake/leads của CRM V5 (để trống = chưa đồng bộ CRM)
  *   LEAD_INTAKE_SECRET     khoá HMAC chung với CRM V5
+ *   ZALO_BOT_TOKEN, ZALO_NOTIFY_CHAT_ID  (tuỳ chọn) để báo sự cố đồng bộ CRM qua Zalo; không có thì gửi email
+ *   ALERT_EMAIL            (tuỳ chọn) email nhận cảnh báo — mặc định email tài khoản chạy script
  *
  * Website gọi doPost với {secret, action:'append', lead}. Trả {ok, lead_id, duplicate}.
  * Hàm syncPendingToCrm chạy theo trigger 10 phút: đẩy lead chưa đồng bộ sang CRM, ký HMAC trên đúng chuỗi gửi đi.
@@ -121,9 +123,11 @@ function syncPendingToCrm() {
   var rows = sh.getRange(2, 1, last - 1, HEADERS.length).getValues();
   var sent = 0;
   for (var i = 0; i < rows.length && sent < 50; i++) {
+    // Nghỉ 2,5 s giữa các lần gửi → ~24 lead/phút, luôn dưới ngưỡng CRM 30/phút/IP (50 lead ≈ 2 phút < giới hạn 6 phút).
     var st = rows[i][COL['trạng thái CRM'] - 1];
     if (st !== 'chờ đồng bộ' && st !== 'chưa cấu hình CRM' && st !== 'lỗi tạm') continue;
     var rowNo = i + 2;
+    if (sent > 0) Utilities.sleep(2500);
     var payload = crmPayload_(rows[i]);
     var ts = String(Math.floor(Date.now() / 1000));
     var res, code, text;
@@ -137,6 +141,20 @@ function syncPendingToCrm() {
     sent++;
     var tries = Number(rows[i][COL['lần thử CRM'] - 1] || 0) + 1;
     sh.getRange(rowNo, COL['lần thử CRM']).setValue(tries);
+    if (code === 401) {
+      // Khoá sai / lệch đồng hồ: gửi tiếp vô ích. Dừng lượt này; 3 lượt liên tiếp → cảnh báo owner MỘT lần.
+      sh.getRange(rowNo, COL['trạng thái CRM']).setValue('lỗi tạm');
+      sh.getRange(rowNo, COL['lỗi CRM gần nhất']).setValue('401 ' + text);
+      var streak = Number(props.getProperty('CRM_AUTH_FAIL_STREAK') || 0) + 1;
+      props.setProperty('CRM_AUTH_FAIL_STREAK', String(streak));
+      if (streak >= 3 && props.getProperty('CRM_AUTH_ALERTED') !== '1') {
+        alertOwner_('⚠️ VIP GROUP Lead: CRM từ chối chữ ký (401) ' + streak + ' lượt liên tiếp. Kiểm tra LEAD_INTAKE_SECRET trong Script Properties (khớp khoá CRM) hoặc đồng hồ. Lead vẫn an toàn trong Sheet, sẽ tự gửi lại khi sửa xong.');
+        props.setProperty('CRM_AUTH_ALERTED', '1');
+      }
+      return;
+    }
+    props.deleteProperty('CRM_AUTH_FAIL_STREAK');
+    props.deleteProperty('CRM_AUTH_ALERTED');
     if (code === 200 || code === 201) {
       var crmId = ''; try { crmId = JSON.parse(text).crm_lead_id || ''; } catch (e2) {}
       sh.getRange(rowNo, COL['trạng thái CRM']).setValue('đã đồng bộ');
@@ -150,6 +168,21 @@ function syncPendingToCrm() {
       sh.getRange(rowNo, COL['lỗi CRM gần nhất']).setValue(code + ' ' + text);
     }
   }
+}
+
+/** Cảnh báo vận hành cho owner: Zalo Bot nếu có cấu hình, nếu không thì email. Không chứa dữ liệu khách. */
+function alertOwner_(text) {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty('ZALO_BOT_TOKEN'), chat = props.getProperty('ZALO_NOTIFY_CHAT_ID');
+  try {
+    if (token && chat) {
+      UrlFetchApp.fetch('https://bot-api.zapps.me/bot' + token + '/sendMessage', {
+        method: 'post', contentType: 'application/json', muteHttpExceptions: true, payload: JSON.stringify({ chat_id: chat, text: text }),
+      });
+      return;
+    }
+  } catch (e) { /* rơi xuống email */ }
+  MailApp.sendEmail(props.getProperty('ALERT_EMAIL') || Session.getEffectiveUser().getEmail(), 'VIP GROUP Lead — cảnh báo đồng bộ CRM', text);
 }
 
 /** Chạy tay MỘT lần sau khi dán code: tạo trigger 10 phút + kiểm cấu hình. */
