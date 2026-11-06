@@ -14,7 +14,7 @@ const PAGES = ['/', '/gioi-thieu/', '/linh-vuc-hoat-dong/', '/cong-ty-thanh-vien
 const SITEMAP_EXTRA = ['/chinh-sach-bao-mat/'];
 // Trang Logistics trạng thái `ready` (VIPG-WEB-021) — cũng phải nằm trong sitemap. Trang `pending` thì không.
 const LOGISTICS_READY = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/',
-  '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/'];
+  '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/', '/logistics/bang-gia/'];
 
 const fileFor = (path) => join(dist, path, 'index.html');
 const read = (path) => readFileSync(fileFor(path), 'utf8');
@@ -131,14 +131,17 @@ test('favicon, logo và ảnh Open Graph tồn tại', () => {
   }
 });
 
-test('form liên hệ không giả vờ gửi dữ liệu', () => {
+test('form liên hệ: gửi thật qua /api/lead (Turnstile), có nhãn cho mọi ô, có đồng ý xử lý dữ liệu', () => {
   const html = read('/lien-he/');
   const form = attr(html, /(<form [^>]*data-contact-form[^>]*>)/);
   assert.ok(form, 'có form liên hệ');
-  assert.doesNotMatch(form, /\saction=/, 'form chưa có backend thì không được có action');
-  assert.match(html, /chưa gửi được dữ liệu/, 'phải báo rõ form chưa gửi được');
-  for (const id of ['cf-name', 'cf-phone', 'cf-email', 'cf-message']) {
-    assert.match(html, new RegExp(`<label for="${id}"`), `thiếu label cho ${id}`);
+  assert.doesNotMatch(form, /\saction=/, 'gửi bằng fetch, không submit form');
+  assert.match(form, /data-backend-ready="true"/);
+  assert.match(form, /data-endpoint="\/api\/lead"/);
+  assert.match(html, /class="cf-turnstile" data-sitekey="0x/);
+  assert.match(html, /<input id="cf-consent" type="checkbox" required/);
+  for (const id of ['cf-name', 'cf-phone', 'cf-email', 'cf-need', 'cf-weight', 'cf-message', 'cf-consent']) {
+    assert.match(html, new RegExp(`<label[^>]*for="${id}"`), `thiếu label cho ${id}`);
   }
 });
 

@@ -9,7 +9,7 @@ interface Props { location: string; variant?: 'light' | 'dark'; showQuote?: bool
 const { location, variant = 'light', showQuote = true } = Astro.props;
 ---
 <div class:list={['contact-actions', variant]}>
-  {showQuote && <a class="btn btn-primary" href="/logistics/bang-gia/#bao-gia" data-track="quote_cta_click" data-track-location={location}>Yêu cầu báo giá</a>}
+  {showQuote && <a class="btn btn-primary" href="/logistics/bang-gia/#form-lien-he" data-track="quote_cta_click" data-track-location={location}>Yêu cầu báo giá</a>}
   <a class="btn btn-ghost" href={provider.zaloUrl} rel="noopener" target="_blank" data-track="zalo_click" data-track-location={location}>
     Nhắn Zalo<span class="visually-hidden"> (mở tab mới)</span>
   </a>

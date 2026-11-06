@@ -105,7 +105,10 @@ test('không ảnh hưởng nội dung trang chủ đang chạy: title, H1, các
   // Bản sao lưu trang chủ production trước thay đổi.
   const live = readFileSync(join(root, 'docs/backup/live-home-2026-11-06.html'), 'utf8');
   // Thay đổi có chủ đích khác: link "Chính sách bảo mật" ở chân trang (VIPG-WEB-023).
-  const strip = (h) => text(h.replace(/<section class="section price-section"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '').replace(/Chính sách bảo mật · /, '');
+  // Thay đổi có chủ đích ngoài bảng giá: link "Chính sách bảo mật" chân trang (023); mục menu/chân trang "Logistics"
+  // và link "Dịch vụ vận chuyển Trung Quốc – Việt Nam →" trên thẻ lĩnh vực (021).
+  const strip = (h) => text(h.replace(/<section class="section price-section"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '')
+    .replace(/Chính sách bảo mật · /, '').replace(/ Logistics /g, ' ').replace(/ Dịch vụ vận chuyển Trung Quốc – Việt Nam → /, ' ');
   // Thay đổi có chủ đích duy nhất ngoài bảng giá: owner đổi Hotline/Zalo 0968961962 → 0961102655 (06/11/2026).
   const liveNewPhone = live.replace(/0968961962/g, '0961102655').replace(/\+84968961962/g, '+84961102655');
   assert.equal(strip(html), strip(liveNewPhone), 'ngoài khối bảng giá + số điện thoại mới, nội dung chữ trang chủ phải giống hệt bản production');

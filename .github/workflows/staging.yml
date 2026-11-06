@@ -67,14 +67,6 @@ jobs:
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
-      - name: Build and verify lead preview for PR 43
-        if: github.event_name == 'pull_request' && github.event.pull_request.number == 43
-        env:
-          VIPG_TURNSTILE_SITE_KEY: 0x4AAAAAAF2QZNcXX6-6puJf
-        run: |
-          npm run build
-          grep -Fq "data-sitekey=\"$VIPG_TURNSTILE_SITE_KEY\"" dist/lien-he/index.html
-
       - uses: actions/upload-artifact@v7
         with:
           name: dist

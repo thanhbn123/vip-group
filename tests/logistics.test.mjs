@@ -13,11 +13,17 @@ const demo = join(root, 'dist-demo');
 const SITE = 'https://www.vipgroup.com.vn';
 
 const READY = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/',
-  '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/'];
-const PENDING = ['/logistics/bang-gia/'];
+  '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/',
+  // V1.1: bảng giá có đơn giá theo kg owner cung cấp 06/11/2026 → ready.
+  '/logistics/bang-gia/'];
+const PENDING = [];
 // Trang kho: DRAFT cho tới khi owner xác nhận kho có thật (verifier P0-1).
-const DRAFT = ['/logistics/kho-quang-chau/', '/logistics/kho-tham-quyen/', '/logistics/kien-thuc/', '/logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/',
-  '/logistics/kien-thuc/ghi-ma-khach-hang-khi-dat-hang-1688-taobao/', '/logistics/kien-thuc/dong-goi-hang-gui-tu-trung-quoc/'];
+const KT = '/logistics/kien-thuc/';
+// Trang kho Quảng Châu + tuyến Thâm Quyến: DRAFT cho tới khi owner xác nhận nhận hàng/kho tại đó (verifier P0-1).
+const DRAFT = ['/logistics/kho-quang-chau/', '/logistics/van-chuyen-tham-quyen-viet-nam/', KT,
+  ...['cach-tinh-so-khoi-va-can-nang-quy-doi', 'ghi-ma-khach-hang-khi-dat-hang-1688-taobao', 'dong-goi-hang-gui-tu-trung-quoc',
+    'c-o-form-e-va-ma-hs-hang-tham-quyen', 'tham-quyen-o-dau-nhap-hang-tham-quyen', 'chinh-ngach-va-ky-gui-tron-goi-khac-nhau-the-nao',
+    'thu-tuc-hai-quan-nhap-khau-hang-trung-quoc-duong-bo', 'hang-dien-tu-co-pin-tu-trung-quoc'].map((s) => `${KT}${s}/`)];
 const BUILT = [...READY, ...PENDING];
 
 const read = (path, base = dist) => readFileSync(join(base, path, 'index.html'), 'utf8');
@@ -99,7 +105,8 @@ test('chống trùng lặp: title, description, H1 khác nhau trên toàn site',
 test('production KHÔNG chứa dữ liệu MẪU, giá, thời gian giao hay đánh giá chưa xác minh', () => {
   for (const file of allHtml(dist)) {
     const html = readFileSync(file, 'utf8');
-    const t = text(html);
+    // Giá DUY NHẤT được phép: 5 mức owner cung cấp 06/11/2026 (src/data/vi/pricing.ts). Mọi giá khác vẫn bị chặn.
+    const t = text(html).replace(/\b(?:20|16|15|14|12)\.000\s*(?:đ\/kg|VNĐ\/kg)/g, ' ').replace(/(?:20|16|15|14|12)\.000(?=\s*đ\/kg)/g, ' ');
     assert.doesNotMatch(t, /\bMẪU\b|\[MẪU\]|KHÔNG PHẢI ĐỊA CHỈ THẬT|BẢN DEMO/, `${file}: lọt dữ liệu mẫu`);
     // Cờ `u` + lookahead Unicode: `\b` của JS không nhận "đ"/"₫" (verifier P1-2).
     assert.doesNotMatch(t, /\d[\d.,]*\s*(?:đ|₫|VNĐ|vnđ|VND|đồng|triệu|nghìn|k)(?![\p{L}\p{N}])/iu, `${file}: có giá tiền chưa xác minh`);
@@ -107,7 +114,9 @@ test('production KHÔNG chứa dữ liệu MẪU, giá, thời gian giao hay đ�
       assert.doesNotMatch(t, /\d+(?:\s*[–-]\s*\d+)?\s*(?:ngày|giờ|tiếng|tuần)(?![\p{L}])/iu, `${file}: có thời gian giao chưa xác minh`);
     }
     assert.doesNotMatch(html, /aggregateRating|"Review"|ratingValue/, `${file}: không được có đánh giá`);
-    assert.doesNotMatch(html, /"offers"|"priceRange"/, `${file}: không được khai giá trong schema`);
+    assert.doesNotMatch(html, /"priceRange"/, `${file}: không khai priceRange`);
+    // Offer chỉ được mang đúng 5 đơn giá owner (VND/kg).
+    for (const m of html.matchAll(/"price":(\d+)/g)) assert.ok([20000, 16000, 15000, 14000, 12000].includes(Number(m[1])), `${file}: giá lạ trong schema ${m[1]}`);
     assert.doesNotMatch(t, /tập đoàn/i, file);
   }
 });
@@ -158,37 +167,30 @@ test('FAQPage chỉ chứa câu trả lời đã có căn cứ', () => {
   const faq = ldAll(html).find((d) => d['@type'] === 'FAQPage');
   assert.ok(faq && faq.mainEntity.length >= 5);
   const names = faq.mainEntity.map((q) => q.name);
-  for (const pendingQ of ['Hàng về Bắc Ninh mất bao lâu?', 'Gửi hàng về địa chỉ nào tại Trung Quốc?']) {
+  assert.ok(names.includes('Bảng giá vận chuyển Trung Quốc – Việt Nam bao nhiêu một kg?'), 'câu hỏi bảng giá (đã có nguồn) phải vào FAQPage');
+  for (const pendingQ of ['Hàng về Bắc Ninh mất bao lâu?', 'Gửi hàng về địa chỉ nào tại Trung Quốc?', 'Cước vận chuyển tính theo cân nặng hay theo khối?']) {
     assert.ok(!names.includes(pendingQ), `câu chưa xác minh không được vào FAQPage: ${pendingQ}`);
   }
   // Mọi câu hỏi trong schema đều hiển thị trên trang.
   for (const n of names) assert.ok(text(html).includes(n), `câu hỏi trong schema không hiển thị: ${n}`);
 });
 
-test('form báo giá: không có máy chủ → không action, ô chữ không có name, nút gửi disabled khi tắt JS', () => {
+test('bảng giá chi tiết: đúng 5 mức owner, form thu lead chọn sẵn "báo giá", không dùng hệ số quy đổi chưa xác minh', () => {
   const html = read('/logistics/bang-gia/');
-  const start = html.indexOf('<form class="quote-form');
-  assert.ok(start > 0, 'có form báo giá');
-  const form = html.slice(start, html.indexOf('</form>', start));
-  const open = form.slice(0, form.indexOf('>') + 1);
-  assert.doesNotMatch(open, /\saction=|\smethod=/);
-  for (const [tag] of form.matchAll(/<(?:input|textarea|select)\b[^>]*>/g)) {
-    if (/type="radio"/.test(tag)) continue; // nhóm radio cần name để chọn-một bằng bàn phím; không rời trang vì không action + nút disabled + CSP
-    assert.doesNotMatch(tag, /\sname=/, `ô nhập có name: ${tag}`);
+  const t = text(html).replace(/\s+/g, ' ');
+  for (const [label, price] of [['0–5 kg', '20.000'], ['Trên 5 đến dưới 100 kg', '16.000'], ['100 đến dưới 500 kg', '15.000'], ['500–1.000 kg', '14.000'], ['Trên 1.000 kg', '12.000']]) {
+    assert.match(t, new RegExp(`${label} .{0,40}?${price.replace('.', '\\.')} ?đ/kg`), `${label} → ${price}`);
   }
+  assert.match(t, /Đơn vị tính: VNĐ\/kg/);
+  assert.match(t, /Phụ phí và thuế \(nếu có\) sẽ được xác nhận trước khi báo giá chính thức/);
+  assert.match(t, /Hệ số quy đổi được báo theo từng lô hàng/, 'công cụ tính không dùng hệ số chưa xác minh');
+  const start = html.indexOf('<form '); const form = html.slice(start, html.indexOf('</form>', start));
+  assert.match(form, /id="form-lien-he"/);
+  assert.match(form, /<option value="bao-gia-van-chuyen" selected/);
+  assert.doesNotMatch(form.slice(0, form.indexOf('>') + 1), /\saction=|\smethod=/);
+  for (const [tag] of form.matchAll(/<(?:input|textarea|select)\b[^>]*>/g)) assert.doesNotMatch(tag, /\sname=/, tag);
   assert.match(form, /<button [^>]*type="submit"[^>]*\sdisabled[\s>]/);
-  assert.match(form, /chưa lưu yêu cầu trên máy chủ/);
-  for (const id of ['qf-name', 'qf-phone', 'qf-goods', 'qf-dest', 'qf-service', 'qf-kg', 'qf-m3', 'qf-msg']) {
-    assert.match(form, new RegExp(`<label for="${id}"`), `thiếu label ${id}`);
-  }
-  assert.match(html, /form-action 'none'/, 'CSP vẫn chặn submit');
-});
-
-test('bảng giá production: hiện "đang cập nhật", không có bảng giá', () => {
-  const html = read('/logistics/bang-gia/');
-  assert.doesNotMatch(html, /<table class="price-table/);
-  assert.match(text(html), /Bảng giá công khai đang được cập nhật/);
-  assert.match(text(html), /Hệ số quy đổi được báo theo từng lô hàng/, 'công cụ tính không dùng hệ số chưa xác minh');
+  assert.match(html, /form-action 'none'/);
 });
 
 test('link nội bộ tới trang nháp không tồn tại trong production', () => {
@@ -198,12 +200,13 @@ test('link nội bộ tới trang nháp không tồn tại trong production', ()
   }
 });
 
-test('thương hiệu tập đoàn: trang chủ giữ nguyên H1/title, chỉ thêm 1 link Logistics trong thẻ lĩnh vực + menu', () => {
+test('thương hiệu tập đoàn: trang chủ giữ nguyên H1/title; link Logistics chỉ ở menu, chân trang, thẻ lĩnh vực + bảng giá', () => {
   const html = read('/');
   assert.equal(attr(html, /<title>([^<]+)<\/title>/), 'VIP GROUP | Con người - Công nghệ - Cơ hội');
   assert.match(html, /<h1 id="hero-title"[^>]*>Con người\./);
   assert.ok(!html.includes('sticky-bar'), 'trang chủ không có thanh liên hệ logistics');
   assert.equal((html.match(/href="\/logistics\/"/g) ?? []).length, 3, 'menu + footer + thẻ lĩnh vực');
+  assert.equal((html.match(/href="\/logistics\/bang-gia\/"/g) ?? []).length, 1, 'bảng giá trang chủ → bảng giá chi tiết');
 });
 
 test('lớp đo lường: chỉ dataLayer, không tải script bên thứ ba, không gửi dữ liệu cá nhân', () => {
@@ -216,8 +219,8 @@ test('lớp đo lường: chỉ dataLayer, không tải script bên thứ ba, kh
   const js = all + assetJs;
   assert.match(js, /dataLayer/);
   // MỌI lời gọi đo lường (track/push/dataLayer) không được mang họ tên / SĐT / email / nội dung form (verifier P1-4).
-  const PII = /qf-(name|phone|msg|goods|dest)|summary|\bname\b|phone|email|val\(/i;
-  const srcFiles = ['src/components/logistics/QuoteForm.astro', 'src/components/logistics/TrackEvents.astro', 'src/components/logistics/VolumeCalculator.astro'];
+  const PII = /cf-(name|phone|email|message|weight|website)|\bname\b|phone|email/i;
+  const srcFiles = ['src/components/ContactForm.astro', 'src/components/logistics/TrackEvents.astro', 'src/components/logistics/VolumeCalculator.astro'];
   let calls = 0;
   for (const f of srcFiles) {
     const src = readFileSync(join(root, f), 'utf8');
@@ -226,7 +229,7 @@ test('lớp đo lường: chỉ dataLayer, không tải script bên thứ ba, kh
       assert.doesNotMatch(m[2] ?? '', PII, `${f}: sự kiện ${m[1]} mang dữ liệu cá nhân: ${m[2]}`);
     }
   }
-  assert.ok(calls >= 5, `phải tìm thấy các lời gọi track() (thấy ${calls})`);
+  assert.ok(calls >= 1, `phải tìm thấy các lời gọi track() (thấy ${calls})`);
 });
 
 test('DEMO (VIPG_DEMO=1): ra dist-demo/, mọi trang noindex, có nhãn MẪU, có bài nháp', { timeout: 180000 }, () => {
@@ -235,10 +238,9 @@ test('DEMO (VIPG_DEMO=1): ra dist-demo/, mọi trang noindex, có nhãn MẪU, c
   for (const file of allHtml(demo)) assert.match(readFileSync(file, 'utf8'), /<meta name="robots" content="noindex"/, `${file} DEMO phải noindex`);
   assert.equal((readFileSync(join(demo, 'sitemap.xml'), 'utf8').match(/<loc>/g) ?? []).length, 0, 'DEMO: sitemap rỗng');
   for (const p of DRAFT) assert.ok(existsSync(join(demo, p, 'index.html')), `DEMO thiếu ${p}`);
-  const bg = read('/logistics/bang-gia/', demo);
-  assert.match(bg, /<table class="price-table/);
-  assert.match(text(bg), /MẪU/);
-  assert.match(text(bg), /BẢN DEMO NGHIỆM THU/);
+  const kho = read('/logistics/kho-quang-chau/', demo);
+  assert.match(text(kho), /MẪU/);
+  assert.match(text(kho), /BẢN DEMO NGHIỆM THU/);
   // Build DEMO không được ghi đè dist/ production.
-  assert.doesNotMatch(read('/logistics/bang-gia/'), /<table class="price-table/);
+  assert.ok(!existsSync(join(dist, 'logistics/kho-quang-chau/index.html')), 'build DEMO không ghi đè dist/');
 });

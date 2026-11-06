@@ -1,34 +1,32 @@
 ---
 import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
-import QuoteForm from '../../components/logistics/QuoteForm.astro';
+import PriceTable from '../../components/PriceTable.astro';
+import ContactForm from '../../components/ContactForm.astro';
 import VolumeCalculator from '../../components/logistics/VolumeCalculator.astro';
-import { pageByKey, shown } from '../../lib/logistics';
-import { priceTable, priceFactors } from '../../data/vi/logistics';
+import { pageByKey } from '../../lib/logistics';
+import { priceFactors } from '../../data/vi/logistics';
+import { getContent } from '../../data';
 
 const page = pageByKey('bang-gia');
-const { value: rows, isSample } = shown(priceTable);
+const { company, contact, pricing } = getContent('vi');
+// Offer theo từng mức giá (VND/kg) — cùng nguồn với trang chủ. Không khai thời gian giao, phụ phí, đánh giá.
+const site = Astro.site!;
+const priceLd = {
+  '@type': 'Service',
+  name: pricing.title,
+  serviceType: 'Vận chuyển hàng hóa Trung Quốc – Việt Nam',
+  url: new URL(page.href, site).href,
+  brand: { '@id': new URL('/#organization', site).href },
+  areaServed: { '@type': 'Country', name: 'Việt Nam' },
+  offers: pricing.tiers.map((t) => ({
+    '@type': 'Offer', name: t.label, priceCurrency: 'VND',
+    priceSpecification: { '@type': 'UnitPriceSpecification', price: t.price, priceCurrency: 'VND', unitCode: 'KGM', unitText: 'kg' },
+  })),
+};
 ---
-<LogisticsLayout page={page} showActions={false}>
-  <section class="section" aria-labelledby="price-title">
-    <div class="container">
-      <span class="kicker">Bảng giá</span>
-      <h2 id="price-title">Bảng giá tham khảo {isSample && <span class="sample-tag">MẪU</span>}</h2>
-      {rows ? (
-        <div class="table-wrap">
-          <table class="price-table">
-            <caption class="visually-hidden">Bảng giá vận chuyển tham khảo</caption>
-            <thead><tr><th scope="col">Tuyến</th><th scope="col">Đơn vị tính</th><th scope="col">Đơn giá</th><th scope="col">Thời gian dự kiến</th></tr></thead>
-            <tbody>{rows.map((r) => <tr><td>{r.route}</td><td>{r.unit}</td><td>{r.price}</td><td>{r.transit}</td></tr>)}</tbody>
-          </table>
-        </div>
-      ) : (
-        <div class="empty-state" data-owner-input-pending>
-          <p><strong>Bảng giá công khai đang được cập nhật.</strong></p>
-          <p>Cước được báo theo từng lô hàng dựa trên cân nặng, số khối, loại hàng và nơi nhận. Gửi yêu cầu bên dưới để nhận báo giá.</p>
-        </div>
-      )}
-    </div>
-  </section>
+<LogisticsLayout page={page} showActions={false} jsonLd={[priceLd]}>
+  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline}
+    quoteHref={contact.formBackendReady ? '#form-lien-he' : null} />
 
   <section class="section section-alt" aria-labelledby="factor-title">
     <div class="container">
@@ -37,19 +35,17 @@ const { value: rows, isSample } = shown(priceTable);
     </div>
   </section>
 
-  <section class="section" aria-label="Công cụ tính và yêu cầu báo giá">
+  <section class="section" aria-labelledby="quote-title">
     <div class="container quote-grid">
       <VolumeCalculator />
-      <QuoteForm />
+      <div>
+        <h2 id="quote-title" class="quote-title">Yêu cầu báo giá cho lô hàng</h2>
+        <ContactForm email={contact.email} backendReady={contact.formBackendReady} hotline={contact.hotline} lead={contact.lead} defaultNeed="bao-gia-van-chuyen" />
+      </div>
     </div>
   </section>
 </LogisticsLayout>
 <style>
-  .sample-tag { display: inline-block; vertical-align: middle; padding: 2px 8px; border-radius: 6px; font-size: 13px; font-weight: 800; color: #fff; background: #6b4e00; }
-  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
-  .price-table { width: 100%; border-collapse: collapse; min-width: 560px; }
-  .price-table th, .price-table td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--line); }
-  .price-table thead th { background: var(--bg-alt); font-size: 14px; }
-  .price-table tbody tr:last-child td { border-bottom: 0; }
   .quote-grid { display: grid; gap: 32px; }
+  .quote-title { font-size: 26px; }
 </style>

@@ -14,8 +14,10 @@ interface Props {
   backendReady: boolean;
   hotline?: string | null;
   lead?: { endpoint: string; turnstileSiteKey: string | null; privacyHref: string };
+  /** Nhu cầu chọn sẵn (vd. trang bảng giá → báo giá vận chuyển). */
+  defaultNeed?: string;
 }
-const { email, backendReady, hotline = null, lead } = Astro.props;
+const { email, backendReady, hotline = null, lead, defaultNeed } = Astro.props;
 const ready = backendReady && !!lead?.turnstileSiteKey;
 const tel = hotline?.replace(/\s/g, '') ?? '';
 const pretty = tel.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3');
@@ -55,7 +57,7 @@ const needs = [
     <div class="field-row">
       <div class="field">
         <label for="cf-need">Nhu cầu</label>
-        <select id="cf-need">{needs.map(([v, l]) => <option value={v}>{l}</option>)}</select>
+        <select id="cf-need">{needs.map(([v, l]) => <option value={v} selected={v === defaultNeed}>{l}</option>)}</select>
       </div>
       <div class="field">
         <label for="cf-weight">Khối lượng ước tính (kg)</label>

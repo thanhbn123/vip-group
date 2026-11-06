@@ -1,19 +1,24 @@
 ---
 /**
- * Trang tuyến Thâm Quyến → Việt Nam (VIPG-WEB-022) — tối ưu SEO + GEO cho cụm
+ * Trang tuyến Thâm Quyến → Việt Nam (VIPG-WEB-024) — tối ưu SEO + GEO cho cụm
  * "vận chuyển trung việt từ thâm quyến về việt nam".
  *
  * Cấu trúc cho AI trích dẫn: đoạn trả lời trực tiếp ngay dưới H1 (< 100 từ), bảng số liệu,
  * ngày cập nhật, FAQ ngắn gọn. MỌI con số (thời gian, giá) đi qua Fact → chưa xác minh thì
  * production không hiện (và trang đang `draft`, chỉ build ở DEMO).
  */
-import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
-import FaqList from '../../components/logistics/FaqList.astro';
-import Pending from '../../components/logistics/Pending.astro';
-import { pageByKey, shown, linkable, telHref, prettyPhone } from '../../lib/logistics';
-import { serviceLd } from '../../lib/schema';
-import { shenzhenRoute as R, provider, processSteps, volumetricDivisor } from '../../data/vi/logistics';
-import type { FaqItem } from '../../data/types';
+import LogisticsLayout from '../../../layouts/LogisticsLayout.astro';
+import FaqList from '../../../components/logistics/FaqList.astro';
+import Pending from '../../../components/logistics/Pending.astro';
+import { pageByKey, shown, linkable, telHref, prettyPhone, isBuilt } from '../../../lib/logistics';
+import { serviceLd } from '../../../lib/schema';
+import { shenzhenRoute as R, provider, processSteps, volumetricDivisor } from '../../../data/vi/logistics';
+import type { FaqItem } from '../../../data/types';
+
+// Route có kiểm trạng thái: trang `draft` KHÔNG được sinh ở production (file .astro tĩnh thì luôn được build).
+export function getStaticPaths() {
+  return isBuilt(pageByKey('tham-quyen').status) ? [{ params: { index: undefined } }] : [];
+}
 
 const page = pageByKey('tham-quyen');
 const site = Astro.site!;
@@ -167,7 +172,7 @@ const steps = [
         </table>
       </div>
       <p class="sz-links">
-        <a class="text-link" href="/logistics/bang-gia/#bao-gia">Gửi yêu cầu báo giá &amp; tính số khối →</a>
+        <a class="text-link" href="/logistics/bang-gia/#form-lien-he">Gửi yêu cầu báo giá &amp; tính số khối →</a>
       </p>
       <h3>Cách tính cân nặng quy đổi</h3>
       <p>Số khối (m³) = dài × rộng × cao (cm) ÷ 1.000.000. Cân nặng quy đổi (kg) = dài × rộng × cao (cm) ÷ hệ số quy đổi (hệ số: <Pending fact={{ ...volumetricDivisor, value: volumetricDivisor.value === null ? null : String(volumetricDivisor.value), sample: volumetricDivisor.sample === undefined ? undefined : String(volumetricDivisor.sample) }} fallback="ghi trong báo giá" />). Ví dụ kiện 60 × 50 × 40 cm có thể tích 0,12 m³. Cước thường tính theo giá trị lớn hơn giữa cân nặng thực và cân nặng quy đổi.</p>

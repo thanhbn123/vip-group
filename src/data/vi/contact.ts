@@ -8,7 +8,8 @@ import type { ContactInfo } from '../types';
  * Mã site Cloudflare Turnstile — CÔNG KHAI (không phải bí mật). Owner tạo theo docs/HUONG_DAN_CAI_DAT_THU_LEAD.md.
  * null = chưa cài → form giữ trạng thái "chưa gửi được dữ liệu" như trước.
  */
-const TURNSTILE_SITE_KEY: string | null = null;
+// Owner tạo widget Turnstile (06/11/2026). Form chỉ gửi được khi Cloudflare có đủ biến bí mật (docs/HUONG_DAN_CAI_DAT_THU_LEAD.md, bước D).
+const TURNSTILE_SITE_KEY: string | null = '0x4AAAAAAF2QZNcXX6-6puJf';
 const siteKey = __VIPG_TURNSTILE_OVERRIDE__ || TURNSTILE_SITE_KEY;
 
 export const contact: ContactInfo = {

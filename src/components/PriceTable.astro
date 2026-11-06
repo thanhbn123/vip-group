@@ -5,8 +5,8 @@
  * và trình đọc màn hình hiểu đúng; trên điện thoại vẫn là 2 cột, chữ lớn, không cuộn ngang.
  */
 import type { ShippingPricing } from '../data';
-interface Props { pricing: ShippingPricing; slogan: string; brand: string; hotline: string | null; quoteHref?: string | null }
-const { pricing, slogan, brand, hotline, quoteHref = null } = Astro.props;
+interface Props { pricing: ShippingPricing; slogan: string; brand: string; hotline: string | null; quoteHref?: string | null; detailHref?: string | null }
+const { pricing, slogan, brand, hotline, quoteHref = null, detailHref = null } = Astro.props;
 const fmt = (n: number) => n.toLocaleString('vi-VN');
 const updated = pricing.updated.split('-').reverse().join('/');
 const tel = hotline?.replace(/\s/g, '');
@@ -58,6 +58,7 @@ const pretty = tel?.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3');
         <p><strong>Đơn vị tính:</strong> {pricing.unit} · <span lang="zh-CN">单位：{pricing.unitZh}</span></p>
         <p>{pricing.note} <span lang="zh-CN">{pricing.noteZh}</span></p>
         <p class="updated">Cập nhật: <time datetime={pricing.updated}>{updated}</time></p>
+        {detailHref && <p><a class="text-link" href={detailHref}>Xem bảng giá chi tiết, cách tính số khối →</a></p>}
       </div>
     </div>
   </div>

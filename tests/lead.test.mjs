@@ -138,14 +138,15 @@ test('worker: router chỉ xử lý /api/*, còn lại trả về tài sản tĩ
   assert.equal(served, 1);
 });
 
-test('build mặc định: có _worker.js + _routes.json chỉ /api/*; form giữ trạng thái chưa gửi', () => {
+test('build mặc định: có _worker.js + _routes.json chỉ /api/*; form bật với mã site Turnstile thật', () => {
   const dist = join(root, 'dist');
   assert.equal(readFileSync(join(dist, '_worker.js'), 'utf8'), readFileSync(join(root, 'public/_worker.js'), 'utf8'));
   assert.deepEqual(JSON.parse(readFileSync(join(dist, '_routes.json'), 'utf8')), { version: 1, include: ['/api/*'], exclude: [] });
+  // V1.1: mã site Turnstile thật đã ghi (contact.ts) → form bật trong bản build chính.
   const html = readFileSync(join(dist, 'lien-he/index.html'), 'utf8');
-  assert.match(html, /data-backend-ready="false"/);
-  assert.doesNotMatch(html, /class="cf-turnstile"|<script[^>]*challenges\.cloudflare\.com/);
-  assert.doesNotMatch(readFileSync(join(dist, 'index.html'), 'utf8'), /Gửi yêu cầu báo giá/);
+  assert.match(html, /data-backend-ready="true"/);
+  assert.match(html, /class="cf-turnstile" data-sitekey="0x4AAAAAAF2QZNcXX6-6puJf"/);
+  assert.match(readFileSync(join(dist, 'index.html'), 'utf8'), /Gửi yêu cầu báo giá/);
   assert.ok(existsSync(join(dist, 'chinh-sach-bao-mat/index.html')));
 });
 

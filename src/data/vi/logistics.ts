@@ -1,4 +1,4 @@
-import type { Article, FaqItem, LogisticsPage, LogisticsProvider, PriceRow, ShenzhenRoute, Warehouse, Fact } from '../types';
+import type { Article, FaqItem, LogisticsPage, LogisticsProvider, ShenzhenRoute, Warehouse, Fact } from '../types';
 
 /**
  * KHU LOGISTICS — VIPG-WEB-021.
@@ -86,7 +86,7 @@ export const warehouses: Warehouse[] = [
   },
 ];
 
-/* ───────────── Tuyến Thâm Quyến → Việt Nam (VIPG-WEB-022) ───────────── */
+/* ───────────── Tuyến Thâm Quyến → Việt Nam (VIPG-WEB-024) ───────────── */
 
 /**
  * Dữ liệu trang /logistics/van-chuyen-tham-quyen-viet-nam/.
@@ -161,17 +161,7 @@ function shenzhenTitleSuffix() {
 /** Hệ số quy đổi cân nặng thể tích (cm³ / kg) mà VIPORDER áp dụng — chưa được owner cung cấp. */
 export const volumetricDivisor: Fact<number> = { value: null, source: null, sample: 6000 };
 
-/** Bảng giá — chưa có văn bản của owner. Production: không hiện bảng. */
-export const priceTable: Fact<PriceRow[]> = {
-  value: null,
-  source: null,
-  sample: [
-    { route: '[MẪU] Quảng Châu → Bắc Ninh', unit: 'kg', price: '[MẪU] 00.000 đ', transit: '[MẪU] 3–5 ngày' },
-    { route: '[MẪU] Quảng Châu → Bắc Ninh', unit: 'm³', price: '[MẪU] 0.000.000 đ', transit: '[MẪU] 4–6 ngày' },
-    { route: '[MẪU] Thâm Quyến → Bắc Ninh', unit: 'kg', price: '[MẪU] 00.000 đ', transit: '[MẪU] 4–6 ngày' },
-    { route: '[MẪU] Thâm Quyến → Bắc Ninh', unit: 'm³', price: '[MẪU] 0.000.000 đ', transit: '[MẪU] 5–7 ngày' },
-  ],
-};
+/** Bảng giá theo kg: dùng chung `pricing` (src/data/vi/pricing.ts — owner cung cấp 06/11/2026), không lặp lại ở đây. */
 
 /** Các yếu tố ảnh hưởng tới cước — kiến thức chung của ngành, không phải cam kết giá. */
 export const priceFactors = [
@@ -216,6 +206,10 @@ export const faqs: FaqItem[] = [
     q: 'Gửi hàng về địa chỉ nào tại Trung Quốc?',
     a: 'Địa chỉ nhận hàng tại Trung Quốc và cách ghi thông tin người nhận đang được cập nhật trên website. Vui lòng liên hệ hotline / Zalo 0961 102 655 để được hướng dẫn.',
     pending: true,
+  },
+  {
+    q: 'Bảng giá vận chuyển Trung Quốc – Việt Nam bao nhiêu một kg?',
+    a: 'Đơn giá theo khối lượng: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
   },
   {
     q: 'Cước vận chuyển tính theo cân nặng hay theo khối?',
@@ -330,13 +324,13 @@ export const pages: LogisticsPage[] = [
     key: 'bang-gia',
     href: '/logistics/bang-gia/',
     nav: 'Bảng giá & báo giá',
-    title: 'Bảng giá vận chuyển Trung Quốc – Việt Nam, báo giá',
+    title: 'Bảng giá vận chuyển Trung Quốc – Việt Nam theo kg',
     description:
-      'Yêu cầu báo giá vận chuyển hàng Trung Quốc về Bắc Ninh, Việt Nam theo cân nặng, số khối, loại hàng. Công cụ tính số khối và cân nặng quy đổi.',
-    h1: 'Bảng giá và yêu cầu báo giá',
-    lead: 'Cước được báo theo từng lô hàng. Gửi thông tin hàng để nhận báo giá, hoặc dùng công cụ tính số khối để chuẩn bị trước.',
-    status: 'pending',
-    pendingReason: 'Chưa có bảng giá, hệ số quy đổi cân nặng và thời gian vận chuyển do owner xác nhận bằng văn bản.',
+      'Bảng giá vận chuyển hàng Trung Quốc về Việt Nam theo kg: từ 12.000 đến 20.000 VNĐ/kg tùy khối lượng. Tính số khối và gửi yêu cầu báo giá.',
+    h1: 'Bảng giá vận chuyển Trung Quốc – Việt Nam',
+    lead: 'Đơn giá theo khối lượng, đơn vị VNĐ/kg. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
+    // READY (V1.1): đơn giá theo kg owner cung cấp 06/11/2026. Hệ số quy đổi + thời gian vẫn chờ owner (không hiển thị).
+    status: 'ready',
     keyword: 'bảng giá vận chuyển Trung Quốc Việt Nam',
   },
   {
@@ -556,5 +550,196 @@ export const articles: Article[] = [
       },
     ],
     related: ['/logistics/van-chuyen-tham-quyen-viet-nam/', '/logistics/van-chuyen-trung-quoc-viet-nam/'],
+  },
+  // ── VIPG-WEB-024: 4 bài cụm Thâm Quyến (phiên ec soạn, nháp — cần chuyên môn duyệt: khoảng cách địa lý bài 1,
+  //    nghĩa pháp lý 'tiểu ngạch' bài 2, phân luồng hải quan bài 3).
+
+  {
+    slug: 'tham-quyen-o-dau-nhap-hang-tham-quyen',
+    title: 'Thâm Quyến ở đâu? Nguồn hàng điện tử và cách nhập về Việt Nam',
+    description:
+      'Thâm Quyến (深圳, Shenzhen) thuộc Quảng Đông, sát Hồng Kông — trung tâm điện tử, linh kiện của Trung Quốc. Các khu nguồn hàng chính và cách nhập về Việt Nam.',
+    keyword: 'Thâm Quyến ở đâu; nhập hàng Thâm Quyến; Thẩm Quyến',
+    status: 'draft',
+    updated: '2026-11-06',
+    sections: [
+      {
+        heading: 'Thâm Quyến ở đâu?',
+        paragraphs: [
+          'Thâm Quyến (深圳, Shenzhen; nhiều người viết nhầm là "Thẩm Quyến") là thành phố thuộc tỉnh Quảng Đông, miền Nam Trung Quốc, nằm sát Hồng Kông và cách Quảng Châu khoảng hơn 100 km về phía đông nam. Đây là một trong những trung tâm sản xuất điện tử, linh kiện và thiết bị công nghệ lớn nhất thế giới.',
+          'Với người nhập hàng Việt Nam, Thâm Quyến là nguồn chính của linh kiện điện tử, phụ kiện điện thoại – máy tính, thiết bị thông minh, đèn LED và máy móc nhỏ.',
+        ],
+      },
+      {
+        heading: 'Các khu nguồn hàng thường gặp',
+        paragraphs: ['Một số khu vực người mua hàng hay nhắc tới:'],
+        list: [
+          'Hoa Cường Bắc (华强北, Huaqiangbei) – quận Phúc Điền: khu chợ điện tử, linh kiện nổi tiếng, phù hợp tìm mẫu và hàng lẻ.',
+          'Bảo An (宝安), Long Hoa (龙华), Long Cương (龙岗): nhiều nhà máy, xưởng sản xuất điện tử và thiết bị.',
+          'Đông Quản (东莞) – thành phố liền kề phía bắc: nhiều nhà máy gia công, thường gom chung tuyến với hàng Thâm Quyến.',
+          'Cảng Diêm Điền (盐田) và Xà Khẩu (蛇口): cảng biển lớn cho hàng đi container.',
+        ],
+      },
+      {
+        heading: 'Hàng từ Thâm Quyến về Việt Nam đi bằng cách nào?',
+        paragraphs: [
+          'Phổ biến nhất là đường bộ: hàng được gom tại kho phía Trung Quốc, đi xe tải về cửa khẩu biên giới phía Bắc (khu vực Lạng Sơn) rồi giao về Hà Nội, Bắc Ninh hoặc chuyển tiếp vào miền Nam. Lô lớn, không gấp có thể đi đường biển từ cảng Thâm Quyến về Hải Phòng hoặc TP.HCM.',
+          'Về thủ tục, người mua chọn giữa ký gửi trọn gói (không kèm chứng từ nhập khẩu) và nhập khẩu chính ngạch (có tờ khai hải quan). Xem bài so sánh hai hình thức để chọn đúng.',
+        ],
+      },
+      {
+        heading: 'Kinh nghiệm khi mua hàng Thâm Quyến',
+        paragraphs: ['Một vài lưu ý giúp lô hàng đi suôn sẻ:'],
+        list: [
+          'Xin catalogue, thông số kỹ thuật ngay từ đầu — vừa để kiểm tra hàng, vừa để xác định mã HS nếu nhập chính ngạch.',
+          'Hàng điện tử có pin, nam châm, chất lỏng cần báo trước để chọn phương án vận chuyển phù hợp.',
+          'Yêu cầu nhà cung cấp ghi đúng mã khách hàng trên từng kiện khi giao tới kho.',
+          'Doanh nghiệp cần hóa đơn, chứng từ nên trao đổi C/O Form E với nhà cung cấp trước khi chốt đơn.',
+        ],
+      },
+    ],
+    related: ['/logistics/van-chuyen-tham-quyen-viet-nam/', '/logistics/quy-trinh-gui-hang/'],
+  },
+  {
+    slug: 'chinh-ngach-va-ky-gui-tron-goi-khac-nhau-the-nao',
+    title: 'Nhập hàng Trung Quốc chính ngạch và ký gửi trọn gói: chọn thế nào?',
+    description:
+      'So sánh nhập khẩu chính ngạch và ký gửi trọn gói (thường gọi tiểu ngạch) khi nhập hàng Trung Quốc: chứng từ, thuế, rủi ro, đối tượng phù hợp.',
+    keyword: 'chính ngạch và tiểu ngạch; nhập hàng chính ngạch Trung Quốc',
+    status: 'draft',
+    updated: '2026-11-06',
+    sections: [
+      {
+        heading: 'Khác nhau ở điểm nào?',
+        paragraphs: [
+          'Nhập khẩu chính ngạch là doanh nghiệp đứng tên nhập khẩu, mở tờ khai hải quan, nộp thuế nhập khẩu và thuế GTGT khâu nhập khẩu, nhận đủ chứng từ hợp pháp cho lô hàng. Ký gửi trọn gói (thị trường hay gọi là "tiểu ngạch" hoặc "vận chuyển trọn gói") là đơn vị vận chuyển lo toàn bộ khâu đưa hàng về, người mua trả một mức cước gộp và không nhận tờ khai nhập khẩu đứng tên mình.',
+          'Lưu ý: theo pháp luật, "tiểu ngạch" vốn chỉ hoạt động mua bán, trao đổi hàng hóa của cư dân biên giới; cách gọi trên thị trường rộng hơn nghĩa gốc này.',
+        ],
+      },
+      {
+        heading: 'So sánh nhanh',
+        paragraphs: ['Các tiêu chí người nhập hàng hay cân nhắc:'],
+        list: [
+          'Chứng từ: chính ngạch có tờ khai hải quan, chứng từ nộp thuế, hóa đơn thương mại; ký gửi trọn gói thường chỉ có phiếu gửi / biên nhận của đơn vị vận chuyển.',
+          'Thuế: chính ngạch nộp thuế theo mã HS và trị giá khai báo, được khấu trừ thuế GTGT đầu vào (doanh nghiệp kê khai thuế); ký gửi trọn gói gộp chi phí vào cước.',
+          'Ưu đãi thuế: chỉ chính ngạch mới dùng được C/O Form E để hưởng thuế suất ACFTA.',
+          'Thủ tục: ký gửi trọn gói đơn giản hơn cho người mua; chính ngạch cần chuẩn bị hồ sơ, có thể bị kiểm tra theo phân luồng hải quan.',
+          'Rủi ro: hàng không có chứng từ chứng minh nguồn gốc có thể bị xử lý khi cơ quan chức năng kiểm tra trên đường hoặc tại cửa hàng.',
+        ],
+      },
+      {
+        heading: 'Nên chọn hình thức nào?',
+        paragraphs: ['Gợi ý theo đối tượng:'],
+        list: [
+          'Doanh nghiệp, xưởng sản xuất cần hạch toán, khấu trừ thuế, bán hàng có hóa đơn: chọn chính ngạch.',
+          'Hàng có giá trị cao, hàng cần kiểm tra chuyên ngành hoặc giấy phép: chọn chính ngạch.',
+          'Chủ shop nhập đơn nhỏ, hàng mẫu, chưa cần chứng từ: cân nhắc ký gửi trọn gói và hỏi rõ phạm vi trách nhiệm của đơn vị vận chuyển.',
+        ],
+      },
+      {
+        heading: 'VIPORDER hỗ trợ gì?',
+        paragraphs: [
+          'VIPORDER hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp theo mặt hàng. Gửi thông tin hàng hóa để được tư vấn hình thức phù hợp trước khi đặt hàng.',
+        ],
+      },
+    ],
+    related: ['/logistics/van-chuyen-trung-quoc-viet-nam/', '/logistics/van-chuyen-tham-quyen-viet-nam/'],
+  },
+  {
+    slug: 'thu-tuc-hai-quan-nhap-khau-hang-trung-quoc-duong-bo',
+    title: 'Thủ tục hải quan nhập khẩu hàng Trung Quốc đường bộ: các bước',
+    description:
+      'Các bước làm thủ tục hải quan khi nhập khẩu chính ngạch hàng Trung Quốc qua cửa khẩu đường bộ: chuẩn bị hồ sơ, khai tờ khai, phân luồng, nộp thuế, thông quan.',
+    keyword: 'thủ tục hải quan nhập khẩu hàng Trung Quốc; thông quan cửa khẩu Lạng Sơn',
+    status: 'draft',
+    updated: '2026-11-06',
+    sections: [
+      {
+        heading: 'Tóm tắt quy trình',
+        paragraphs: [
+          'Nhập khẩu chính ngạch hàng Trung Quốc qua cửa khẩu đường bộ gồm 5 bước chính: chuẩn bị bộ chứng từ, xác định mã HS và thuế, khai tờ khai hải quan điện tử, xử lý theo kết quả phân luồng (xanh / vàng / đỏ), nộp thuế và thông quan để đưa hàng về kho.',
+        ],
+      },
+      {
+        heading: 'Bước 1 – Chuẩn bị bộ chứng từ',
+        paragraphs: ['Bộ hồ sơ cơ bản thường gồm:'],
+        list: [
+          'Hợp đồng mua bán (sales contract).',
+          'Hóa đơn thương mại (commercial invoice) và phiếu đóng gói (packing list).',
+          'Chứng từ vận tải.',
+          'C/O Form E nếu muốn hưởng thuế ưu đãi ACFTA.',
+          'Giấy phép, kết quả kiểm tra chuyên ngành nếu mặt hàng thuộc diện quản lý.',
+        ],
+      },
+      {
+        heading: 'Bước 2 – Xác định mã HS và thuế',
+        paragraphs: [
+          'Mã HS quyết định thuế suất nhập khẩu, thuế GTGT và việc hàng có cần giấy phép hay kiểm tra chuyên ngành hay không. Với hàng điện tử, linh kiện từ Thâm Quyến, nên xác định mã trước khi đặt hàng dựa trên catalogue và thông số kỹ thuật.',
+        ],
+      },
+      {
+        heading: 'Bước 3 – Khai tờ khai hải quan điện tử',
+        paragraphs: [
+          'Tờ khai được khai trên hệ thống thông quan điện tử của Hải quan Việt Nam (VNACCS/VCIS). Thông tin trên tờ khai phải khớp với hóa đơn, phiếu đóng gói và C/O.',
+        ],
+      },
+      {
+        heading: 'Bước 4 – Phân luồng',
+        paragraphs: ['Hệ thống tự phân luồng tờ khai:'],
+        list: [
+          'Luồng xanh: miễn kiểm tra chi tiết hồ sơ và miễn kiểm tra thực tế hàng hóa.',
+          'Luồng vàng: kiểm tra chi tiết hồ sơ, miễn kiểm tra thực tế hàng hóa.',
+          'Luồng đỏ: kiểm tra chi tiết hồ sơ và kiểm tra thực tế hàng hóa.',
+        ],
+      },
+      {
+        heading: 'Bước 5 – Nộp thuế và thông quan',
+        paragraphs: [
+          'Sau khi nộp đủ thuế nhập khẩu, thuế GTGT khâu nhập khẩu (và thuế khác nếu có), tờ khai được thông quan; hàng được đưa ra khỏi khu vực cửa khẩu và vận chuyển về kho người nhận.',
+          'Lô hàng bị chậm thường do chứng từ không khớp, khai sai mã HS hoặc thiếu giấy phép chuyên ngành — đều xử lý được nếu chuẩn bị trước khi hàng tới cửa khẩu.',
+        ],
+      },
+    ],
+    related: ['/logistics/van-chuyen-trung-quoc-viet-nam/', '/logistics/van-chuyen-tham-quyen-viet-nam/'],
+  },
+  {
+    slug: 'hang-dien-tu-co-pin-tu-trung-quoc',
+    title: 'Gửi hàng điện tử có pin từ Trung Quốc về Việt Nam: lưu ý',
+    description:
+      'Lưu ý khi vận chuyển hàng điện tử có pin lithium, sạc dự phòng, thiết bị có nam châm từ Thâm Quyến về Việt Nam: đóng gói, khai báo, chọn hình thức.',
+    keyword: 'gửi hàng có pin từ Trung Quốc; vận chuyển pin lithium Trung Quốc',
+    status: 'draft',
+    updated: '2026-11-06',
+    sections: [
+      {
+        heading: 'Vì sao hàng có pin cần lưu ý riêng?',
+        paragraphs: [
+          'Pin lithium (trong sạc dự phòng, tai nghe, đồng hồ thông minh, đồ chơi điện tử…) có nguy cơ cháy nổ khi va đập, chập điện hoặc quá nhiệt, nên bị hạn chế chặt trên đường hàng không và cần đóng gói, khai báo đúng khi đi đường bộ hoặc đường biển. Đây là nhóm hàng rất phổ biến khi nhập từ Thâm Quyến.',
+        ],
+      },
+      {
+        heading: 'Cách đóng gói an toàn',
+        paragraphs: ['Một số nguyên tắc chung:'],
+        list: [
+          'Giữ nguyên bao bì nhà sản xuất; mỗi thiết bị / pin được cách ly, không để các cực chạm nhau.',
+          'Chèn chặt trong thùng carton cứng, không để xê dịch.',
+          'Pin rời đóng riêng, ghi rõ trên kiện để kho bốc xếp cẩn thận.',
+          'Không gửi pin phồng, pin hỏng hoặc hàng đã qua sử dụng không rõ tình trạng.',
+        ],
+      },
+      {
+        heading: 'Khai báo và chứng từ',
+        paragraphs: [
+          'Hãy báo trước cho đơn vị vận chuyển loại hàng, số lượng và thông số pin để được tư vấn phương án phù hợp. Với nhập khẩu chính ngạch, một số thiết bị điện, điện tử có thể thuộc diện kiểm tra chuyên ngành — cần xác định trước dựa trên mã HS và thông số kỹ thuật.',
+        ],
+      },
+      {
+        heading: 'Trao đổi trước khi đặt hàng',
+        paragraphs: [
+          'Gửi danh sách mặt hàng, ảnh và thông số cho VIPORDER qua hotline / Zalo trước khi chốt đơn với nhà cung cấp để được tư vấn hình thức vận chuyển và thủ tục.',
+        ],
+      },
+    ],
+    related: ['/logistics/van-chuyen-tham-quyen-viet-nam/', '/logistics/quy-trinh-gui-hang/'],
   },
 ];

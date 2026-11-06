@@ -40,7 +40,8 @@ test('liên hệ: đúng dữ liệu giấy ĐKDN + owner chốt 24/10/2026, for
   assert.match(co, /foundingDate: '2026-10-21'/);
   assert.match(co, /slogan: 'Con người - Công nghệ - Cơ hội'/);
   // VIPG-WEB-023: form chỉ bật khi owner ghi mã site Turnstile (công khai). Chưa cài → null → form như cũ.
-  assert.match(c, /const TURNSTILE_SITE_KEY: string \| null = null;/);
+  // Mã site Turnstile công khai (0x… ) — owner tạo 06/11/2026.
+  assert.match(c, /const TURNSTILE_SITE_KEY: string \| null = '0x[0-9A-Za-z_-]{20,}';/);
   assert.match(c, /formBackendReady: siteKey !== null/);
 });
 
