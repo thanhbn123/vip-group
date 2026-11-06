@@ -104,7 +104,8 @@ test('không ảnh hưởng nội dung trang chủ đang chạy: title, H1, các
   assert.deepEqual([...pos].sort((a, b) => a - b), pos, 'thứ tự khối trang chủ thay đổi ngoài dự kiến');
   // Bản sao lưu trang chủ production trước thay đổi.
   const live = readFileSync(join(root, 'docs/backup/live-home-2026-11-06.html'), 'utf8');
-  const strip = (h) => text(h.replace(/<section class="section price-section"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '');
+  // Thay đổi có chủ đích khác: link "Chính sách bảo mật" ở chân trang (VIPG-WEB-023).
+  const strip = (h) => text(h.replace(/<section class="section price-section"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '').replace(/Chính sách bảo mật · /, '');
   // Thay đổi có chủ đích duy nhất ngoài bảng giá: owner đổi Hotline/Zalo 0968961962 → 0961102655 (06/11/2026).
   const liveNewPhone = live.replace(/0968961962/g, '0961102655').replace(/\+84968961962/g, '+84961102655');
   assert.equal(strip(html), strip(liveNewPhone), 'ngoài khối bảng giá + số điện thoại mới, nội dung chữ trang chủ phải giống hệt bản production');

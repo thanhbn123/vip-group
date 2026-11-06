@@ -1,0 +1,49 @@
+---
+/**
+ * Chính sách bảo mật dữ liệu cá nhân (VIPG-WEB-023) — theo Nghị định 13/2023/NĐ-CP.
+ * Bản do Controller soạn theo thiết kế thu lead đã duyệt; owner/pháp chế cần duyệt câu chữ trước khi phát hành.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { getContent } from '../data';
+
+const { company, contact } = getContent('vi');
+const updated = '06/11/2026';
+---
+<BaseLayout title="Chính sách bảo mật" description={`Chính sách bảo vệ dữ liệu cá nhân của ${company.legalName}: dữ liệu thu thập qua form liên hệ, mục đích, thời hạn lưu và quyền của bạn.`}>
+  <PageHero kicker="Chính sách bảo mật" title="Bảo vệ dữ liệu cá nhân" lead={`Cập nhật ngày ${updated}. Áp dụng cho thông tin bạn gửi qua website ${contact.domain}.`} />
+  <section class="section">
+    <div class="container prose policy">
+      <h2>1. Bên kiểm soát dữ liệu</h2>
+      <p>{company.legalName} (mã số doanh nghiệp {company.taxId}), địa chỉ {contact.address}. Email: <a class="text-link" href={`mailto:${contact.email}`}>{contact.email}</a>; hotline {contact.hotline}.</p>
+
+      <h2>2. Dữ liệu chúng tôi thu thập</h2>
+      <p>Khi bạn gửi form liên hệ / yêu cầu báo giá: họ và tên, số điện thoại, email (nếu điền), nhu cầu, khối lượng hàng ước tính, nội dung bạn viết, trang bạn gửi form và nguồn truy cập (ví dụ tham số quảng cáo trên đường dẫn), thời điểm bạn đồng ý. Chúng tôi không thu thập dữ liệu cá nhân nhạy cảm.</p>
+
+      <h2>3. Mục đích sử dụng</h2>
+      <p>Liên hệ lại, tư vấn và báo giá theo yêu cầu của bạn; quản lý quan hệ khách hàng; thống kê hiệu quả kênh tiếp cận ở dạng tổng hợp. Chúng tôi không bán dữ liệu của bạn và không dùng cho mục đích khác khi chưa có sự đồng ý của bạn.</p>
+
+      <h2>4. Nơi lưu trữ và bên xử lý</h2>
+      <ul>
+        <li>Cloudflare — vận hành website và chống spam (Turnstile);</li>
+        <li>Google Workspace của công ty — sổ ghi nhận yêu cầu;</li>
+        <li>Zalo — gửi thông báo nội bộ cho nhân viên phụ trách;</li>
+        <li>Hệ thống quản lý khách hàng (CRM) nội bộ của {company.name}.</li>
+      </ul>
+      <p>Chỉ nhân viên được giao phụ trách mới được truy cập dữ liệu.</p>
+
+      <h2>5. Thời hạn lưu</h2>
+      <p>Tối đa 24 tháng kể từ ngày bạn đồng ý, sau đó dữ liệu được xoá hoặc ẩn danh — trừ khi bạn trở thành khách hàng và pháp luật yêu cầu lưu lâu hơn cho hồ sơ giao dịch.</p>
+
+      <h2>6. Quyền của bạn</h2>
+      <p>Bạn có quyền được biết, xem, chỉnh sửa, yêu cầu xoá dữ liệu, rút lại sự đồng ý và phản đối việc xử lý dữ liệu của mình. Gửi yêu cầu tới <a class="text-link" href={`mailto:${contact.email}`}>{contact.email}</a>; chúng tôi phản hồi trong thời hạn pháp luật quy định.</p>
+
+      <h2>7. Thay đổi chính sách</h2>
+      <p>Khi chính sách thay đổi, chúng tôi cập nhật tại trang này và ghi rõ ngày cập nhật.</p>
+    </div>
+  </section>
+</BaseLayout>
+<style>
+  .policy h2 { font-size: 24px; margin-top: 36px; }
+  .policy ul { padding-left: 20px; }
+</style>

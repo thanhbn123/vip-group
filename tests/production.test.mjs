@@ -69,6 +69,8 @@ function allFiles(dir = dist) {
   return readdirSync(dir).flatMap((n) => { const p = join(dir, n); return statSync(p).isDirectory() ? allFiles(p) : [p]; });
 }
 const PAGES = ['/', '/gioi-thieu/', '/linh-vuc-hoat-dong/', '/cong-ty-thanh-vien/', '/tin-tuc/', '/tuyen-dung/', '/lien-he/'];
+// Trang ngoài menu nhưng vào sitemap (VIPG-WEB-023).
+const SITEMAP_EXTRA = ['/chinh-sach-bao-mat/'];
 
 test('trang production cho phép lập chỉ mục; chỉ 404 có noindex', () => {
   for (const p of PAGES) {
@@ -85,7 +87,7 @@ test('robots.txt và sitemap.xml trỏ tên miền production', () => {
   assert.doesNotMatch(robots, /Disallow: \/\s*$/m);
   assert.match(robots, new RegExp(`Sitemap: ${PROD}/sitemap.xml`));
   const locs = [...readFileSync(join(dist, 'sitemap.xml'), 'utf8').matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-  assert.equal(locs.length, PAGES.length);
+  assert.equal(locs.length, PAGES.length + SITEMAP_EXTRA.length);
   for (const l of locs) assert.ok(l.startsWith(`${PROD}/`), l);
 });
 

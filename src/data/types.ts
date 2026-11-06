@@ -79,8 +79,10 @@ export interface ContactInfo {
   /** Địa chỉ tách trường cho schema.org PostalAddress. */
   addressParts: { street: string; ward: string; region: string; country: string } | null;
   domain: string;
-  /** Form liên hệ đã có máy chủ nhận dữ liệu chưa. v1: false. */
+  /** Form liên hệ đã có máy chủ nhận dữ liệu chưa. v1: false. Tính từ `lead.turnstileSiteKey` (xem contact.ts). */
   formBackendReady: boolean;
+  /** Thu lead (VIPG-WEB-023): endpoint cùng tên miền + mã site Turnstile công khai (null = chưa cài). */
+  lead: { endpoint: string; turnstileSiteKey: string | null; privacyHref: string };
 }
 
 export interface SiteContent {

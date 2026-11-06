@@ -35,7 +35,7 @@ const year = new Date().getFullYear();
   </div>
   <div class="container footer-bottom">
     <span>© {year} {company.legalName ?? company.name}</span>
-    <span>{contact.domain}</span>
+    <span><a href={contact.lead.privacyHref}>Chính sách bảo mật</a> · {contact.domain}</span>
   </div>
 </footer>
 

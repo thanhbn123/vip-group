@@ -82,7 +82,8 @@ const sloganLast = sloganParts.pop();
     </div>
   </section>
 
-  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline} />
+  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline}
+    quoteHref={contact.formBackendReady ? '/lien-he/?nhu-cau=bao-gia-van-chuyen#form-lien-he' : null} />
 
   <section class="section" aria-labelledby="members-title">
     <div class="container">

@@ -7,3 +7,4 @@ dist/
 .DS_Store
 *.log
 evidence/*.png
+dist-lead/

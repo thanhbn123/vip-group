@@ -5,8 +5,8 @@
  * và trình đọc màn hình hiểu đúng; trên điện thoại vẫn là 2 cột, chữ lớn, không cuộn ngang.
  */
 import type { ShippingPricing } from '../data';
-interface Props { pricing: ShippingPricing; slogan: string; brand: string; hotline: string | null }
-const { pricing, slogan, brand, hotline } = Astro.props;
+interface Props { pricing: ShippingPricing; slogan: string; brand: string; hotline: string | null; quoteHref?: string | null }
+const { pricing, slogan, brand, hotline, quoteHref = null } = Astro.props;
 const fmt = (n: number) => n.toLocaleString('vi-VN');
 const updated = pricing.updated.split('-').reverse().join('/');
 const tel = hotline?.replace(/\s/g, '');
@@ -24,7 +24,8 @@ const pretty = tel?.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3');
       <p class="muted">Giá tính theo khối lượng hàng, tuyến {pricing.route}.</p>
       {tel && (
         <div class="price-actions">
-          <a class="btn btn-primary" href={`tel:${tel}`}>Gọi báo giá {pretty}</a>
+          {quoteHref && <a class="btn btn-primary" href={quoteHref}>Gửi yêu cầu báo giá</a>}
+          <a class:list={['btn', quoteHref ? 'btn-ghost' : 'btn-primary']} href={`tel:${tel}`}>Gọi báo giá {pretty}</a>
           <a class="btn btn-ghost" href={`https://zalo.me/${tel}`} rel="noopener" target="_blank">Nhắn Zalo<span class="visually-hidden"> (mở tab mới)</span></a>
         </div>
       )}

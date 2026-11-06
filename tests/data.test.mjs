@@ -39,7 +39,9 @@ test('liên hệ: đúng dữ liệu giấy ĐKDN + owner chốt 24/10/2026, for
   assert.match(co, /taxId: '4900951703'/);
   assert.match(co, /foundingDate: '2026-10-21'/);
   assert.match(co, /slogan: 'Con người - Công nghệ - Cơ hội'/);
-  assert.match(c, /formBackendReady: false/);
+  // VIPG-WEB-023: form chỉ bật khi owner ghi mã site Turnstile (công khai). Chưa cài → null → form như cũ.
+  assert.match(c, /const TURNSTILE_SITE_KEY: string \| null = null;/);
+  assert.match(c, /formBackendReady: siteKey !== null/);
 });
 
 test('không có secret trong mã nguồn', () => {
