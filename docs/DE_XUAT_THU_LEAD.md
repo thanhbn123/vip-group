@@ -51,3 +51,43 @@ Hệ thống tự ghi: trang gửi, nguồn truy cập (UTM, Google/Zalo/Faceboo
 3. **Bên quản lý dữ liệu** ghi trên chính sách bảo mật: CÔNG TY TNHH VIP GROUP hay VIPORDER.
 4. **Cho phép** tạo Cloudflare Turnstile + secret trên tài khoản Cloudflare; với B: cho phép thêm endpoint lead vào backend VIPORDER đang chạy.
 5. Thời hạn lưu dữ liệu lead.
+
+---
+
+## 5. QUYẾT ĐỊNH CỦA OWNER (06/11/2026) → PHƯƠNG ÁN CHỐT
+
+Owner: *"phân biệt với VIP ORDER thì làm theo A nhưng vẫn thông báo như B về số zalo 0961102655 và quản lý lead cùng gộp với phần CRM anh đang làm"*; *"cách báo Zalo như bên viporder.com.vn"*; CRM đang làm ở phiên khác (repo `~/Projects/vip-group-khoqctq` — VIP GROUP CRM V5).
+
+### Luồng
+
+```
+Form (vipgroup.com.vn) ──► Cloudflare Pages Function  /api/lead   (cùng tên miền, tách hẳn VIPORDER)
+                             1. kiểm Turnstile + bẫy bot + giới hạn tần suất + kiểm dữ liệu
+                             2. GHI Google Sheet "Lead vipgroup.com.vn" (sổ gốc, không bao giờ mất)
+                             3. Báo Zalo Bot → tài khoản Zalo 0961102655   (giống viporder.com.vn)
+                             4. Đẩy sang CRM V5: POST /api/intake/leads (khi CRM có cổng này)
+                                 └ lỗi → đánh dấu "chưa đồng bộ" trong Sheet, tự gửi lại
+Khách thấy: "Đã nhận yêu cầu" chỉ khi bước 2 thành công; lỗi → hiện Hotline/Zalo 0961 102 655.
+```
+
+### Báo Zalo — cùng cách viporder.com.vn (Zalo Bot API)
+- Bot **riêng** cho VIP GROUP (vd. "VIP GROUP Lead"), không dùng chung bot VIPORDER → tách bạch.
+- `POST https://bot-api.zapps.me/bot<TOKEN>/sendMessage {chat_id, text}`; tin gồm: tên, SĐT, nhu cầu, khối lượng, trang gửi, nguồn, giờ — **không** gửi lại dữ liệu nhạy cảm khác.
+- Zalo lỗi → lead vẫn được lưu (bước 2), không ảnh hưởng khách.
+- **Owner làm một lần:** tạo bot bằng tài khoản Zalo 0961102655 (Zalo Bot Creator / bot.zapps.me) → nhắn bot 1 tin để lấy `chat_id` (em hướng dẫn lúc làm) → tự nhập token vào Cloudflare (không gửi qua chat).
+
+### Hợp đồng đề xuất cho CRM V5 (gửi phiên CRM thực hiện)
+`POST /api/intake/leads` — ký HMAC-SHA256 bằng khoá chung `LEAD_INTAKE_SECRET` (giống cách CRM đã ký COWORK), header `X-Signature`, `X-Timestamp` (lệch ≤ 5 phút), `Idempotency-Key` = mã lead (gửi lại không tạo trùng).
+```json
+{ "lead_id": "VG-20261106-0001", "source": "vipgroup.com.vn", "page": "/", "utm": {"source":"google","medium":"organic","campaign":""},
+  "name": "…", "phone": "0961…", "email": null, "need": "bao-gia-van-chuyen", "weight_kg": 120, "message": "…",
+  "consent_at": "2026-11-06T07:30:00+07:00", "created_at": "…" }
+```
+Trả `201 {crm_lead_id}` / `200` nếu đã có (trùng) / `4xx` lỗi dữ liệu (không gửi lại) / `5xx` (gửi lại sau). Trong CRM: lead là đối tượng riêng (chưa phải `customers`), có trạng thái *mới → đã liên hệ → báo giá → thành khách / huỷ*, người phụ trách, nhật ký; chuyển thành khách hàng do nhân viên bấm.
+
+### Việc kỹ thuật phía website
+- Thêm thư mục `functions/` + sửa workflow deploy để tải kèm Function (hiện chỉ tải `dist/`); mở CSP `connect-src 'self'` (đã có) + `https://challenges.cloudflare.com` cho Turnstile.
+- Form `/lien-he/` thật sự gửi; thêm nút "Nhận báo giá" ở bảng giá trang chủ; trang **Chính sách bảo mật** + ô đồng ý.
+- Google Sheet: owner tạo Sheet trong Workspace, chia quyền "Người chỉnh sửa" cho một tài khoản dịch vụ (em tạo hướng dẫn); khoá tài khoản dịch vụ nhập vào Cloudflare.
+- Test: gửi thật trên staging, spam/bot, Zalo lỗi, CRM lỗi → tự gửi lại, gửi trùng, tắt JS, điện thoại.
+- Ước tính: website 2–3 ngày; phía CRM (phiên kia) theo hợp đồng trên.
