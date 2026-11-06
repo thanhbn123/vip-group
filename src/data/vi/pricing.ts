@@ -21,6 +21,9 @@ export const pricing: ShippingPricing = {
     { label: '500–1.000 kg', labelZh: '500–1,000 公斤', min: 500, minInclusive: true, max: 1000, maxInclusive: true, price: 14000 },
     { label: 'Trên 1.000 kg', labelZh: '超过 1,000 公斤', min: 1000, minInclusive: false, max: null, maxInclusive: false, price: 12000 },
   ],
+  // Owner xác nhận 06/11/2026: tra mức giá theo TỔNG khối lượng tính cước của cả lô; hàng cồng kềnh quy đổi hệ số 6000.
+  basis: 'Mức giá áp dụng theo tổng khối lượng tính cước của cả lô hàng trong một lần gửi. Hàng nhẹ, cồng kềnh tính theo số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000).',
+  basisZh: '按同一批货物的总计费重量适用价格档位。轻泡货按实际重量与体积重量（长×宽×高 cm ÷ 6000）中较大者计费。',
   source: 'Owner cung cấp 06/11/2026',
   updated: '2026-11-06',
 };

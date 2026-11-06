@@ -50,7 +50,7 @@ const audiences = [
       <div class="section-head">
         <div>
           <span class="kicker">Hành trình hàng</span>
-          <h2 id="kho-title">{khoLinks.length ? 'Gửi hàng từ kho Quảng Châu, Thâm Quyến' : 'Từ nhà cung cấp Trung Quốc tới tay bạn'}</h2>
+          <h2 id="kho-title">{khoLinks.length ? `Nhận hàng tại ${khoLinks.map((w) => w.city).join(', ')}` : 'Từ nhà cung cấp Trung Quốc tới tay bạn'}</h2>
         </div>
         <p>Hàng được nhận tại Trung Quốc, vận chuyển về Việt Nam; khách nhận tại kho hoặc theo phương án giao hàng đã thỏa thuận.</p>
       </div>
@@ -74,9 +74,9 @@ const audiences = [
         {khoLinks.map((w) => (
           <a class="card card-link" href={w.href}>
             <span class="card-index">{w.cityZh}</span>
-            <h3>Kho {w.city}</h3>
-            <ul class="check-list">{w.goodsFit.map((g) => <li>{g}</li>)}</ul>
-            <p class="more">Xem kho {w.city} →</p>
+            <h3>Nhận hàng tại {w.city}</h3>
+            <p>Nhà cung cấp giao hàng tới điểm nhận tại {w.city}; hàng được vận chuyển về Việt Nam.</p>
+            <p class="more">Xem tuyến {w.city} → Việt Nam →</p>
           </a>
         ))}
         <a class="card card-link" href="/logistics/van-chuyen-trung-quoc-bac-ninh/">

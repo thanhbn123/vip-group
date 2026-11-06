@@ -95,7 +95,8 @@ export const warehouses: Warehouse[] = [
  */
 export const shenzhenRoute: ShenzhenRoute = {
   updated: '2026-11-06',
-  served: pending('[MẪU] VIPORDER nhận hàng từ nhà cung cấp tại Thâm Quyến'),
+  // Owner xác nhận 06/11/2026: nhận hàng trực tiếp tại Thâm Quyến (KHÔNG khẳng định kho thuộc sở hữu VIP GROUP).
+  served: { value: 'Nhận hàng trực tiếp tại Thâm Quyến, Trung Quốc', source: 'Owner xác nhận 06/11/2026 (phiên Controller 8d)' },
   borderGate: pending('[MẪU] cửa khẩu Lạng Sơn (Hữu Nghị / Tân Thanh)'),
   destinations: [
     { city: 'Hà Nội', transit: pending('[MẪU] 2–3 ngày'), note: 'Nhận tại kho hoặc giao tận nơi nội thành' },
@@ -159,7 +160,8 @@ function shenzhenTitleSuffix() {
 }
 
 /** Hệ số quy đổi cân nặng thể tích (cm³ / kg) mà VIPORDER áp dụng — chưa được owner cung cấp. */
-export const volumetricDivisor: Fact<number> = { value: null, source: null, sample: 6000 };
+// Owner xác nhận 06/11/2026: có quy đổi thể tích, hệ số 6000; tính theo số lớn hơn giữa cân thực và cân quy đổi.
+export const volumetricDivisor: Fact<number> = { value: 6000, source: 'Owner xác nhận 06/11/2026 (phiên Controller 8d)' };
 
 /** Bảng giá theo kg: dùng chung `pricing` (src/data/vi/pricing.ts — owner cung cấp 06/11/2026), không lặp lại ở đây. */
 
@@ -209,12 +211,11 @@ export const faqs: FaqItem[] = [
   },
   {
     q: 'Bảng giá vận chuyển Trung Quốc – Việt Nam bao nhiêu một kg?',
-    a: 'Đơn giá theo khối lượng: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
+    a: 'Đơn giá theo khối lượng: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Mức giá áp dụng theo tổng khối lượng tính cước của cả lô hàng. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
   },
   {
     q: 'Cước vận chuyển tính theo cân nặng hay theo khối?',
-    a: 'Thông thường cước được tính theo cân nặng thực hoặc theo thể tích / cân nặng quy đổi, áp dụng giá trị lớn hơn. Hệ số quy đổi và đơn giá cụ thể sẽ được báo theo từng lô hàng.',
-    pending: true,
+    a: 'Cước tính theo số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao theo cm ÷ 6000). Mức giá theo kg áp dụng theo tổng khối lượng tính cước của cả lô hàng trong một lần gửi.',
   },
   {
     q: 'Hàng về Bắc Ninh mất bao lâu?',
@@ -301,11 +302,9 @@ export const pages: LogisticsPage[] = [
       'Vận chuyển hàng từ Thâm Quyến (Shenzhen, 深圳) về Hà Nội, Bắc Ninh, TP.HCM: thời gian, cách tính cước, nhập khẩu chính ngạch, hải quan. VIPORDER vận hành.',
     h1: 'Vận chuyển hàng hóa từ Thâm Quyến về Việt Nam',
     lead: 'Dành cho doanh nghiệp, xưởng sản xuất và chủ shop nhập linh kiện, thiết bị điện tử, phụ kiện công nghệ từ nhà cung cấp khu vực Thâm Quyến (Quảng Đông).',
-    // DRAFT: chưa có văn bản owner xác nhận VIPORDER nhận hàng tại Thâm Quyến, thời gian từng tuyến, bảng giá.
-    // Nâng `ready` khi điền đủ shenzhenRoute.served + destinations (value + source) — xem docs/seo/G09_THAM_QUYEN_GEO.md.
-    status: 'draft',
-    pendingReason:
-      'Chưa có xác nhận VIPORDER nhận hàng tại Thâm Quyến (kho/địa chỉ), thời gian Thâm Quyến → Hà Nội / Bắc Ninh / Lạng Sơn / TP.HCM, hình thức vận chuyển đang cung cấp, bảng giá 2026.',
+    // READY (V1.1): owner xác nhận 06/11/2026 nhận hàng trực tiếp tại Thâm Quyến + bảng giá theo kg + quy đổi 6000.
+    // Thời gian từng tuyến, cửa khẩu, các hình thức ngoài chính ngạch vẫn chờ owner → hiển thị "liên hệ", không công bố.
+    status: 'ready',
     keyword: 'vận chuyển trung việt từ thâm quyến về việt nam; vận chuyển Thâm Quyến Việt Nam; kho Thâm Quyến',
   },
   {

@@ -121,6 +121,9 @@ export interface ShippingPricing {
   note: string;
   noteZh: string;
   tiers: PriceTier[];
+  /** Cách áp mức giá (owner xác nhận) — vd. theo tổng khối lượng cả lô. */
+  basis: string;
+  basisZh: string;
   /** Nguồn — owner chốt. */
   source: string;
   /** Ngày hiệu lực hiển thị (ISO). */

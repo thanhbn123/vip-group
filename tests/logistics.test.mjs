@@ -14,13 +14,13 @@ const SITE = 'https://www.vipgroup.com.vn';
 
 const READY = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/',
   '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/',
-  // V1.1: bảng giá có đơn giá theo kg owner cung cấp 06/11/2026 → ready.
-  '/logistics/bang-gia/'];
+  // V1.1: bảng giá (đơn giá owner 06/11/2026) + tuyến Thâm Quyến (owner xác nhận nhận hàng tại Thâm Quyến) → ready.
+  '/logistics/bang-gia/', '/logistics/van-chuyen-tham-quyen-viet-nam/'];
 const PENDING = [];
 // Trang kho: DRAFT cho tới khi owner xác nhận kho có thật (verifier P0-1).
 const KT = '/logistics/kien-thuc/';
 // Trang kho Quảng Châu + tuyến Thâm Quyến: DRAFT cho tới khi owner xác nhận nhận hàng/kho tại đó (verifier P0-1).
-const DRAFT = ['/logistics/kho-quang-chau/', '/logistics/van-chuyen-tham-quyen-viet-nam/', KT,
+const DRAFT = ['/logistics/kho-quang-chau/', KT,
   ...['cach-tinh-so-khoi-va-can-nang-quy-doi', 'ghi-ma-khach-hang-khi-dat-hang-1688-taobao', 'dong-goi-hang-gui-tu-trung-quoc',
     'c-o-form-e-va-ma-hs-hang-tham-quyen', 'tham-quyen-o-dau-nhap-hang-tham-quyen', 'chinh-ngach-va-ky-gui-tron-goi-khac-nhau-the-nao',
     'thu-tuc-hai-quan-nhap-khau-hang-trung-quoc-duong-bo', 'hang-dien-tu-co-pin-tu-trung-quoc'].map((s) => `${KT}${s}/`)];
@@ -157,7 +157,9 @@ test('mọi dữ kiện có value đều phải có source (không xuất bản 
 test('không trang ready nào khẳng định có kho Quảng Châu / Thâm Quyến khi trang kho chưa xuất bản', () => {
   for (const p of READY) {
     const t = text(read(p));
-    assert.doesNotMatch(t, /[Kk]ho (Quảng Châu|Thâm Quyến)/, `${p}: khẳng định có kho chưa xác minh`);
+    // Thâm Quyến: owner xác nhận nhận hàng 06/11/2026. Quảng Châu: trang còn nháp → không được khẳng định.
+    assert.doesNotMatch(t, /[Kk]ho Quảng Châu/, `${p}: khẳng định có kho chưa xác minh`);
+    assert.doesNotMatch(t, /kho (?:thuộc sở hữu|của) VIP GROUP/i, `${p}: không khẳng định sở hữu kho`);
     assert.doesNotMatch(t, /gom hàng|[Gg]om nhiều đơn/, `${p}: dịch vụ gom hàng chưa có nguồn`);
   }
 });
@@ -168,14 +170,15 @@ test('FAQPage chỉ chứa câu trả lời đã có căn cứ', () => {
   assert.ok(faq && faq.mainEntity.length >= 5);
   const names = faq.mainEntity.map((q) => q.name);
   assert.ok(names.includes('Bảng giá vận chuyển Trung Quốc – Việt Nam bao nhiêu một kg?'), 'câu hỏi bảng giá (đã có nguồn) phải vào FAQPage');
-  for (const pendingQ of ['Hàng về Bắc Ninh mất bao lâu?', 'Gửi hàng về địa chỉ nào tại Trung Quốc?', 'Cước vận chuyển tính theo cân nặng hay theo khối?']) {
+  assert.ok(names.includes('Cước vận chuyển tính theo cân nặng hay theo khối?'), 'quy đổi 6000 owner xác nhận → vào FAQPage');
+  for (const pendingQ of ['Hàng về Bắc Ninh mất bao lâu?', 'Gửi hàng về địa chỉ nào tại Trung Quốc?']) {
     assert.ok(!names.includes(pendingQ), `câu chưa xác minh không được vào FAQPage: ${pendingQ}`);
   }
   // Mọi câu hỏi trong schema đều hiển thị trên trang.
   for (const n of names) assert.ok(text(html).includes(n), `câu hỏi trong schema không hiển thị: ${n}`);
 });
 
-test('bảng giá chi tiết: đúng 5 mức owner, form thu lead chọn sẵn "báo giá", không dùng hệ số quy đổi chưa xác minh', () => {
+test('bảng giá chi tiết: đúng 5 mức owner, áp theo cả lô, quy đổi 6000, form thu lead chọn sẵn "báo giá"', () => {
   const html = read('/logistics/bang-gia/');
   const t = text(html).replace(/\s+/g, ' ');
   for (const [label, price] of [['0–5 kg', '20.000'], ['Trên 5 đến dưới 100 kg', '16.000'], ['100 đến dưới 500 kg', '15.000'], ['500–1.000 kg', '14.000'], ['Trên 1.000 kg', '12.000']]) {
@@ -183,7 +186,9 @@ test('bảng giá chi tiết: đúng 5 mức owner, form thu lead chọn sẵn "
   }
   assert.match(t, /Đơn vị tính: VNĐ\/kg/);
   assert.match(t, /Phụ phí và thuế \(nếu có\) sẽ được xác nhận trước khi báo giá chính thức/);
-  assert.match(t, /Hệ số quy đổi được báo theo từng lô hàng/, 'công cụ tính không dùng hệ số chưa xác minh');
+  assert.match(t, /theo tổng khối lượng tính cước của cả lô hàng/, 'owner: áp giá theo tổng cả lô');
+  assert.match(html, /data-calc data-divisor="6000"/, 'owner: quy đổi hệ số 6000');
+  assert.doesNotMatch(t, /\bMẪU\b/);
   const start = html.indexOf('<form '); const form = html.slice(start, html.indexOf('</form>', start));
   assert.match(form, /id="form-lien-he"/);
   assert.match(form, /<option value="bao-gia-van-chuyen" selected/);
