@@ -10,3 +10,4 @@ dist-demo/
 evidence/*.png
 evidence/screenshots/*.png
 dist-lead/
+evidence/**/*.png
