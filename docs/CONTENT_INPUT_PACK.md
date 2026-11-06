@@ -4,7 +4,7 @@
 
 | # | Trường | Trạng thái 24/10/2026 | Giá trị trên site |
 |---|---|---|---|
-| 1 | Hotline | **ĐÃ CÓ** (owner chốt) | `0968961962` |
+| 1 | Hotline | **ĐÃ CÓ** (owner chốt) | `0961102655` |
 | 2 | Địa chỉ pháp lý | **ĐÃ CÓ** (Giấy CN ĐKDN) | Số 183 đường Bắc Sơn, Phường Kỳ Lừa, Tỉnh Lạng Sơn, Việt Nam |
 | 3 | Tên pháp lý VIP GROUP | **ĐÃ CÓ** (Giấy CN ĐKDN) | CÔNG TY TNHH VIP GROUP · VIP GROUP COMPANY LIMITED · VIP GROUP CO., LTD · MSDN 4900951703 |
 | 4 | Pháp nhân khối Công nghệ | Chưa có — giữ placeholder | "Công ty thành viên khối Công nghệ" · Đang hoàn thiện |
