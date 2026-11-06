@@ -90,4 +90,35 @@ export interface SiteContent {
   news: NewsItem[];
   careers: CareersInfo;
   contact: ContactInfo;
+  pricing: ShippingPricing;
+}
+
+/** Một mức giá vận chuyển theo khối lượng (VIPG-WEB-022). */
+export interface PriceTier {
+  /** Nhãn hiển thị tiếng Việt — đúng nguyên văn owner cung cấp. */
+  label: string;
+  /** Nhãn tiếng Trung (giản thể). */
+  labelZh: string;
+  /** Cận dưới (kg) và cận trên (kg, null = không giới hạn); `minInclusive`/`maxInclusive` cho biết có gồm biên không. */
+  min: number;
+  minInclusive: boolean;
+  max: number | null;
+  maxInclusive: boolean;
+  /** Đơn giá VNĐ/kg. */
+  price: number;
+}
+
+export interface ShippingPricing {
+  title: string;
+  titleZh: string;
+  route: string;
+  unit: string;
+  unitZh: string;
+  note: string;
+  noteZh: string;
+  tiers: PriceTier[];
+  /** Nguồn — owner chốt. */
+  source: string;
+  /** Ngày hiệu lực hiển thị (ISO). */
+  updated: string;
 }

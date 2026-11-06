@@ -32,7 +32,7 @@ test('công ty thành viên placeholder không có tên pháp lý hay website', 
 test('liên hệ: đúng dữ liệu giấy ĐKDN + owner chốt 24/10/2026, form chưa có backend', () => {
   const c = src('contact.ts');
   assert.match(c, /email: 'viporder@vipgroup\.com\.vn'/);
-  assert.match(c, /hotline: '0968961962'/);
+  assert.match(c, /hotline: '0961102655'/);
   assert.match(c, /address: 'Số 183 đường Bắc Sơn, Phường Kỳ Lừa, Tỉnh Lạng Sơn, Việt Nam'/);
   const co = src('company.ts');
   assert.match(co, /legalName: 'CÔNG TY TNHH VIP GROUP'/);

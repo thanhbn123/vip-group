@@ -42,12 +42,12 @@ test('không có chuỗi chưa có nguồn trong nội dung hiển thị', () =>
 });
 
 test('chỉ có email và số điện thoại đã chốt trong bản build', () => {
-  const PHONES = new Set(['0968961962', '+84968961962']);
+  const PHONES = new Set(['0961102655', '+84961102655']);
   for (const file of allHtml()) {
     const html = readFileSync(file, 'utf8');
     const emails = new Set(html.match(/[\w.+-]+@[\w-]+\.[\w.]+/g) ?? []);
     assert.deepEqual([...emails].filter((e) => e !== 'viporder@vipgroup.com.vn'), [], file);
-    for (const [, tel] of html.matchAll(/href="tel:([^"]+)"/g)) assert.equal(tel, '0968961962', `${file}: tel lạ ${tel}`);
+    for (const [, tel] of html.matchAll(/href="tel:([^"]+)"/g)) assert.equal(tel, '0961102655', `${file}: tel lạ ${tel}`);
     // Số điện thoại VN: 0xxx hoặc +84, 9–11 chữ số — chỉ được là số đã chốt (trong chữ hiển thị và JSON-LD).
     for (const [m] of (text(html) + ' ' + html).matchAll(/(?:\+84|\b0)(?:[\s.]?\d){8,10}\b/g)) {
       assert.ok(PHONES.has(m.replace(/[\s.]/g, '')), `${file}: số điện thoại lạ ${m}`);

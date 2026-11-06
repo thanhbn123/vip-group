@@ -62,7 +62,7 @@ for (const path of PAGES) {
     assert.equal(org.legalName, 'CÔNG TY TNHH VIP GROUP');
     assert.equal(org.taxID, '4900951703');
     assert.equal(org.foundingDate, '2026-10-21');
-    assert.equal(org.telephone, '+84968961962');
+    assert.equal(org.telephone, '+84961102655');
     assert.deepEqual(org.alternateName, ['VIP GROUP COMPANY LIMITED', 'VIP GROUP CO., LTD']);
     assert.equal(org.address['@type'], 'PostalAddress');
     assert.equal(org.address.streetAddress, 'Số 183 đường Bắc Sơn, Phường Kỳ Lừa');

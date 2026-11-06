@@ -5,13 +5,37 @@ import MemberGrid from '../components/MemberGrid.astro';
 import NewsList from '../components/NewsList.astro';
 import CtaBand from '../components/CtaBand.astro';
 import MemberNote from '../components/MemberNote.astro';
+import PriceTable from '../components/PriceTable.astro';
 import { getContent } from '../data';
 
-const { company, sectors, subsidiaries, news, careers } = getContent('vi');
+const { company, sectors, subsidiaries, news, careers, contact, pricing } = getContent('vi');
+const site = Astro.site!;
+// schema.org Service + Offer theo từng mức giá (VND/kg). Không khai thời gian giao, phụ phí, đánh giá.
+const priceLd = {
+  '@type': 'Service',
+  name: pricing.title,
+  serviceType: 'Vận chuyển hàng hóa Trung Quốc – Việt Nam',
+  url: new URL('/#bang-gia', site).href,
+  brand: { '@id': new URL('/#organization', site).href },
+  areaServed: { '@type': 'Country', name: 'Việt Nam' },
+  offers: pricing.tiers.map((t) => ({
+    '@type': 'Offer',
+    name: t.label,
+    priceCurrency: 'VND',
+    priceSpecification: {
+      '@type': 'UnitPriceSpecification',
+      price: t.price,
+      priceCurrency: 'VND',
+      unitCode: 'KGM',
+      unitText: 'kg',
+      eligibleQuantity: { '@type': 'QuantitativeValue', minValue: t.min, ...(t.max !== null ? { maxValue: t.max } : {}), unitCode: 'KGM' },
+    },
+  })),
+};
 const sloganParts = company.slogan.split(' - ').map((s) => s.trim());
 const sloganLast = sloganParts.pop();
 ---
-<BaseLayout title="Trang chủ" description={company.tagline}>
+<BaseLayout title="Trang chủ" description={company.tagline} jsonLd={[priceLd]}>
   <section class="hero" aria-labelledby="hero-title">
     <div class="container hero-grid">
       <div>
@@ -57,6 +81,8 @@ const sloganLast = sloganParts.pop();
       <SectorGrid sectors={sectors} />
     </div>
   </section>
+
+  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline} />
 
   <section class="section" aria-labelledby="members-title">
     <div class="container">
