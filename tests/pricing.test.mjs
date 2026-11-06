@@ -111,7 +111,7 @@ test('không ảnh hưởng nội dung trang chủ đang chạy: title, H1, các
   // Thay đổi có chủ đích ngoài bảng giá: link "Chính sách bảo mật" chân trang (023); mục menu/chân trang "Logistics"
   // và link "Dịch vụ vận chuyển Trung Quốc – Việt Nam →" trên thẻ lĩnh vực (021).
   const strip = (h) => text(h.replace(/<section class="section price-section"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '')
-    .replace(/Chính sách bảo mật · /, '').replace(/0961 102 655/g, '0961102655').replace(/ Logistics /g, ' ').replace(/ Dịch vụ vận chuyển Trung Quốc – Việt Nam → /, ' ');
+    .replace(/Chính sách bảo mật · /, '').replace(/0961 102 655/g, '0961102655').replace(/ Xem thêm: Vận chuyển hàng Trung Quốc về Bắc Ninh · Vận chuyển Thâm Quyến về Việt Nam /, ' ').replace(/ Logistics /g, ' ').replace(/ Dịch vụ vận chuyển Trung Quốc – Việt Nam → /, ' ');
   // Thay đổi có chủ đích duy nhất ngoài bảng giá: owner đổi Hotline/Zalo 0968961962 → 0961102655 (06/11/2026).
   const liveNewPhone = live.replace(/0968961962/g, '0961102655').replace(/\+84968961962/g, '+84961102655');
   assert.equal(strip(html), strip(liveNewPhone), 'ngoài khối bảng giá + số điện thoại mới, nội dung chữ trang chủ phải giống hệt bản production');

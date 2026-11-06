@@ -10,8 +10,10 @@ interface Props {
   /** Hotline hiển thị + Zalo từ cấu hình tập trung (src/data/vi/contact.ts). */
   hotlineDisplay?: string | null; zaloUrl?: string | null;
   quoteHref?: string | null; detailHref?: string | null;
+  /** Link ngữ cảnh tới trang tuyến (chỉ truyền trang đã xuất bản). */
+  relatedLinks?: { href: string; label: string }[];
 }
-const { pricing, slogan, brand, hotline, hotlineDisplay = null, zaloUrl = null, quoteHref = null, detailHref = null } = Astro.props;
+const { pricing, slogan, brand, hotline, hotlineDisplay = null, zaloUrl = null, quoteHref = null, detailHref = null, relatedLinks = [] } = Astro.props;
 const fmt = (n: number) => n.toLocaleString('vi-VN');
 const updated = pricing.updated.split('-').reverse().join('/');
 const tel = hotline?.replace(/\s/g, '');
@@ -66,6 +68,9 @@ const pretty = hotlineDisplay ?? tel?.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 
         <p>{pricing.note} <span lang="zh-CN">{pricing.noteZh}</span></p>
         <p class="updated">Cập nhật: <time datetime={pricing.updated}>{updated}</time></p>
         {detailHref && <p><a class="text-link" href={detailHref}>Xem bảng giá chi tiết, cách tính số khối →</a></p>}
+        {relatedLinks.length > 0 && (
+          <p class="related">Xem thêm: {relatedLinks.map((l, i) => <>{i > 0 && ' · '}<a class="text-link" href={l.href}>{l.label}</a></>)}</p>
+        )}
       </div>
     </div>
   </div>

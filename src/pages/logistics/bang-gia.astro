@@ -20,7 +20,10 @@ const priceLd = {
   areaServed: { '@type': 'Country', name: 'Việt Nam' },
   offers: pricing.tiers.map((t) => ({
     '@type': 'Offer', name: t.label, priceCurrency: 'VND',
-    priceSpecification: { '@type': 'UnitPriceSpecification', price: t.price, priceCurrency: 'VND', unitCode: 'KGM', unitText: 'kg' },
+    priceSpecification: {
+      '@type': 'UnitPriceSpecification', price: t.price, priceCurrency: 'VND', unitCode: 'KGM', unitText: 'kg',
+      eligibleQuantity: { '@type': 'QuantitativeValue', minValue: t.min, ...(t.max !== null ? { maxValue: t.max } : {}), unitCode: 'KGM' },
+    },
   })),
 };
 ---
