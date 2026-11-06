@@ -31,6 +31,8 @@ export interface Sector {
   title: string;
   summary: string;
   focus: string[];
+  /** Trang chi tiết của lĩnh vực (nếu có). */
+  link?: { href: string; label: string };
 }
 
 export interface Subsidiary {
@@ -123,4 +125,98 @@ export interface ShippingPricing {
   source: string;
   /** Ngày hiệu lực hiển thị (ISO). */
   updated: string;
+}
+
+/* ───────────── Khu Logistics (VIPG-WEB-021) ───────────── */
+
+/**
+ * Trạng thái xuất bản của một trang logistics.
+ * - `ready`: mọi thông tin trên trang đã có nguồn → được lập chỉ mục, vào sitemap.
+ * - `pending`: trang dùng được nhưng còn trường chờ owner xác nhận → noindex, không vào sitemap.
+ * - `draft`: bài nháp chờ duyệt → KHÔNG build ở production (chỉ build ở chế độ DEMO).
+ */
+export type PublishStatus = 'ready' | 'pending' | 'draft';
+
+/** Một dữ kiện có nguồn. `value: null` = OWNER INPUT PENDING; `sample` chỉ hiện ở chế độ DEMO. */
+export interface Fact<T = string> {
+  value: T | null;
+  /** Nguồn kiểm chứng khi `value` khác null (URL công khai, giấy tờ, ngày owner chốt). */
+  source: string | null;
+  /** Dữ liệu MẪU để dựng giao diện — không bao giờ xuất hiện ở bản build production. */
+  sample?: T;
+}
+
+export interface LogisticsProvider {
+  /** Đơn vị trực tiếp vận hành dịch vụ. */
+  name: string;
+  legalName: string;
+  url: string;
+  relation: string;
+  hotline: string;
+  zaloUrl: string;
+  /** Địa chỉ văn phòng đơn vị vận hành công bố. */
+  officeAddress: Fact;
+  trackingUrl: string;
+  customerPortalUrl: string;
+  registerUrl: string;
+}
+
+export interface Warehouse {
+  id: 'tham-quyen' | 'quang-chau';
+  city: string;
+  cityZh: string;
+  address: Fact;
+  receivingHours: Fact;
+  receiver: Fact;
+  /** Tuyến/cửa khẩu về Việt Nam. */
+  route: Fact;
+  transitTime: Fact;
+  goodsFit: string[];
+}
+
+export interface FaqItem {
+  q: string;
+  a: string;
+  /** Câu trả lời cần owner xác nhận trước khi coi là cam kết dịch vụ. */
+  pending?: boolean;
+}
+
+export interface PriceRow {
+  route: string;
+  unit: string;
+  price: string;
+  transit: string;
+}
+
+export interface ArticleSection {
+  heading: string;
+  paragraphs: string[];
+  list?: string[];
+}
+
+export interface Article {
+  slug: string;
+  title: string;
+  description: string;
+  keyword: string;
+  status: PublishStatus;
+  updated: string;
+  sections: ArticleSection[];
+  related: string[];
+}
+
+export interface LogisticsPage {
+  key: string;
+  href: string;
+  /** Nhãn ngắn cho menu phụ. */
+  nav: string;
+  /** Phần trước ` | VIP GROUP` trong <title>. */
+  title: string;
+  description: string;
+  h1: string;
+  lead: string;
+  status: PublishStatus;
+  /** Lý do trang chưa `ready` — liệt kê trường OWNER INPUT PENDING. */
+  pendingReason?: string;
+  keyword: string;
 }

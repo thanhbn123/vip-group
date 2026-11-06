@@ -1,0 +1,18 @@
+---
+import { provider } from '../../data/vi/logistics';
+import { telHref } from '../../lib/logistics';
+---
+<nav class="sticky-bar" aria-label="Liên hệ nhanh">
+  <a href={telHref(provider.hotline)} data-track="call_click" data-track-location="sticky_bar">Gọi ngay</a>
+  <a href={provider.zaloUrl} rel="noopener" target="_blank" data-track="zalo_click" data-track-location="sticky_bar">Zalo<span class="visually-hidden"> (mở tab mới)</span></a>
+  <a class="primary" href="/logistics/bang-gia/#bao-gia" data-track="quote_cta_click" data-track-location="sticky_bar">Báo giá</a>
+</nav>
+<style>
+  .sticky-bar { display: none; }
+  @media (max-width: 760px) {
+    .sticky-bar { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, .97); border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(17, 17, 20, .08); }
+    .sticky-bar a { min-height: 48px; display: grid; place-items: center; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); font-weight: 700; font-size: 15px; }
+    .sticky-bar a.primary { background: var(--brand); color: var(--on-brand); border-color: transparent; }
+    :global(body) { padding-bottom: 76px; }
+  }
+</style>

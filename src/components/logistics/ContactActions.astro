@@ -1,0 +1,25 @@
+---
+/**
+ * Nút liên hệ chính: Gọi, Zalo, Báo giá. Mỗi nút có `data-track` → TrackEvents đẩy sự kiện vào dataLayer
+ * (GA4/GTM đọc khi owner cấu hình). Không gửi thông tin cá nhân vào sự kiện.
+ */
+import { provider } from '../../data/vi/logistics';
+import { telHref, prettyPhone } from '../../lib/logistics';
+interface Props { location: string; variant?: 'light' | 'dark'; showQuote?: boolean }
+const { location, variant = 'light', showQuote = true } = Astro.props;
+---
+<div class:list={['contact-actions', variant]}>
+  {showQuote && <a class="btn btn-primary" href="/logistics/bang-gia/#bao-gia" data-track="quote_cta_click" data-track-location={location}>Yêu cầu báo giá</a>}
+  <a class="btn btn-ghost" href={provider.zaloUrl} rel="noopener" target="_blank" data-track="zalo_click" data-track-location={location}>
+    Nhắn Zalo<span class="visually-hidden"> (mở tab mới)</span>
+  </a>
+  <a class="btn btn-ghost" href={telHref(provider.hotline)} data-track="call_click" data-track-location={location}>Gọi {prettyPhone(provider.hotline)}</a>
+</div>
+<style>
+  .contact-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+  .dark .btn-primary { background: #fff; color: var(--brand-ink); }
+  .dark .btn-primary:hover { background: #fff3f4; }
+  .dark .btn-ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .7); }
+  .dark .btn-ghost:hover { border-color: #fff; color: #fff; }
+  .dark :focus-visible { outline-color: #fff; }
+</style>

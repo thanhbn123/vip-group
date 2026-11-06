@@ -1,0 +1,24 @@
+---
+/**
+ * Lớp sự kiện chuyển đổi (G06). Chỉ đẩy vào `window.dataLayer` — KHÔNG tải GA4/GTM ở đây.
+ * Khi owner cấp GA4 Measurement ID / GTM ID: nạp thẻ ở BaseLayout + mở CSP cho googletagmanager.com
+ * (xem docs/seo/G06_ANALYTICS_LEAD_TRACKING.md). Sự kiện không chứa họ tên, SĐT, email.
+ */
+---
+<script>
+  type W = Window & { dataLayer?: Record<string, unknown>[] };
+  const push = (event: string, data: Record<string, unknown> = {}) => {
+    const w = window as W;
+    w.dataLayer = w.dataLayer || [];
+    w.dataLayer.push({ event, page_path: location.pathname, ...data });
+  };
+  document.addEventListener('click', (e) => {
+    const el = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-track]');
+    if (!el) return;
+    push(el.dataset.track ?? 'click', { link_location: el.dataset.trackLocation ?? '', route: el.dataset.trackRoute ?? '' });
+  });
+  document.addEventListener('vipg:track', (e) => {
+    const d = (e as CustomEvent<{ event: string; data?: Record<string, unknown> }>).detail;
+    if (d?.event) push(d.event, d.data);
+  });
+</script>

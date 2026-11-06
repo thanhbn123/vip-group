@@ -1,0 +1,122 @@
+---
+/**
+ * Khung chung khu Logistics (VIPG-WEB-021).
+ * Giữ nguyên Header/Footer thương hiệu VIP GROUP; thêm menu phụ, breadcrumb, CTA liên hệ,
+ * thanh liên hệ nhanh trên mobile và ghi chú đơn vị vận hành (VIPORDER).
+ */
+import BaseLayout from './BaseLayout.astro';
+import ContactActions from '../components/logistics/ContactActions.astro';
+import StickyBar from '../components/logistics/StickyBar.astro';
+import TrackEvents from '../components/logistics/TrackEvents.astro';
+import { DEMO } from '../lib/mode';
+import { isIndexable, navPages } from '../lib/logistics';
+import { provider } from '../data/vi/logistics';
+import type { LogisticsPage } from '../data/types';
+
+interface Crumb { name: string; href: string }
+interface Props {
+  page: LogisticsPage;
+  /** Breadcrumb giữa "Logistics" và trang hiện tại (ví dụ mục Kiến thức cho bài viết). */
+  extraCrumbs?: Crumb[];
+  jsonLd?: Record<string, unknown>[];
+  showActions?: boolean;
+}
+
+const { page, extraCrumbs = [], jsonLd = [], showActions = true } = Astro.props;
+const site = Astro.site!;
+const isHub = page.href === '/logistics/';
+const crumbs: Crumb[] = [
+  { name: 'Trang chủ', href: '/' },
+  ...(isHub ? [] : [{ name: 'Logistics', href: '/logistics/' }]),
+  ...extraCrumbs,
+  { name: page.nav === 'Tổng quan' ? 'Logistics' : page.nav, href: page.href },
+];
+const breadcrumbLd = {
+  '@type': 'BreadcrumbList',
+  itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: new URL(c.href, site).href })),
+};
+const nav = navPages();
+const current = Astro.url.pathname;
+---
+<BaseLayout title={page.title} description={page.description} noindex={!isIndexable(page.status)} jsonLd={[breadcrumbLd, ...jsonLd]}>
+  {DEMO && (
+    <div class="demo-banner" role="note">
+      <div class="container">
+        <strong>BẢN DEMO NGHIỆM THU</strong> — các mục gắn nhãn <span class="tag">MẪU</span> là dữ liệu giả để dựng giao diện, chưa được xác minh.
+        Trạng thái trang: <code>{page.status}</code>{page.pendingReason && <> · Chờ owner: {page.pendingReason}</>}
+      </div>
+    </div>
+  )}
+  <section class="page-hero lg-hero">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Đường dẫn">
+        <ol>
+          {crumbs.map((c, i) => (i === crumbs.length - 1
+            ? <li aria-current="page">{c.name}</li>
+            : <li><a href={c.href}>{c.name}</a></li>))}
+        </ol>
+      </nav>
+      <span class="kicker">VIP GROUP Logistics</span>
+      <h1>{page.h1}</h1>
+      <p class="lead">{page.lead}</p>
+      {showActions && <ContactActions location="hero" />}
+    </div>
+  </section>
+
+  <nav class="lg-subnav" aria-label="Mục Logistics">
+    <div class="container">
+      <ul>
+        {nav.map((p) => (
+          <li><a href={p.href} aria-current={current === p.href ? 'page' : undefined}>{p.nav}</a></li>
+        ))}
+      </ul>
+    </div>
+  </nav>
+
+  <slot />
+
+  <section class="section lg-provider" aria-labelledby="provider-title">
+    <div class="container provider-box">
+      <div>
+        <h2 id="provider-title" class="provider-title">Đơn vị vận hành dịch vụ</h2>
+        <p>
+          Dịch vụ logistics trên trang này do <strong>{provider.name}</strong> — {provider.legalName} — trực tiếp vận hành.{' '}
+          {provider.name} là công ty {provider.relation.charAt(0).toLowerCase() + provider.relation.slice(1)}.
+        </p>
+      </div>
+      <a class="text-link" href={provider.url} rel="noopener" target="_blank" data-track="provider_site_click" data-track-location="provider_box">
+        Website {provider.name}<span class="visually-hidden"> (mở tab mới)</span> →
+      </a>
+    </div>
+  </section>
+
+  <section class="cta-band lg-cta" aria-labelledby="lg-cta-title">
+    <div class="container">
+      <h2 id="lg-cta-title">Cần báo giá cho lô hàng của bạn?</h2>
+      <p class="muted">Gửi thông tin cân nặng, số khối, loại hàng và nơi nhận — đội ngũ {provider.name} sẽ tư vấn phương án phù hợp.</p>
+      <ContactActions location="cta_band" variant="dark" />
+    </div>
+  </section>
+  <StickyBar />
+  <TrackEvents />
+</BaseLayout>
+
+<style>
+  .demo-banner { background: #fff4d6; border-bottom: 2px solid #6b4e00; color: #3d2c00; font-size: 14px; padding: 10px 0; }
+  .demo-banner .tag { display: inline-block; padding: 0 6px; border-radius: 6px; background: #6b4e00; color: #fff; font-size: 11px; font-weight: 800; }
+  .demo-banner code { font-size: 13px; }
+  .lg-hero h1 { max-width: 22ch; }
+  .lg-subnav { position: sticky; top: var(--header-h); z-index: 30; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .lg-subnav ul { list-style: none; margin: 0; padding: 8px 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; }
+  .lg-subnav a { display: block; white-space: nowrap; padding: 10px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--text-2); }
+  .lg-subnav a:hover { color: var(--brand-ink); }
+  .lg-subnav a[aria-current='page'] { background: rgba(208, 7, 26, .08); color: var(--brand-ink); }
+  .lg-provider { padding: 40px 0; background: var(--bg-alt); }
+  .provider-box { display: flex; justify-content: space-between; align-items: center; gap: 16px 40px; flex-wrap: wrap; }
+  .provider-box p { margin: 0; max-width: 760px; color: var(--text-2); }
+  .provider-title { font-size: 18px; margin-bottom: 8px; }
+  .lg-cta { padding: clamp(48px, 7vw, 80px) 0; background: var(--brand); color: var(--on-brand); }
+  .lg-cta h2 { margin-bottom: 8px; }
+  .lg-cta .muted { color: rgba(255, 255, 255, .9); max-width: 640px; margin: 0; }
+  .lg-cta :focus-visible { outline-color: #fff; }
+</style>

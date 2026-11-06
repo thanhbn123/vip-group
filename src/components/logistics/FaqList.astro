@@ -1,0 +1,29 @@
+---
+import type { FaqItem } from '../../data/types';
+interface Props { items: FaqItem[]; headingLevel?: 'h2' | 'h3' }
+const { items, headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+---
+<div class="faq">
+  {items.map((f) => (
+    <details class="faq-item">
+      <summary><H class="faq-q">{f.q}</H></summary>
+      <div class="faq-a">
+        <p>{f.a}</p>
+        {f.pending && <p class="faq-note">Thông tin chi tiết đang được cập nhật.</p>}
+      </div>
+    </details>
+  ))}
+</div>
+<style>
+  .faq { display: grid; gap: 12px; }
+  .faq-item { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); }
+  summary { cursor: pointer; list-style: none; padding: 18px 52px 18px 20px; position: relative; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 22px; color: var(--brand); font-weight: 700; }
+  details[open] summary::after { content: '−'; }
+  .faq-q { margin: 0; font-size: 17px; line-height: 1.4; }
+  .faq-a { padding: 0 20px 18px; color: var(--text-2); }
+  .faq-a p:last-child { margin-bottom: 0; }
+  .faq-note { font-size: 14px; color: var(--muted); font-style: italic; }
+</style>

@@ -1,0 +1,125 @@
+---
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import FaqList from '../../components/logistics/FaqList.astro';
+import Pending from '../../components/logistics/Pending.astro';
+import { pageByKey, telHref, prettyPhone, linkable } from '../../lib/logistics';
+import { serviceLd } from '../../lib/schema';
+import { provider, processSteps, serviceArea, warehouses } from '../../data/vi/logistics';
+import type { FaqItem } from '../../data/types';
+
+const page = pageByKey('bac-ninh');
+const site = Astro.site!;
+const ld = [serviceLd({
+  name: 'Vận chuyển hàng Trung Quốc về Bắc Ninh',
+  serviceType: 'Vận chuyển hàng hóa quốc tế Trung Quốc – Việt Nam',
+  description: page.description,
+  url: new URL(page.href, site),
+  areaServed: ['Bắc Ninh'],
+})];
+const needs = [
+  { title: 'Xưởng đồ gỗ, nội thất', text: 'Phụ kiện, bản lề, ray trượt, sơn, vật tư hoàn thiện — nhập theo lô, cần kiểm đếm đủ trước khi sản xuất.' },
+  { title: 'Doanh nghiệp trong khu công nghiệp', text: 'Linh kiện, máy móc, nguyên vật liệu cần nhập khẩu chính ngạch và chứng từ hải quan đầy đủ.' },
+  { title: 'Cửa hàng, kinh doanh online', text: 'Hàng đặt từ 1688 / Taobao / Pinduoduo, nhiều đơn nhỏ cần quản lý bằng một mã khách hàng.' },
+];
+const localFaq: FaqItem[] = [
+  { q: 'Khách hàng ở Từ Sơn, Đồng Kỵ liên hệ thế nào?', a: `Văn phòng ${provider.name} ở Đồng Nguyên, Bắc Ninh. Gọi hoặc nhắn Zalo ${prettyPhone(provider.hotline)}; địa điểm nhận hàng (tại kho hoặc theo phương án giao hàng) được thống nhất khi báo giá.` },
+  { q: 'Doanh nghiệp ở Bắc Ninh có cần đến văn phòng để làm thủ tục không?', a: 'Có thể trao đổi thông tin hàng, báo giá và hồ sơ qua điện thoại, Zalo. Với hàng nhập khẩu chính ngạch, bộ chứng từ cụ thể sẽ được hướng dẫn theo từng mặt hàng.' },
+  { q: 'Hàng về Bắc Ninh mất bao lâu?', a: 'Thời gian phụ thuộc kho xuất phát, loại hàng và thủ tục; thời gian cụ thể được báo theo từng lô hàng.', pending: true },
+];
+---
+<LogisticsLayout page={page} jsonLd={ld}>
+  <section class="section" aria-labelledby="need-title">
+    <div class="container">
+      <span class="kicker">Nhu cầu tại Bắc Ninh</span>
+      <h2 id="need-title">Nhập hàng Trung Quốc cho xưởng, doanh nghiệp và cửa hàng</h2>
+      <div class="prose">
+        <p>
+          Bắc Ninh tập trung nhiều xưởng sản xuất, làng nghề đồ gỗ và doanh nghiệp trong các khu công nghiệp — những khách hàng nhập hàng Trung Quốc thường xuyên,
+          cần một đầu mối liên hệ gần, thông tin rõ ràng và chứng từ đầy đủ.
+        </p>
+      </div>
+      <div class="grid grid-3">
+        {needs.map((n) => <article class="card"><h3>{n.title}</h3><p>{n.text}</p></article>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="office-title">
+    <div class="container split">
+      <div>
+        <span class="kicker">Đầu mối tại Bắc Ninh</span>
+        <h2 id="office-title">Văn phòng {provider.name} tại Đồng Nguyên</h2>
+        <p class="muted">Thuận tiện cho khách hàng khu vực Từ Sơn, Đồng Kỵ và các khu công nghiệp lân cận.</p>
+      </div>
+      <div>
+        <dl class="info-table">
+          <div><dt>Địa chỉ văn phòng</dt><dd><Pending fact={provider.officeAddress} /></dd></div>
+          <div><dt>Hotline / Zalo</dt><dd><a class="text-link" href={telHref(provider.hotline)} data-track="call_click" data-track-location="bn_office">{prettyPhone(provider.hotline)}</a></dd></div>
+          <div><dt>Nhận hàng</dt><dd>Tại kho hoặc theo phương án giao hàng đã thỏa thuận</dd></div>
+          <div><dt>Khu vực tập trung</dt><dd>{serviceArea.focus.join(', ')}</dd></div>
+          <div><dt>Giao ngoài Bắc Ninh</dt><dd><Pending fact={serviceArea.expansion} fallback="Liên hệ để xác nhận theo từng địa điểm" /></dd></div>
+        </dl>
+        <p class="source-note">Địa chỉ theo thông tin {provider.name} công bố tại viporder.com.vn.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tu-son-dong-ky" aria-labelledby="ts-title">
+    <div class="container split">
+      <div>
+        <span class="kicker">Từ Sơn – Đồng Kỵ</span>
+        <h2 id="ts-title">Nhập hàng Trung Quốc cho xưởng đồ gỗ Đồng Kỵ, Từ Sơn</h2>
+      </div>
+      <div class="prose">
+        <p>
+          Xưởng đồ gỗ, nội thất thường nhập phụ kiện kim khí, bản lề, ray trượt, tay nắm, sơn và vật tư hoàn thiện từ Trung Quốc theo từng đợt sản xuất.
+          Có văn phòng đơn vị vận hành ngay tại Bắc Ninh giúp chủ xưởng trao đổi trực tiếp về lô hàng, chứng từ và phương án nhận hàng.
+        </p>
+        <ul class="check-list">
+          <li>Đặt phụ kiện từ nhiều nhà cung cấp, quản lý chung bằng một mã khách hàng.</li>
+          <li>Trao đổi trước về đóng gói với hàng dễ móp, hàng mặt kính, đá.</li>
+          <li>Cần hóa đơn, chứng từ nhập khẩu: chọn nhập khẩu chính ngạch ngay từ đầu.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="route-title">
+    <div class="container">
+      <span class="kicker">Gửi hàng</span>
+      <h2 id="route-title">Từ Trung Quốc về Bắc Ninh</h2>
+      <div class="grid grid-3">
+        {warehouses.filter((w) => linkable(`/logistics/kho-${w.id}/`)).map((w) => (
+          <a class="card card-link" href={`/logistics/kho-${w.id}/`}>
+            <h3>{w.city} → Bắc Ninh</h3>
+            <p>Tuyến: <Pending fact={w.route} fallback="đang cập nhật" /></p>
+            <p class="more">Xem kho {w.city} →</p>
+          </a>
+        ))}
+        <a class="card card-link" href="/logistics/bang-gia/">
+          <h3>Nhà cung cấp ở đâu tại Trung Quốc?</h3>
+          <p>Gửi thông tin nơi nhà cung cấp, loại hàng và khối lượng để được tư vấn phương án và báo giá.</p>
+          <p class="more">Yêu cầu báo giá →</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="proc-title">
+    <div class="container">
+      <h2 id="proc-title">Quy trình gửi hàng về Bắc Ninh</h2>
+      <ol class="steps">{processSteps.map((s) => <li><h3>{s.title}</h3><p>{s.text}</p></li>)}</ol>
+      <p><a class="text-link" href="/logistics/quy-trinh-gui-hang/">Xem hướng dẫn và lưu ý chi tiết →</a></p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="bnfaq-title">
+    <div class="container split">
+      <div>
+        <h2 id="bnfaq-title">Câu hỏi của khách hàng Bắc Ninh</h2>
+        <a class="text-link" href="/logistics/cau-hoi-thuong-gap/">Tất cả câu hỏi thường gặp →</a>
+      </div>
+      <FaqList items={localFaq} />
+    </div>
+  </section>
+</LogisticsLayout>

@@ -12,6 +12,9 @@ const SITE = 'https://www.vipgroup.com.vn';
 const PAGES = ['/', '/gioi-thieu/', '/linh-vuc-hoat-dong/', '/cong-ty-thanh-vien/', '/tin-tuc/', '/tuyen-dung/', '/lien-he/'];
 // Trang ngoài menu nhưng vào sitemap (VIPG-WEB-023).
 const SITEMAP_EXTRA = ['/chinh-sach-bao-mat/'];
+// Trang Logistics trạng thái `ready` (VIPG-WEB-021) — cũng phải nằm trong sitemap. Trang `pending` thì không.
+const LOGISTICS_READY = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/',
+  '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/'];
 
 const fileFor = (path) => join(dist, path, 'index.html');
 const read = (path) => readFileSync(fileFor(path), 'utf8');
@@ -108,11 +111,10 @@ test('ảnh đều có alt', () => {
   }
 });
 
-test('sitemap.xml liệt kê đủ 7 trang, robots.txt trỏ sitemap', () => {
+test('sitemap.xml liệt kê đủ 7 trang tập đoàn + các trang Logistics ready, robots.txt trỏ sitemap', () => {
   const sitemap = readFileSync(join(dist, 'sitemap.xml'), 'utf8');
-  for (const path of PAGES) assert.ok(sitemap.includes(`<loc>${SITE}${path}</loc>`), `sitemap thiếu ${path}`);
-  for (const p of SITEMAP_EXTRA) assert.ok(sitemap.includes(`<loc>${SITE}${p}</loc>`), `sitemap thiếu ${p}`);
-  assert.equal((sitemap.match(/<loc>/g) ?? []).length, PAGES.length + SITEMAP_EXTRA.length);
+  for (const path of [...PAGES, ...SITEMAP_EXTRA, ...LOGISTICS_READY]) assert.ok(sitemap.includes(`<loc>${SITE}${path}</loc>`), `sitemap thiếu ${path}`);
+  assert.equal((sitemap.match(/<loc>/g) ?? []).length, PAGES.length + SITEMAP_EXTRA.length + LOGISTICS_READY.length);
   const robots = readFileSync(join(dist, 'robots.txt'), 'utf8');
   assert.match(robots, /Sitemap: https:\/\/www\.vipgroup\.com\.vn\/sitemap\.xml/);
 });

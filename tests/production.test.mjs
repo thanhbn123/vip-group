@@ -71,6 +71,9 @@ function allFiles(dir = dist) {
 const PAGES = ['/', '/gioi-thieu/', '/linh-vuc-hoat-dong/', '/cong-ty-thanh-vien/', '/tin-tuc/', '/tuyen-dung/', '/lien-he/'];
 // Trang ngoài menu nhưng vào sitemap (VIPG-WEB-023).
 const SITEMAP_EXTRA = ['/chinh-sach-bao-mat/'];
+// Trang Logistics trạng thái `ready` (VIPG-WEB-021) — cũng phải nằm trong sitemap. Trang `pending` thì không.
+const LOGISTICS_READY = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/',
+  '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/'];
 
 test('trang production cho phép lập chỉ mục; chỉ 404 có noindex', () => {
   for (const p of PAGES) {
@@ -87,7 +90,7 @@ test('robots.txt và sitemap.xml trỏ tên miền production', () => {
   assert.doesNotMatch(robots, /Disallow: \/\s*$/m);
   assert.match(robots, new RegExp(`Sitemap: ${PROD}/sitemap.xml`));
   const locs = [...readFileSync(join(dist, 'sitemap.xml'), 'utf8').matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-  assert.equal(locs.length, PAGES.length + SITEMAP_EXTRA.length);
+  assert.equal(locs.length, PAGES.length + SITEMAP_EXTRA.length + LOGISTICS_READY.length);
   for (const l of locs) assert.ok(l.startsWith(`${PROD}/`), l);
 });
 

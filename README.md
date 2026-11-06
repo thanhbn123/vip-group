@@ -90,6 +90,16 @@ Mọi nội dung nằm trong `src/data/vi/`. Quy ước: **thông tin chưa ch�
 | Đăng tin | `news.ts` — thêm phần tử, `date` dạng `YYYY-MM-DD` |
 | Đăng vị trí tuyển dụng | `careers.ts` → `openings`; email nhận hồ sơ riêng ở `applyEmail` |
 
+## Khu Logistics (`/logistics/`, VIPG-WEB-021)
+
+Khu SEO dịch vụ vận chuyển Trung Quốc – Việt Nam do **VIPORDER** (công ty cùng chủ sở hữu) vận hành. Nội dung: `src/data/vi/logistics.ts`; trang: `src/pages/logistics/`; khung: `src/layouts/LogisticsLayout.astro`.
+
+- Mỗi trang có `status`: `ready` (index + sitemap) · `pending` (noindex, còn trường chờ owner) · `draft` (không build ở production).
+- Mỗi dữ kiện là `Fact { value, source, sample }`: chưa có nguồn thì `value: null` → giao diện hiện "Đang cập nhật". `sample` (dữ liệu MẪU) **chỉ** hiện ở bản DEMO.
+- `npm run build:demo` → `dist-demo/` (mọi trang noindex, dữ liệu MẪU có nhãn, có bài nháp) để nghiệm thu giao diện. `dist/` production không bao giờ chứa dữ liệu mẫu (`tests/logistics.test.mjs` chặn).
+- E2E trình duyệt: phục vụ `dist`/`dist-demo` bằng `node tests/e2e/serve.mjs dist 4321` và `node tests/e2e/serve.mjs dist-demo 4322`, rồi `PLAYWRIGHT=<đường dẫn playwright> CHROMIUM=<chrome> npm run test:e2e`.
+- Tài liệu SEO, kế hoạch nội dung, GBP, đo lường, nghiệm thu: `docs/seo/`.
+
 ## Form liên hệ
 
 Giai đoạn 1 **chỉ có giao diện**: form không có `action`, các ô nhập không có `name` và nút gửi `disabled` sẵn trong HTML — nên kể cả khi trình duyệt tắt JavaScript cũng không dữ liệu nào lọt vào URL. Bật JS thì nút gửi mở, bấm gửi chỉ hiện thông báo dữ liệu chưa được gửi, kèm email công khai (`contact.email` — hiện `viporder@vipgroup.com.vn`). Khi có backend: nối API trong `src/components/ContactForm.astro` (thêm `action`/`method`) rồi đặt `formBackendReady: true` — ô nhập sẽ tự có `name` trong `contact.ts` (test sẽ cần cập nhật theo).

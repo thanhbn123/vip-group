@@ -1,0 +1,55 @@
+---
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import QuoteForm from '../../components/logistics/QuoteForm.astro';
+import VolumeCalculator from '../../components/logistics/VolumeCalculator.astro';
+import { pageByKey, shown } from '../../lib/logistics';
+import { priceTable, priceFactors } from '../../data/vi/logistics';
+
+const page = pageByKey('bang-gia');
+const { value: rows, isSample } = shown(priceTable);
+---
+<LogisticsLayout page={page} showActions={false}>
+  <section class="section" aria-labelledby="price-title">
+    <div class="container">
+      <span class="kicker">Bảng giá</span>
+      <h2 id="price-title">Bảng giá tham khảo {isSample && <span class="sample-tag">MẪU</span>}</h2>
+      {rows ? (
+        <div class="table-wrap">
+          <table class="price-table">
+            <caption class="visually-hidden">Bảng giá vận chuyển tham khảo</caption>
+            <thead><tr><th scope="col">Tuyến</th><th scope="col">Đơn vị tính</th><th scope="col">Đơn giá</th><th scope="col">Thời gian dự kiến</th></tr></thead>
+            <tbody>{rows.map((r) => <tr><td>{r.route}</td><td>{r.unit}</td><td>{r.price}</td><td>{r.transit}</td></tr>)}</tbody>
+          </table>
+        </div>
+      ) : (
+        <div class="empty-state" data-owner-input-pending>
+          <p><strong>Bảng giá công khai đang được cập nhật.</strong></p>
+          <p>Cước được báo theo từng lô hàng dựa trên cân nặng, số khối, loại hàng và nơi nhận. Gửi yêu cầu bên dưới để nhận báo giá.</p>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="factor-title">
+    <div class="container">
+      <h2 id="factor-title">Cước vận chuyển phụ thuộc vào đâu?</h2>
+      <div class="grid grid-4">{priceFactors.map((f) => <article class="card"><h3>{f.title}</h3><p>{f.text}</p></article>)}</div>
+    </div>
+  </section>
+
+  <section class="section" aria-label="Công cụ tính và yêu cầu báo giá">
+    <div class="container quote-grid">
+      <VolumeCalculator />
+      <QuoteForm />
+    </div>
+  </section>
+</LogisticsLayout>
+<style>
+  .sample-tag { display: inline-block; vertical-align: middle; padding: 2px 8px; border-radius: 6px; font-size: 13px; font-weight: 800; color: #fff; background: #6b4e00; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+  .price-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+  .price-table th, .price-table td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--line); }
+  .price-table thead th { background: var(--bg-alt); font-size: 14px; }
+  .price-table tbody tr:last-child td { border-bottom: 0; }
+  .quote-grid { display: grid; gap: 32px; }
+</style>

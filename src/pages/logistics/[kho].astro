@@ -1,0 +1,30 @@
+---
+/**
+ * Trang kho Trung Quốc (/logistics/kho-<id>/). Route động để trạng thái xuất bản có hiệu lực:
+ * trang `draft` (chưa xác nhận kho có thật) KHÔNG được sinh ở production — chỉ ở bản DEMO.
+ */
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import WarehouseBody from '../../components/logistics/WarehouseBody.astro';
+import { pageByKey, isBuilt } from '../../lib/logistics';
+import { serviceLd } from '../../lib/schema';
+import { warehouses } from '../../data/vi/logistics';
+import type { Warehouse } from '../../data/types';
+
+export function getStaticPaths() {
+  return warehouses
+    .filter((w) => isBuilt(pageByKey(w.id).status))
+    .map((w) => ({ params: { kho: `kho-${w.id}` }, props: { warehouse: w } }));
+}
+const { warehouse } = Astro.props as { warehouse: Warehouse };
+const page = pageByKey(warehouse.id);
+const ld = [serviceLd({
+  name: `Kho nhận hàng ${warehouse.city} – vận chuyển về Việt Nam`,
+  serviceType: 'Nhận hàng tại Trung Quốc và vận chuyển về Việt Nam',
+  description: page.description,
+  url: new URL(page.href, Astro.site!),
+  areaServed: ['Việt Nam'],
+})];
+---
+<LogisticsLayout page={page} jsonLd={ld}>
+  <WarehouseBody warehouse={warehouse} />
+</LogisticsLayout>
