@@ -42,6 +42,7 @@ for (const [name, vp] of [['desktop', { width: 1366, height: 900 }], ['mobile', 
 
   // Hợp lệ: gửi thật qua worker → Sheet giả.
   await page.selectOption('#cf-need', 'bao-gia-van-chuyen');
+  await page.selectOption('#cf-route', 'tham-quyen');
   await page.fill('#cf-weight', '250');
   await page.fill('#cf-message', `Lô hàng thử ${name}`);
   await page.check('#cf-consent');
@@ -51,7 +52,7 @@ for (const [name, vp] of [['desktop', { width: 1366, height: 900 }], ['mobile', 
   const msg = await page.textContent('[data-form-status]');
   check(`[${name}] gửi hợp lệ → "Đã nhận yêu cầu" + mã lead`, /Đã nhận yêu cầu \(mã VG-E2E-\d{4}\)/.test(msg), msg);
   const all = await rows(); const last = all.at(-1);
-  check(`[${name}] Sheet nhận đúng 1 dòng, đúng dữ liệu`, all.length === before + 1 && last.phone === '0961102655' && last.weight_kg === 250 && last.need === 'bao-gia-van-chuyen' && last.page === '/lien-he/' && last.message === `Lô hàng thử ${name}`, JSON.stringify(last));
+  check(`[${name}] Sheet nhận đúng 1 dòng, đúng dữ liệu`, all.length === before + 1 && last.phone === '0961102655' && last.weight_kg === 250 && last.need === 'bao-gia-van-chuyen' && last.route === 'tham-quyen' && last.page === '/lien-he/' && last.message === `Lô hàng thử ${name}`, JSON.stringify(last));
   check(`[${name}] form khoá sau khi gửi (chống gửi lặp)`, await page.locator('#cf-name').isDisabled());
   const layer = await page.evaluate(() => JSON.stringify(window.dataLayer ?? []));
   check(`[${name}] đo lường lead_submit, không chứa dữ liệu cá nhân`, layer.includes('lead_submit') && !layer.includes('0961102655') && !layer.includes('Khách Thử'));

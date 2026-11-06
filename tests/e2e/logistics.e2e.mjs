@@ -33,7 +33,11 @@ for (const [base, label, list] of [[PROD, 'prod', PAGES], [DEMO, 'demo', [...PAG
       page.on('pageerror', (e) => errors.push(String(e)));
       const res = await page.goto(base + p, { waitUntil: 'load' }); await page.waitForTimeout(400);
       check(`[${label}/${vp}] ${p} HTTP 200`, res?.status() === 200, String(res?.status()));
-      check(`[${label}/${vp}] ${p} không lỗi console / CSP`, errors.length === 0, errors.join(' | ').slice(0, 300));
+      // Turnstile mã site THẬT chỉ cho phép tên miền thật → trên localhost luôn báo 110200 (domain not allowed).
+      // Đó là giới hạn môi trường thử, không phải lỗi; mọi lỗi khác vẫn tính. Luồng Turnstile đầy đủ: lead.e2e.mjs (mã thử).
+      const local = /localhost|127\.0\.0\.1/.test(base);
+      const real = errors.filter((e) => !(local && /TurnstileError: \[Cloudflare Turnstile\] Error: 110200|status of 400/.test(e)));
+      check(`[${label}/${vp}] ${p} không lỗi console / CSP`, real.length === 0, real.join(' | ').slice(0, 300));
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       check(`[${label}/${vp}] ${p} không tràn ngang`, overflow <= 1, `dư ${overflow}px`);
       if (vp === 'mobile' && p.startsWith('/logistics/')) {
@@ -72,7 +76,7 @@ for (const [base, label, list] of [[PROD, 'prod', PAGES], [DEMO, 'demo', [...PAG
   await pop;
   const names = await page.evaluate(() => (window.dataLayer ?? []).map((e) => e.event));
   check('đo lường: call_click + zalo_click', names.includes('call_click') && names.includes('zalo_click'), names.join(','));
-  const foreign = requests.filter((u) => !u.startsWith('https://zalo.me') && !u.startsWith('https://challenges.cloudflare.com'));
+  const foreign = requests.filter((u) => !u.startsWith('https://zalo.me') && !/^(blob:)?https:\/\/challenges\.cloudflare\.com/.test(u));
   check('không gọi domain ngoài (trừ Turnstile chống spam)', foreign.length === 0, foreign.join(' | '));
   const nojs = await browser.newContext({ javaScriptEnabled: false });
   const p2 = await nojs.newPage();
