@@ -7,6 +7,10 @@ export const providerLd = () => ({
   legalName: provider.legalName,
   url: provider.url,
   telephone: provider.hotline.replace(/^0/, '+84'),
+  // Địa chỉ văn phòng VIPORDER công bố (có nguồn) — giúp Google/AI nối dịch vụ với pháp nhân có thật.
+  ...(provider.officeAddress.value && provider.officeAddress.source
+    ? { address: { '@type': 'PostalAddress', streetAddress: provider.officeAddress.value, addressCountry: 'VN' } }
+    : {}),
 });
 
 /**

@@ -2,7 +2,7 @@
 import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
 import FaqList from '../../components/logistics/FaqList.astro';
 import Pending from '../../components/logistics/Pending.astro';
-import { pageByKey, telHref, prettyPhone, linkable } from '../../lib/logistics';
+import { pageByKey, telHref, prettyPhone, linkable, warehouseHref } from '../../lib/logistics';
 import { serviceLd } from '../../lib/schema';
 import { provider, processSteps, serviceArea, warehouses } from '../../data/vi/logistics';
 import type { FaqItem } from '../../data/types';
@@ -89,8 +89,8 @@ const localFaq: FaqItem[] = [
       <span class="kicker">Gửi hàng</span>
       <h2 id="route-title">Từ Trung Quốc về Bắc Ninh</h2>
       <div class="grid grid-3">
-        {warehouses.filter((w) => linkable(`/logistics/kho-${w.id}/`)).map((w) => (
-          <a class="card card-link" href={`/logistics/kho-${w.id}/`}>
+        {warehouses.filter((w) => linkable(warehouseHref(w.id))).map((w) => (
+          <a class="card card-link" href={warehouseHref(w.id)}>
             <h3>{w.city} → Bắc Ninh</h3>
             <p>Tuyến: <Pending fact={w.route} fallback="đang cập nhật" /></p>
             <p class="more">Xem kho {w.city} →</p>

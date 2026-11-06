@@ -1,7 +1,7 @@
 ---
 import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
 import FaqList from '../../components/logistics/FaqList.astro';
-import { pageByKey, linkable } from '../../lib/logistics';
+import { pageByKey, linkable, warehouseHref } from '../../lib/logistics';
 import { serviceLd } from '../../lib/schema';
 import { services, processSteps, faqs, warehouses, provider } from '../../data/vi/logistics';
 
@@ -15,7 +15,7 @@ const ld = [serviceLd({
   areaServed: ['Bắc Ninh', 'Việt Nam'],
 })];
 // Thẻ kho chỉ hiện khi trang kho được xuất bản (owner xác nhận kho có thật) — verifier P0-1.
-const khoLinks = warehouses.map((w) => ({ ...w, href: `/logistics/kho-${w.id}/` })).filter((w) => linkable(w.href));
+const khoLinks = warehouses.map((w) => ({ ...w, href: warehouseHref(w.id) })).filter((w) => linkable(w.href));
 const audiences = [
   { title: 'Xưởng sản xuất, làng nghề', text: 'Nhập phụ kiện, vật tư, máy móc từ Trung Quốc theo lô, cần kiểm đếm và chứng từ rõ ràng.' },
   { title: 'Doanh nghiệp khu công nghiệp', text: 'Cần nhập khẩu chính ngạch, khai báo hải quan và bộ chứng từ phù hợp cho kế toán.' },

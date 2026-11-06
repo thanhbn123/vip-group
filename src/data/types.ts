@@ -174,6 +174,30 @@ export interface Warehouse {
   goodsFit: string[];
 }
 
+/** Một hình thức vận chuyển trên bảng so sánh tuyến Thâm Quyến. Mô tả `how/unit/papers/fit` là kiến thức chung của ngành. */
+export interface ShippingMode {
+  id: string;
+  name: string;
+  how: string;
+  unit: string;
+  papers: string;
+  fit: string;
+  /** VIPORDER có cung cấp hình thức này trên tuyến không — production chỉ hiện dòng đã xác nhận. */
+  offered: Fact;
+  transitHanoi: Fact;
+  price: Fact;
+}
+
+export interface ShenzhenRoute {
+  /** Ngày cập nhật dữ liệu trang (ISO). */
+  updated: string;
+  /** Xác nhận VIPORDER nhận hàng tại Thâm Quyến. */
+  served: Fact;
+  borderGate: Fact;
+  destinations: { city: string; transit: Fact; note: string }[];
+  modes: ShippingMode[];
+}
+
 export interface FaqItem {
   q: string;
   a: string;

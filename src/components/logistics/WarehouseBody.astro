@@ -3,7 +3,7 @@ import Pending from './Pending.astro';
 import FaqList from './FaqList.astro';
 import type { Warehouse, FaqItem } from '../../data/types';
 import { warehouses, provider } from '../../data/vi/logistics';
-import { telHref, prettyPhone } from '../../lib/logistics';
+import { telHref, prettyPhone, linkable, warehouseHref } from '../../lib/logistics';
 
 interface Props { warehouse: Warehouse }
 const { warehouse: w } = Astro.props;
@@ -55,7 +55,7 @@ const faq: FaqItem[] = [
   <div class="container split">
     <div>
       <h2 id="wh-faq">Câu hỏi về kho {w.city}</h2>
-      <p><a class="text-link" href={`/logistics/kho-${other.id}/`}>Xem thêm kho {other.city} →</a></p>
+      {linkable(warehouseHref(other.id)) && <p><a class="text-link" href={warehouseHref(other.id)}>Hàng từ {other.city} →</a></p>}
       <p><a class="text-link" href="/logistics/van-chuyen-trung-quoc-bac-ninh/">Nhận hàng tại Bắc Ninh →</a></p>
     </div>
     <FaqList items={faq} />

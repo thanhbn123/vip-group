@@ -1,4 +1,4 @@
-import type { Article, FaqItem, LogisticsPage, LogisticsProvider, PriceRow, Warehouse, Fact } from '../types';
+import type { Article, FaqItem, LogisticsPage, LogisticsProvider, PriceRow, ShenzhenRoute, Warehouse, Fact } from '../types';
 
 /**
  * KHU LOGISTICS — VIPG-WEB-021.
@@ -85,6 +85,78 @@ export const warehouses: Warehouse[] = [
     goodsFit: ['Linh kiện, thiết bị điện tử', 'Phụ kiện công nghệ', 'Hàng từ nhà cung cấp khu vực Thâm Quyến'],
   },
 ];
+
+/* ───────────── Tuyến Thâm Quyến → Việt Nam (VIPG-WEB-022) ───────────── */
+
+/**
+ * Dữ liệu trang /logistics/van-chuyen-tham-quyen-viet-nam/.
+ * Con số trong `sample` lấy từ brief SEO 06/11/2026 (đề xuất nội dung), CHƯA phải cam kết dịch vụ của VIPORDER:
+ * chỉ hiện ở bản DEMO kèm nhãn MẪU. Owner xác nhận bằng văn bản → điền `value` + `source`.
+ */
+export const shenzhenRoute: ShenzhenRoute = {
+  updated: '2026-11-06',
+  served: pending('[MẪU] VIPORDER nhận hàng từ nhà cung cấp tại Thâm Quyến'),
+  borderGate: pending('[MẪU] cửa khẩu Lạng Sơn (Hữu Nghị / Tân Thanh)'),
+  destinations: [
+    { city: 'Hà Nội', transit: pending('[MẪU] 2–3 ngày'), note: 'Nhận tại kho hoặc giao tận nơi nội thành' },
+    { city: 'Bắc Ninh', transit: pending('[MẪU] 2–3 ngày'), note: 'Văn phòng VIPORDER tại Đồng Nguyên, Bắc Ninh' },
+    { city: 'Lạng Sơn', transit: pending('[MẪU] 1–2 ngày'), note: 'Tỉnh có cửa khẩu đường bộ với Trung Quốc' },
+    { city: 'TP.HCM', transit: pending('[MẪU] 4–6 ngày'), note: 'Chuyển tiếp nội địa từ miền Bắc vào miền Nam' },
+  ],
+  modes: [
+    {
+      id: 'duong-bo-kg',
+      name: 'Đường bộ – chuyển phát nhanh (hàng lẻ)',
+      how: 'Hàng gom theo kiện, đi xe tải qua cửa khẩu đường bộ biên giới phía Bắc.',
+      unit: 'kg hoặc kg quy đổi',
+      papers: 'Không kèm bộ chứng từ nhập khẩu đứng tên người mua',
+      fit: 'Đơn nhỏ, hàng mẫu, chủ shop',
+      offered: pending('[MẪU] Có'),
+      transitHanoi: pending('[MẪU] 2–3 ngày'),
+      price: pending('[MẪU] 00.000 đ/kg'),
+    },
+    {
+      id: 'duong-bo-m3',
+      name: 'Đường bộ – hàng lô theo khối',
+      how: 'Hàng cồng kềnh hoặc số lượng lớn, tính theo thể tích, đi xe tải ghép hoặc nguyên xe.',
+      unit: 'm³',
+      papers: 'Tùy hình thức: ký gửi trọn gói hoặc chính ngạch',
+      fit: 'Xưởng sản xuất, hàng cồng kềnh',
+      offered: pending('[MẪU] Có'),
+      transitHanoi: pending('[MẪU] 3–5 ngày'),
+      price: pending('[MẪU] 0.000.000 đ/m³'),
+    },
+    {
+      id: 'chinh-ngach',
+      name: 'Nhập khẩu chính ngạch',
+      how: 'Doanh nghiệp đứng tên nhập khẩu, mở tờ khai hải quan, nộp thuế nhập khẩu và thuế GTGT khâu nhập khẩu.',
+      unit: 'cước vận chuyển + thuế, phí theo tờ khai',
+      papers: 'Tờ khai hải quan và bộ chứng từ nhập khẩu',
+      fit: 'Doanh nghiệp cần hồ sơ cho kế toán, thuế; hàng có C/O Form E',
+      // Có nguồn: VIPORDER công bố dịch vụ "Nhập khẩu chính ngạch" + "Khai báo hải quan".
+      offered: { value: 'Có', source: SRC_VIPORDER },
+      transitHanoi: pending('[MẪU] 3–5 ngày (tùy luồng hải quan)'),
+      price: pending('[MẪU] báo theo lô'),
+    },
+    {
+      id: 'duong-bien',
+      name: 'Đường biển (cảng Thâm Quyến → Hải Phòng / TP.HCM)',
+      how: 'Hàng nguyên container (FCL) hoặc hàng lẻ ghép container (LCL), phù hợp lô lớn, không gấp.',
+      unit: 'container hoặc m³ (LCL)',
+      papers: 'Vận đơn đường biển + bộ chứng từ nhập khẩu',
+      fit: 'Lô hàng lớn, hàng nặng, ưu tiên chi phí',
+      offered: pending('[MẪU] Có'),
+      transitHanoi: pending('[MẪU] 7–12 ngày'),
+      price: pending('[MẪU] báo theo container'),
+    },
+  ],
+};
+
+/** "…, 2–3 ngày" trong <title> — chỉ khi thời gian Hà Nội đã xác minh. */
+function shenzhenTitleSuffix() {
+  const hn = shenzhenRoute.destinations.find((d) => d.city === 'Hà Nội')?.transit;
+  return hn?.value && hn.source ? `, ${hn.value}` : '';
+}
 
 /** Hệ số quy đổi cân nặng thể tích (cm³ / kg) mà VIPORDER áp dụng — chưa được owner cung cấp. */
 export const volumetricDivisor: Fact<number> = { value: null, source: null, sample: 6000 };
@@ -224,18 +296,23 @@ export const pages: LogisticsPage[] = [
     keyword: 'kho Quảng Châu, vận chuyển hàng Quảng Châu về Việt Nam',
   },
   {
+    // VIPG-WEB-022: trang tuyến Thâm Quyến thay cho /logistics/kho-tham-quyen/ — MỘT URL cho cụm từ khóa
+    // "vận chuyển (Trung Việt) từ Thâm Quyến về Việt Nam" + "kho Thâm Quyến" (tránh 2 URL tranh nhau).
     key: 'tham-quyen',
-    href: '/logistics/kho-tham-quyen/',
-    nav: 'Kho Thâm Quyến',
-    title: 'Kho Thâm Quyến – vận chuyển Thâm Quyến về Việt Nam',
+    href: '/logistics/van-chuyen-tham-quyen-viet-nam/',
+    nav: 'Thâm Quyến – VN',
+    // Thời gian Hà Nội chỉ vào <title> khi owner đã xác nhận (xem shenzhenRoute.destinations).
+    title: `Vận chuyển Trung Việt từ Thâm Quyến về Việt Nam${shenzhenTitleSuffix()}`,
     description:
-      'Kho nhận hàng Thâm Quyến (深圳) cho hàng điện tử, linh kiện, phụ kiện về Bắc Ninh và Việt Nam. Liên hệ để nhận địa chỉ kho và báo giá.',
-    h1: 'Kho Thâm Quyến — vận chuyển Thâm Quyến về Việt Nam',
-    lead: 'Phù hợp với linh kiện, thiết bị điện tử và hàng từ nhà cung cấp khu vực Thâm Quyến.',
-    // DRAFT (verifier P0-1): chưa có bằng chứng VIPORDER có kho tại Thâm Quyến → không xuất bản.
+      'Vận chuyển hàng từ Thâm Quyến (Shenzhen, 深圳) về Hà Nội, Bắc Ninh, TP.HCM: thời gian, cách tính cước, nhập khẩu chính ngạch, hải quan. VIPORDER vận hành.',
+    h1: 'Vận chuyển hàng hóa từ Thâm Quyến về Việt Nam',
+    lead: 'Dành cho doanh nghiệp, xưởng sản xuất và chủ shop nhập linh kiện, thiết bị điện tử, phụ kiện công nghệ từ nhà cung cấp khu vực Thâm Quyến (Quảng Đông).',
+    // DRAFT: chưa có văn bản owner xác nhận VIPORDER nhận hàng tại Thâm Quyến, thời gian từng tuyến, bảng giá.
+    // Nâng `ready` khi điền đủ shenzhenRoute.served + destinations (value + source) — xem docs/seo/G09_THAM_QUYEN_GEO.md.
     status: 'draft',
-    pendingReason: 'Chưa có xác nhận kho Thâm Quyến tồn tại + địa chỉ, giờ nhận hàng, người nhận, tuyến, thời gian vận chuyển.',
-    keyword: 'vận chuyển Thâm Quyến Việt Nam',
+    pendingReason:
+      'Chưa có xác nhận VIPORDER nhận hàng tại Thâm Quyến (kho/địa chỉ), thời gian Thâm Quyến → Hà Nội / Bắc Ninh / Lạng Sơn / TP.HCM, hình thức vận chuyển đang cung cấp, bảng giá 2026.',
+    keyword: 'vận chuyển trung việt từ thâm quyến về việt nam; vận chuyển Thâm Quyến Việt Nam; kho Thâm Quyến',
   },
   {
     key: 'quy-trinh',
@@ -421,5 +498,63 @@ export const articles: Article[] = [
       },
     ],
     related: ['/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/bang-gia/'],
+  },
+  {
+    // NHÁP — cần owner/chuyên viên hải quan VIPORDER duyệt và bổ sung kinh nghiệm thực tế (E-E-A-T)
+    // trước khi xuất bản. Chỉ nêu quy tắc chung, không trích số hiệu văn bản chưa đối chiếu.
+    slug: 'c-o-form-e-va-ma-hs-hang-tham-quyen',
+    title: 'C/O Form E và mã HS khi nhập hàng từ Thâm Quyến, Quảng Đông',
+    description:
+      'C/O Form E là gì, khi nào được hưởng thuế ưu đãi ACFTA, lỗi thường gặp với C/O và cách xác định mã HS cho linh kiện, điện tử nhập từ Thâm Quyến.',
+    keyword: 'C/O Form E hàng Trung Quốc; mã HS hàng điện tử Thâm Quyến',
+    status: 'draft',
+    updated: '2026-11-06',
+    sections: [
+      {
+        heading: 'C/O Form E là gì?',
+        paragraphs: [
+          'C/O Form E (giấy chứng nhận xuất xứ mẫu E) là chứng từ xác nhận hàng hóa có xuất xứ Trung Quốc theo Hiệp định Thương mại hàng hóa ASEAN – Trung Quốc (ACFTA). Khi C/O hợp lệ và hàng đáp ứng quy tắc xuất xứ, doanh nghiệp Việt Nam được áp dụng thuế suất nhập khẩu ưu đãi đặc biệt ACFTA — thường thấp hơn đáng kể so với thuế suất ưu đãi thông thường (MFN).',
+          'C/O Form E do cơ quan có thẩm quyền phía Trung Quốc cấp theo đề nghị của nhà xuất khẩu, vì vậy cần thỏa thuận với nhà cung cấp ngay từ khi đặt hàng.',
+        ],
+      },
+      {
+        heading: 'Khi nào nên yêu cầu nhà cung cấp làm C/O Form E?',
+        paragraphs: ['Nên trao đổi trước khi chốt đơn nếu:'],
+        list: [
+          'Doanh nghiệp nhập khẩu chính ngạch, đứng tên trên tờ khai hải quan.',
+          'Thuế suất MFN của mặt hàng cao hơn thuế suất ACFTA — chênh lệch càng lớn, C/O càng có giá trị.',
+          'Lô hàng có giá trị đủ lớn để bù chi phí làm C/O phía Trung Quốc.',
+        ],
+      },
+      {
+        heading: 'Lỗi thường gặp làm C/O bị từ chối',
+        paragraphs: ['Hải quan có thể không chấp nhận ưu đãi nếu C/O có sai lệch so với bộ chứng từ. Các lỗi hay gặp:'],
+        list: [
+          'Tên hàng, số lượng, trọng lượng trên C/O không khớp hóa đơn thương mại và tờ khai.',
+          'Mã HS trên C/O khác mã HS khai báo ở cấp 6 số.',
+          'Thông tin người nhập khẩu, số hóa đơn hoặc ngày hóa đơn ghi sai.',
+          'Hàng không vận chuyển trực tiếp hoặc chứng từ chuyển tải không đầy đủ.',
+        ],
+      },
+      {
+        heading: 'Xác định mã HS cho hàng từ Thâm Quyến',
+        paragraphs: [
+          'Hàng nhập từ Thâm Quyến phần lớn là linh kiện, thiết bị điện tử và phụ kiện công nghệ — thường thuộc Chương 84 (máy móc, thiết bị cơ khí) và Chương 85 (máy, thiết bị điện, điện tử). Việt Nam dùng mã HS 8 số; 6 số đầu thống nhất theo hệ thống HS quốc tế.',
+          'Cùng một sản phẩm có thể được xếp vào nhiều mã khác nhau tùy chức năng chính, cấu tạo và mức độ hoàn thiện (linh kiện rời hay thành phẩm). Chọn sai mã có thể dẫn tới sai thuế suất, thiếu giấy phép hoặc kiểm tra chuyên ngành, và bị truy thu thuế.',
+        ],
+        list: [
+          'Chuẩn bị catalogue, thông số kỹ thuật, ảnh sản phẩm trước khi khai báo.',
+          'Đối chiếu mã HS với nhà cung cấp để mã trên C/O và tờ khai thống nhất.',
+          'Với mặt hàng mới hoặc dễ tranh chấp mã, cân nhắc đề nghị cơ quan hải quan xác định trước mã số.',
+        ],
+      },
+      {
+        heading: 'VIPORDER hỗ trợ gì?',
+        paragraphs: [
+          'VIPORDER hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp. Gửi thông tin mặt hàng, catalogue và hóa đơn dự kiến để được tư vấn mã HS, C/O và chi phí trước khi đặt hàng.',
+        ],
+      },
+    ],
+    related: ['/logistics/van-chuyen-tham-quyen-viet-nam/', '/logistics/van-chuyen-trung-quoc-viet-nam/'],
   },
 ];

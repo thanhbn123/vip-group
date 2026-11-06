@@ -12,7 +12,7 @@ import type { Warehouse } from '../../data/types';
 
 export function getStaticPaths() {
   return warehouses
-    .filter((w) => isBuilt(pageByKey(w.id).status))
+    .filter((w) => pageByKey(w.id).href === `/logistics/kho-${w.id}/` && isBuilt(pageByKey(w.id).status))
     .map((w) => ({ params: { kho: `kho-${w.id}` }, props: { warehouse: w } }));
 }
 const { warehouse } = Astro.props as { warehouse: Warehouse };
