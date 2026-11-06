@@ -278,3 +278,15 @@ test('V1.2 G09: hotline khai ở MỘT nơi (contact.ts); mọi trang dùng tel:
     assert.doesNotMatch(html, /0968\s?961\s?962/, `${f}: số cũ`);
   }
 });
+
+test('QA P2: Origin null/hỏng/sai scheme → 403; Content-Length lớn → 413 trước khi đọc; page "//evil" → "/"', async () => {
+  for (const origin of ['null', 'not a url', 'http://www.vipgroup.com.vn']) {
+    assert.equal((await run(req(good(), { origin }))).res.status, 403, origin);
+  }
+  const big = new Request('https://www.vipgroup.com.vn/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://www.vipgroup.com.vn', 'Content-Length': '999999' }, body: '{}' });
+  assert.equal((await W.handleLead(big, ENV, {}, async () => { throw new Error('không được gọi ra ngoài'); }, NOW)).status, 413);
+  for (const [page, want] of [['//evil.com/x', '/'], ['javascript:alert(1)', '/'], ['/logistics/bang-gia/', '/logistics/bang-gia/']]) {
+    const { f } = await run(req(good({ page })));
+    assert.equal(JSON.parse(f.of('script.example')[0].init.body).lead.page, want, page);
+  }
+});

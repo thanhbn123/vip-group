@@ -58,14 +58,16 @@ export function validate(body, now = Date.now()) {
   if (body.consent !== true) errors.push('consent');
   const key = clean(body.idempotency_key, 64);
   if (!/^[A-Za-z0-9-]{16,64}$/.test(key)) errors.push('idempotency_key');
-  const page = clean(body.page, 200);
+  // Chỉ nhận đường dẫn nội bộ dạng "/…" (không "//host", không ký tự lạ) — giá trị này vào Sheet và tin Zalo (QA P2-5).
+  const pageRaw = clean(body.page, 200);
+  const page = /^\/(?!\/)[\w\-./%?=&#]*$/.test(pageRaw) ? pageRaw : '/';
   const utm = body.utm && typeof body.utm === 'object' ? body.utm : {};
   if (errors.length) return { errors };
   return {
     lead: {
       idempotency_key: key,
       source: 'vipgroup.com.vn',
-      page: page.startsWith('/') ? page : '/',
+      page,
       utm: { source: clean(utm.source, 80), medium: clean(utm.medium, 80), campaign: clean(utm.campaign, 120) },
       name, phone, email, need, route, weight_kg: weight, message,
       consent_at: new Date(now).toISOString(),
@@ -88,7 +90,7 @@ async function verifyTurnstile(env, token, ip, fetchImpl) {
   form.append('response', token);
   if (ip) form.append('remoteip', ip);
   try {
-    const r = await fetchImpl('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form });
+    const r = await fetchImpl('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form, signal: AbortSignal.timeout(8000) });
     const d = await r.json();
     return d.success === true;
   } catch {
@@ -102,6 +104,7 @@ async function saveToSheet(env, lead, fetchImpl) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ secret: env.SHEET_WEBHOOK_SECRET, action: 'append', lead }),
     redirect: 'follow',
+    signal: AbortSignal.timeout(15000),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok || d.ok !== true || typeof d.lead_id !== 'string') throw new Error(`sheet ${r.status} ${d.error ?? ''}`);
@@ -132,6 +135,7 @@ async function notifyZalo(env, text, fetchImpl) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: env.ZALO_NOTIFY_CHAT_ID, text }),
+      signal: AbortSignal.timeout(8000),
     });
     return r.ok;
   } catch {
@@ -144,9 +148,14 @@ export async function handleLead(request, env, ctx = {}, fetchImpl = fetch, now 
   if (!env.TURNSTILE_SECRET || !env.SHEET_WEBHOOK_URL || !env.SHEET_WEBHOOK_SECRET) return json(503, { ok: false, error: 'not_configured' });
 
   const url = new URL(request.url);
+  // Cùng nguồn (scheme + host). Origin "null"/hỏng → 403, không để lỗi 500 (QA P2-1, P2-2).
   const origin = request.headers.get('Origin');
-  if (!origin || new URL(origin).host !== url.host) return json(403, { ok: false, error: 'origin' });
+  let sameOrigin = false;
+  try { sameOrigin = !!origin && new URL(origin).origin === url.origin; } catch { sameOrigin = false; }
+  if (!sameOrigin) return json(403, { ok: false, error: 'origin' });
   if (!(request.headers.get('Content-Type') ?? '').startsWith('application/json')) return json(415, { ok: false, error: 'content_type' });
+  // Chặn sớm theo Content-Length trước khi đọc body (QA P2-3); vẫn kiểm lại độ dài thực sau khi đọc.
+  if (Number(request.headers.get('Content-Length') || 0) > MAX_BODY) return json(413, { ok: false, error: 'too_large' });
   const raw = await request.text();
   if (raw.length > MAX_BODY) return json(413, { ok: false, error: 'too_large' });
   let body;
