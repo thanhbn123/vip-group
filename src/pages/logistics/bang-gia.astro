@@ -25,7 +25,7 @@ const priceLd = {
 };
 ---
 <LogisticsLayout page={page} showActions={false} jsonLd={[priceLd]}>
-  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline}
+  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline} hotlineDisplay={contact.hotlineDisplay} zaloUrl={contact.zaloUrl}
     quoteHref={contact.formBackendReady ? '#form-lien-he' : null} />
 
   <section class="section section-alt" aria-labelledby="factor-title">

@@ -77,6 +77,10 @@ export interface CareersInfo {
 export interface ContactInfo {
   email: string;
   hotline: string | null;
+  /** Hiển thị dạng nhóm số (vd. 0xxx xxx xxx). */
+  hotlineDisplay: string | null;
+  /** Zalo (owner xác nhận cùng số hotline 06/11/2026). */
+  zaloUrl: string | null;
   address: string | null;
   /** Địa chỉ tách trường cho schema.org PostalAddress. */
   addressParts: { street: string; ward: string; region: string; country: string } | null;
@@ -116,6 +120,7 @@ export interface ShippingPricing {
   title: string;
   titleZh: string;
   route: string;
+  routeZh: string;
   unit: string;
   unitZh: string;
   note: string;

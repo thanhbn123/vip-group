@@ -21,6 +21,14 @@ const { email, backendReady, hotline = null, lead, defaultNeed } = Astro.props;
 const ready = backendReady && !!lead?.turnstileSiteKey;
 const tel = hotline?.replace(/\s/g, '') ?? '';
 const pretty = tel.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3');
+const routes = [
+  ['tham-quyen', 'Thâm Quyến (深圳)'],
+  ['quang-chau', 'Quảng Châu (广州)'],
+  ['ha-mon', 'Hạ Môn (厦门)'],
+  ['nghia-o', 'Nghĩa Ô (义乌)'],
+  ['khac', 'Nơi khác tại Trung Quốc'],
+  ['chua-ro', 'Chưa rõ — cần tư vấn'],
+];
 const needs = [
   ['bao-gia-van-chuyen', 'Báo giá vận chuyển Trung Quốc – Việt Nam'],
   ['nhap-khau-chinh-ngach', 'Nhập khẩu chính ngạch / hải quan'],
@@ -53,6 +61,12 @@ const needs = [
       <input id="cf-email" type="email" autocomplete="email" required={!ready} maxlength="120" />
     </div>
   </div>
+  {ready && (
+    <div class="field">
+      <label for="cf-route">Tuyến vận chuyển — hàng gửi từ đâu tại Trung Quốc?</label>
+      <select id="cf-route">{routes.map(([v, l]) => <option value={v} selected={v === 'chua-ro'}>{l}</option>)}</select>
+    </div>
+  )}
   {ready && (
     <div class="field-row">
       <div class="field">
@@ -175,7 +189,7 @@ const needs = [
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               name: name.value, phone: phone.value, email: email.value,
-              need: $<HTMLSelectElement>('cf-need').value, weight_kg: $<HTMLInputElement>('cf-weight').value,
+              need: $<HTMLSelectElement>('cf-need').value, route: $<HTMLSelectElement>('cf-route').value, weight_kg: $<HTMLInputElement>('cf-weight').value,
               message: $<HTMLTextAreaElement>('cf-message').value, consent: consent.checked,
               website: $<HTMLInputElement>('cf-website').value, started_at: startedAt,
               idempotency_key: key, turnstile_token: token, page: location.pathname, utm,
@@ -183,7 +197,7 @@ const needs = [
           });
           const d = await r.json().catch(() => ({}));
           if (r.ok && d.ok) {
-            track('lead_submit', { need: $<HTMLSelectElement>('cf-need').value });
+            track('lead_submit', { need: $<HTMLSelectElement>('cf-need').value, route: $<HTMLSelectElement>('cf-route').value });
             form.querySelectorAll('input, select, textarea').forEach((el) => ((el as HTMLInputElement).disabled = true));
             say(`Đã nhận yêu cầu${d.lead_id ? ` (mã ${d.lead_id})` : ''}. Chúng tôi sẽ liên hệ lại sớm. Cần gấp: gọi/Zalo ${hotline}.`, true);
             return;

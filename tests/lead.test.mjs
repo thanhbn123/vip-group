@@ -1,7 +1,7 @@
 // VIPG-WEB-023 — Thu lead: worker /api/lead, form bật/tắt, CSP, Apps Script.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -228,6 +228,7 @@ test('Apps Script đồng bộ CRM: nghỉ 2,5 s/lead; 401 dừng lượt, 3 lư
   let codes = []; const sleeps = []; const alerts = []; let fetched = 0;
   const sheet = {
     getLastRow: () => data.length + 1,
+    getLastColumn: () => 20,
     getRange: (r, c, nr, nc) => nr ? { getValues: () => data.slice(r - 2, r - 2 + nr).map((x) => x.slice(0, nc)) } : { setValue: (v) => { data[r - 2][c - 1] = v; } },
     appendRow() {}, setFrozenRows() {},
   };
@@ -251,4 +252,29 @@ test('Apps Script đồng bộ CRM: nghỉ 2,5 s/lead; 401 dừng lượt, 3 lư
   assert.deepEqual(data.map((r) => r[14]), ['đã đồng bộ', 'đã đồng bộ', 'đã đồng bộ']);
   assert.deepEqual(sleeps, [2500, 2500]);
   assert.equal(props.CRM_AUTH_FAIL_STREAK, undefined); assert.equal(props.CRM_AUTH_ALERTED, undefined);
+});
+
+test('V1.2: tuyến vận chuyển — hợp lệ thì vào Sheet + Zalo, lạ thì 400; mặc định "chưa rõ"', async () => {
+  const ok = await run(req(good({ route: 'tham-quyen' })));
+  assert.equal(ok.res.status, 201);
+  assert.equal(JSON.parse(ok.f.of('script.example')[0].init.body).lead.route, 'tham-quyen');
+  assert.match(JSON.parse(ok.f.of('zapps')[0].init.body).text, /Tuyến: Thâm Quyến/);
+  const bad = await run(req(good({ route: 'mars' })));
+  assert.equal(bad.res.status, 400); assert.deepEqual(bad.body.fields, ['route']);
+  const def = await run(req(good()));
+  assert.equal(JSON.parse(def.f.of('script.example')[0].init.body).lead.route, 'chua-ro');
+});
+
+test('V1.2 G09: hotline khai ở MỘT nơi (contact.ts); mọi trang dùng tel:0961102655, Zalo đúng số, không còn số cũ', () => {
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]));
+  const holders = walk(join(root, 'src')).filter((f) => /0961\s?102\s?655/.test(readFileSync(f, 'utf8')));
+  assert.deepEqual(holders.map((f) => f.replace(root + '/', '')), ['src/data/vi/contact.ts']);
+  const pages = walk(join(root, 'dist')).filter((x) => x.endsWith('.html'));
+  assert.ok(pages.length >= 15);
+  for (const f of pages) {
+    const html = readFileSync(f, 'utf8');
+    for (const [, tel] of html.matchAll(/href="tel:([^"]+)"/g)) assert.equal(tel, '0961102655', f);
+    for (const [, z] of html.matchAll(/href="(https:\/\/zalo\.me\/[^"]+)"/g)) assert.equal(z, 'https://zalo.me/0961102655', f);
+    assert.doesNotMatch(html, /0968\s?961\s?962/, `${f}: số cũ`);
+  }
 });

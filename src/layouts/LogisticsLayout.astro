@@ -7,7 +7,6 @@
 import BaseLayout from './BaseLayout.astro';
 import ContactActions from '../components/logistics/ContactActions.astro';
 import StickyBar from '../components/logistics/StickyBar.astro';
-import TrackEvents from '../components/logistics/TrackEvents.astro';
 import { DEMO } from '../lib/mode';
 import { isIndexable, navPages } from '../lib/logistics';
 import { provider } from '../data/vi/logistics';
@@ -98,7 +97,6 @@ const current = Astro.url.pathname;
     </div>
   </section>
   <StickyBar />
-  <TrackEvents />
 </BaseLayout>
 
 <style>

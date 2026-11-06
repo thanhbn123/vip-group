@@ -15,6 +15,10 @@
 
 const MAX_BODY = 8 * 1024;
 const MIN_FILL_MS = 3000;
+export const ROUTES = {
+  'tham-quyen': 'Thâm Quyến', 'quang-chau': 'Quảng Châu', 'ha-mon': 'Hạ Môn', 'nghia-o': 'Nghĩa Ô',
+  'khac': 'Nơi khác tại Trung Quốc', 'chua-ro': 'Chưa rõ',
+};
 export const NEEDS = {
   'bao-gia-van-chuyen': 'Báo giá vận chuyển Trung Quốc – Việt Nam',
   'nhap-khau-chinh-ngach': 'Nhập khẩu chính ngạch / hải quan',
@@ -43,6 +47,8 @@ export function validate(body, now = Date.now()) {
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) errors.push('email');
   const need = clean(body.need, 40);
   if (!Object.hasOwn(NEEDS, need)) errors.push('need');
+  const route = clean(body.route, 40) || 'chua-ro';
+  if (!Object.hasOwn(ROUTES, route)) errors.push('route');
   let weight = null;
   if (body.weight_kg !== undefined && body.weight_kg !== null && body.weight_kg !== '') {
     weight = Number(String(body.weight_kg).replace(',', '.'));
@@ -61,7 +67,7 @@ export function validate(body, now = Date.now()) {
       source: 'vipgroup.com.vn',
       page: page.startsWith('/') ? page : '/',
       utm: { source: clean(utm.source, 80), medium: clean(utm.medium, 80), campaign: clean(utm.campaign, 120) },
-      name, phone, email, need, weight_kg: weight, message,
+      name, phone, email, need, route, weight_kg: weight, message,
       consent_at: new Date(now).toISOString(),
       created_at: new Date(now).toISOString(),
     },
@@ -110,6 +116,7 @@ export function zaloText(lead, leadId, saved) {
     `SĐT: ${lead.phone}`,
     lead.email ? `Email: ${lead.email}` : null,
     `Nhu cầu: ${NEEDS[lead.need]}`,
+    `Tuyến: ${ROUTES[lead.route]}`,
     lead.weight_kg !== null ? `Khối lượng: ${lead.weight_kg} kg` : null,
     lead.message ? `Nội dung: ${lead.message.slice(0, 500)}` : null,
     `Trang: ${lead.page}${lead.utm.source ? ` · nguồn ${lead.utm.source}` : ''}`,

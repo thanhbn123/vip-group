@@ -1,3 +1,4 @@
+import { contact } from './contact';
 import type { Article, FaqItem, LogisticsPage, LogisticsProvider, ShenzhenRoute, Warehouse, Fact } from '../types';
 
 /**
@@ -11,6 +12,8 @@ import type { Article, FaqItem, LogisticsPage, LogisticsProvider, ShenzhenRoute,
  * - Không ghi giá, thời gian giao, địa chỉ kho, cam kết bồi thường khi chưa có văn bản của owner.
  */
 
+const HOTLINE = contact.hotlineDisplay!;
+
 const SRC_VIPORDER = 'https://viporder.com.vn (nội dung công khai, đọc 06/11/2026)';
 
 export const provider: LogisticsProvider = {
@@ -19,9 +22,9 @@ export const provider: LogisticsProvider = {
   url: 'https://viporder.com.vn',
   // Owner chốt 24/10/2026 (src/data/vi/subsidiaries.ts).
   relation: 'Cùng chủ sở hữu với VIP GROUP',
-  // Owner đổi số Hotline/Zalo ngày 06/11/2026 (viporder.com.vn vẫn đang ghi số cũ 0968961962).
-  hotline: '0961102655',
-  zaloUrl: 'https://zalo.me/0961102655',
+    // Dùng cấu hình hotline/Zalo tập trung của VIP GROUP (src/data/vi/contact.ts) — không khai số riêng ở đây.
+  hotline: contact.hotline!,
+  zaloUrl: contact.zaloUrl!,
   officeAddress: {
     value: 'Số 62 Khu đô thị Nam Hồng, Đồng Nguyên, Bắc Ninh',
     source: SRC_VIPORDER,
@@ -190,7 +193,7 @@ export const faqs: FaqItem[] = [
   },
   {
     q: 'Muốn gửi hàng từ Trung Quốc về thì bắt đầu từ đâu?',
-    a: 'Đăng ký mã khách hàng trên viporder.com.vn, sau đó dùng mã này khi gửi hàng hoặc đặt hàng. Nếu chưa rõ nên gửi về kho nào, gọi hoặc nhắn Zalo 0961 102 655 để được hướng dẫn.',
+    a: `Đăng ký mã khách hàng trên viporder.com.vn, sau đó dùng mã này khi gửi hàng hoặc đặt hàng. Nếu chưa rõ nên gửi về kho nào, gọi hoặc nhắn Zalo ${HOTLINE} để được hướng dẫn.`,
   },
   {
     q: 'Tra cứu tình trạng hàng ở đâu?',
@@ -206,7 +209,7 @@ export const faqs: FaqItem[] = [
   },
   {
     q: 'Gửi hàng về địa chỉ nào tại Trung Quốc?',
-    a: 'Địa chỉ nhận hàng tại Trung Quốc và cách ghi thông tin người nhận đang được cập nhật trên website. Vui lòng liên hệ hotline / Zalo 0961 102 655 để được hướng dẫn.',
+    a: `Địa chỉ nhận hàng tại Trung Quốc và cách ghi thông tin người nhận đang được cập nhật trên website. Vui lòng liên hệ hotline / Zalo ${HOTLINE} để được hướng dẫn.`,
     pending: true,
   },
   {
@@ -258,7 +261,7 @@ export const pages: LogisticsPage[] = [
     nav: 'Về Bắc Ninh',
     title: 'Vận chuyển hàng Trung Quốc về Bắc Ninh, Từ Sơn',
     description:
-      'Vận chuyển hàng Trung Quốc về Bắc Ninh, Từ Sơn, Đồng Kỵ và khu công nghiệp. Văn phòng VIPORDER tại Đồng Nguyên, Bắc Ninh. Gọi/Zalo 0961 102 655.',
+      `Vận chuyển hàng Trung Quốc về Bắc Ninh, Từ Sơn, Đồng Kỵ và khu công nghiệp. Văn phòng VIPORDER tại Đồng Nguyên, Bắc Ninh. Gọi/Zalo ${HOTLINE}.`,
     h1: 'Vận chuyển hàng Trung Quốc về Bắc Ninh',
     lead: 'Dành cho xưởng sản xuất, doanh nghiệp trong khu công nghiệp và chủ shop tại Bắc Ninh, Từ Sơn, Đồng Kỵ cần nhập hàng Trung Quốc thường xuyên.',
     status: 'ready',
@@ -362,7 +365,7 @@ export const pages: LogisticsPage[] = [
     nav: 'Liên hệ',
     title: 'Liên hệ Logistics – văn phòng Bắc Ninh, Hotline/Zalo',
     description:
-      'Liên hệ dịch vụ vận chuyển Trung Quốc – Việt Nam: Hotline/Zalo 0961 102 655, văn phòng VIPORDER tại Đồng Nguyên, Bắc Ninh. Khu vực phục vụ.',
+      `Liên hệ dịch vụ vận chuyển Trung Quốc – Việt Nam: Hotline/Zalo ${HOTLINE}, văn phòng VIPORDER tại Đồng Nguyên, Bắc Ninh. Khu vực phục vụ.`,
     h1: 'Liên hệ và khu vực phục vụ',
     lead: 'Gọi điện, nhắn Zalo hoặc gửi yêu cầu báo giá — đội ngũ VIPORDER sẽ liên hệ lại.',
     status: 'ready',

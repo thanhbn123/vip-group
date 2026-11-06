@@ -181,7 +181,7 @@ test('FAQPage chỉ chứa câu trả lời đã có căn cứ', () => {
 test('bảng giá chi tiết: đúng 5 mức owner, áp theo cả lô, quy đổi 6000, form thu lead chọn sẵn "báo giá"', () => {
   const html = read('/logistics/bang-gia/');
   const t = text(html).replace(/\s+/g, ' ');
-  for (const [label, price] of [['0–5 kg', '20.000'], ['Trên 5 đến dưới 100 kg', '16.000'], ['100 đến dưới 500 kg', '15.000'], ['500–1.000 kg', '14.000'], ['Trên 1.000 kg', '12.000']]) {
+  for (const [label, price] of [['0–5 kg', '20.000'], ['Trên 5 đến dưới 100 kg', '16.000'], ['Từ 100 đến dưới 500 kg', '15.000'], ['Từ 500 đến 1.000 kg', '14.000'], ['Trên 1.000 kg', '12.000']]) {
     assert.match(t, new RegExp(`${label} .{0,40}?${price.replace('.', '\\.')} ?đ/kg`), `${label} → ${price}`);
   }
   assert.match(t, /Đơn vị tính: VNĐ\/kg/);

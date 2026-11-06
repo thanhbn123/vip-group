@@ -6,6 +6,7 @@ import Footer from '../components/Footer.astro';
 import { defaultLocale, htmlLang, type Locale } from '../i18n/config';
 import { t } from '../i18n/ui';
 import { DEMO } from '../lib/mode';
+import TrackEvents from '../components/logistics/TrackEvents.astro';
 
 interface Props {
   title: string;
@@ -41,5 +42,7 @@ const ui = t(locale);
       <slot />
     </main>
     <Footer locale={locale} />
+    {/* Đo lường nút gọi/Zalo/báo giá trên MỌI trang (chỉ dataLayer, không script ngoài, không dữ liệu cá nhân). */}
+    <TrackEvents />
   </body>
 </html>

@@ -16,7 +16,9 @@
 var SHEET_NAME = 'Leads';
 var HEADERS = ['lead_id', 'thời gian', 'họ tên', 'số điện thoại', 'email', 'nhu cầu', 'khối lượng (kg)', 'nội dung',
   'trang', 'utm_source', 'utm_medium', 'utm_campaign', 'đồng ý lúc', 'idempotency_key',
-  'trạng thái CRM', 'CRM lead id', 'lần thử CRM', 'lỗi CRM gần nhất', 'ghi chú nhân viên'];
+  'trạng thái CRM', 'CRM lead id', 'lần thử CRM', 'lỗi CRM gần nhất', 'ghi chú nhân viên',
+  // V1.2 — thêm cột MỚI ở CUỐI để không lệch cột cũ.
+  'tuyến'];
 var COL = {}; HEADERS.forEach(function (h, i) { COL[h] = i + 1; });
 
 function sheet_() {
@@ -26,6 +28,10 @@ function sheet_() {
     sh.appendRow(HEADERS);
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
+  } else if (sh.getLastColumn() < HEADERS.length) {
+    // Sheet tạo từ phiên bản cũ: bổ sung tiêu đề cột mới (không đụng dữ liệu cũ).
+    var from = sh.getLastColumn() + 1;
+    sh.getRange(1, from, 1, HEADERS.length - from + 1).setValues([HEADERS.slice(from - 1)]).setFontWeight('bold');
   }
   return sh;
 }
@@ -84,7 +90,7 @@ function doPost(e) {
     sh.appendRow([id, "'" + lead.created_at, cell_(lead.name), "'" + lead.phone, cell_(lead.email), lead.need,
       lead.weight_kg === null ? '' : lead.weight_kg, cell_(lead.message), cell_(lead.page),
       cell_(u.source), cell_(u.medium), cell_(u.campaign), "'" + lead.consent_at, lead.idempotency_key,
-      props.getProperty('CRM_INTAKE_URL') ? 'chờ đồng bộ' : 'chưa cấu hình CRM', '', 0, '', '']);
+      props.getProperty('CRM_INTAKE_URL') ? 'chờ đồng bộ' : 'chưa cấu hình CRM', '', 0, '', '', lead.route || 'chua-ro']);
     SpreadsheetApp.flush();
     return out_({ ok: true, lead_id: id, duplicate: false });
   } finally {
@@ -102,7 +108,8 @@ function crmPayload_(row) {
     utm: { source: strip(g('utm_source')), medium: strip(g('utm_medium')), campaign: strip(g('utm_campaign')) },
     name: strip(g('họ tên')), phone: phone, email: strip(g('email')) || null, need: g('nhu cầu'),
     weight_kg: g('khối lượng (kg)') === '' ? null : Number(g('khối lượng (kg)')),
-    message: strip(g('nội dung')), consent_at: strip(g('đồng ý lúc')), created_at: strip(g('thời gian')),
+    // Hợp đồng CRM V5 không có trường tuyến → ghép vào đầu nội dung (không đổi hợp đồng).
+    message: (g('tuyến') && g('tuyến') !== 'chua-ro' ? '[Tuyến: ' + g('tuyến') + '] ' : '') + strip(g('nội dung')), consent_at: strip(g('đồng ý lúc')), created_at: strip(g('thời gian')),
   });
 }
 
