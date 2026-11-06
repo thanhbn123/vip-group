@@ -78,9 +78,10 @@ function doPost(e) {
     }
     var id = newLeadId_();
     var u = lead.utm || {};
-    sh.appendRow([id, lead.created_at, cell_(lead.name), "'" + lead.phone, cell_(lead.email), lead.need,
+    // Thời gian ISO ghi dạng CHỮ (dấu ' đầu) để Sheets không tự đổi sang ngày theo múi giờ → gửi CRM đúng nguyên văn.
+    sh.appendRow([id, "'" + lead.created_at, cell_(lead.name), "'" + lead.phone, cell_(lead.email), lead.need,
       lead.weight_kg === null ? '' : lead.weight_kg, cell_(lead.message), cell_(lead.page),
-      cell_(u.source), cell_(u.medium), cell_(u.campaign), lead.consent_at, lead.idempotency_key,
+      cell_(u.source), cell_(u.medium), cell_(u.campaign), "'" + lead.consent_at, lead.idempotency_key,
       props.getProperty('CRM_INTAKE_URL') ? 'chờ đồng bộ' : 'chưa cấu hình CRM', '', 0, '', '']);
     SpreadsheetApp.flush();
     return out_({ ok: true, lead_id: id, duplicate: false });
@@ -99,7 +100,7 @@ function crmPayload_(row) {
     utm: { source: strip(g('utm_source')), medium: strip(g('utm_medium')), campaign: strip(g('utm_campaign')) },
     name: strip(g('họ tên')), phone: phone, email: strip(g('email')) || null, need: g('nhu cầu'),
     weight_kg: g('khối lượng (kg)') === '' ? null : Number(g('khối lượng (kg)')),
-    message: strip(g('nội dung')), consent_at: g('đồng ý lúc'), created_at: g('thời gian'),
+    message: strip(g('nội dung')), consent_at: strip(g('đồng ý lúc')), created_at: strip(g('thời gian')),
   });
 }
 

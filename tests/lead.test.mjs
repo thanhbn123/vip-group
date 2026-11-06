@@ -183,3 +183,36 @@ test('Apps Script: không có bí mật trong mã, chống công thức, so kho�
   assert.match(gs, /'Idempotency-Key': rows\[i\]\[0\]/);
   assert.match(gs, /LockService/);
 });
+
+test('Apps Script → CRM V5: chữ ký HMAC khớp thuật toán CRM; payload đúng hợp đồng cuối', async () => {
+  const { createHmac } = await import('node:crypto');
+  const vm = await import('node:vm');
+  const gs = readFileSync(join(root, 'ops/lead-sheet/Code.gs'), 'utf8');
+  // Giả lập Utilities của Apps Script: computeHmacSha256Signature trả mảng byte CÓ DẤU (-128..127) như Java.
+  const Utilities = {
+    Charset: { UTF_8: 'UTF-8' },
+    computeHmacSha256Signature: (text, key) => [...createHmac('sha256', key).update(text, 'utf8').digest()].map((b) => (b > 127 ? b - 256 : b)),
+  };
+  const ctx = { Utilities, JSON, String, Number, Math, Date };
+  vm.createContext(ctx);
+  vm.runInContext(gs, ctx);
+  const secret = 'crm-secret-ví-dụ';
+  const ts = '1793952000';
+  const body = '{"lead_id":"VG-1","name":"Nguyễn Văn Thử"}';
+  // Thuật toán CRM V5 (server/modules/leads/intake.js signLead): hmac-sha256(secret, `${ts}.${raw}`) hex.
+  assert.equal(ctx.hmacHex_(secret, ts + '.' + body), createHmac('sha256', secret).update(`${ts}.${body}`).digest('hex'));
+
+  // Dòng Sheet (sau khi Sheets bỏ dấu ' ở ô chữ) → payload gửi CRM.
+  const row = ['VG-20261106-AB12CD', '2026-11-06T07:30:01.000Z', 'Nguyễn Văn Thử', '0961102655', '', 'bao-gia-van-chuyen', 120, 'Hàng nội thất',
+    '/lien-he/', 'google', 'organic', '', '2026-11-06T07:30:00.000Z', 'key-1234567890abcdef', 'chờ đồng bộ', '', 0, '', ''];
+  const p = JSON.parse(ctx.crmPayload_(row));
+  assert.equal(p.lead_id, 'VG-20261106-AB12CD');
+  assert.equal(p.source, 'vipgroup.com.vn');
+  assert.equal(p.phone, '0961102655');
+  assert.equal(p.email, null);
+  assert.equal(p.weight_kg, 120);
+  assert.equal(p.consent_at, '2026-11-06T07:30:00.000Z');
+  assert.ok(['bao-gia-van-chuyen', 'nhap-khau-chinh-ngach', 'hop-tac', 'khac'].includes(p.need));
+  assert.ok(Buffer.byteLength(ctx.crmPayload_(row)) < 16 * 1024, 'body ≤ 16 KB');
+  assert.equal(JSON.parse(ctx.crmPayload_([...row.slice(0, 6), '', ...row.slice(7)])).weight_kg, null);
+});

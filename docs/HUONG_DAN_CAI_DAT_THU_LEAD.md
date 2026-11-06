@@ -114,4 +114,12 @@ Em sẽ: ghi Site Key vào mã → mở PR → bản thử (staging) có form th
 - **Tắt thu lead khẩn cấp:** Cloudflare → vip-group → Settings → Variables → xoá `TURNSTILE_SECRET` → Retry deployment gần nhất. Form sẽ báo "chưa gửi được" kèm Hotline/Zalo.
 - **Đổi người nhận Zalo:** lặp B2 với tài khoản Zalo mới → sửa `ZALO_NOTIFY_CHAT_ID` trên Cloudflare.
 - **Lộ khoá:** tạo khoá mới (A2 / Turnstile Rotate / tạo lại token bot) và thay ở cả hai nơi.
-- **Nối CRM** (khi phiên CRM có endpoint): Apps Script → Thuộc tính tập lệnh → thêm `CRM_INTAKE_URL`, `LEAD_INTAKE_SECRET` (giống khoá bên CRM). Lead cũ "chưa cấu hình CRM" tự được đẩy sang trong vòng 10 phút.
+- **Nối CRM V5** — làm khi phiên CRM báo địa chỉ `https://crm-staging.vipgroup.com.vn` đã chạy (cần anh tạo DNS + người có root thêm khối Caddy, theo phiên CRM):
+  1. Lấy khoá 🔒 trên Mac, Terminal (lệnh in khoá ra màn hình — không chụp/gửi):
+     ```bash
+     ssh viporder-staging "grep '^LEAD_INTAKE_SECRET=' ~/vipcrm5-staging/secrets/app.env | cut -d= -f2"
+     ```
+  2. Apps Script → ⚙️ Cài đặt dự án → Thuộc tính tập lệnh → thêm
+     `CRM_INTAKE_URL` = `https://crm-staging.vipgroup.com.vn/api/intake/leads` và `LEAD_INTAKE_SECRET` = khoá bước 1 → Lưu.
+  3. Trình chỉnh sửa → chọn hàm **syncPendingToCrm** → **Chạy** một lần. Cột "trạng thái CRM" chuyển **đã đồng bộ** + có mã `LD-…`. Từ đó tự chạy mỗi 10 phút; lead cũ "chưa cấu hình CRM" cũng được đẩy sang.
+  4. Nếu thấy "lỗi tạm 401": giờ hệ thống lệch hoặc khoá sai → kiểm lại khoá. "lỗi dữ liệu 422": xem cột "lỗi CRM gần nhất", báo em.
