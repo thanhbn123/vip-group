@@ -22,14 +22,14 @@ Nếu văn phòng **không** tiếp khách: chọn "doanh nghiệp khu vực d�
 | Danh mục phụ | Đại lý hải quan (Customs broker) — *chỉ nếu VIPORDER trực tiếp làm thủ tục hải quan*; Công ty xuất nhập khẩu (Import export company) |
 | Địa chỉ | Số 62 Khu đô thị Nam Hồng, Đồng Nguyên, Bắc Ninh *(nguồn: viporder.com.vn — owner xác nhận đúng địa chỉ hành chính sau sáp nhập 2025)* |
 | Khu vực phục vụ | Bắc Ninh; mở rộng chỉ khi thực sự giao được — **OWNER INPUT** |
-| Điện thoại | 0968 961 962 (đồng nhất với 2 website — NAP nhất quán) |
+| Điện thoại | 0961 102 655 (đồng nhất với 2 website — NAP nhất quán) |
 | Website | `https://www.vipgroup.com.vn/logistics/van-chuyen-trung-quoc-bac-ninh/?utm_source=google&utm_medium=organic&utm_campaign=gbp` *(hoặc viporder.com.vn — xem quyết định 2 domain ở G08)* |
 | Giờ mở cửa | **OWNER INPUT** |
 | Ngày khai trương | **OWNER INPUT** |
 
 **Mô tả (≤ 750 ký tự, không chèn link/khuyến mãi):**
 
-> VIPORDER cung cấp dịch vụ vận chuyển hàng từ Trung Quốc về Việt Nam, nhập khẩu chính ngạch, khai báo hải quan và hỗ trợ đặt hàng 1688, Taobao, Pinduoduo. Văn phòng tại Đồng Nguyên, Bắc Ninh, phục vụ xưởng sản xuất, doanh nghiệp khu công nghiệp và chủ shop khu vực Từ Sơn, Đồng Kỵ. Khách hàng đăng ký mã khách hàng, gửi hàng về kho tại Trung Quốc, theo dõi hành trình bằng mã vận đơn và nhận hàng tại kho hoặc theo phương án giao hàng thỏa thuận. Liên hệ hotline/Zalo 0968 961 962 để được tư vấn và báo giá theo từng lô hàng.
+> VIPORDER cung cấp dịch vụ vận chuyển hàng từ Trung Quốc về Việt Nam, nhập khẩu chính ngạch, khai báo hải quan và hỗ trợ đặt hàng 1688, Taobao, Pinduoduo. Văn phòng tại Đồng Nguyên, Bắc Ninh, phục vụ xưởng sản xuất, doanh nghiệp khu công nghiệp và chủ shop khu vực Từ Sơn, Đồng Kỵ. Khách hàng đăng ký mã khách hàng, gửi hàng về kho tại Trung Quốc, theo dõi hành trình bằng mã vận đơn và nhận hàng tại kho hoặc theo phương án giao hàng thỏa thuận. Liên hệ hotline/Zalo 0961 102 655 để được tư vấn và báo giá theo từng lô hàng.
 
 **Dịch vụ (mục Services):** Vận chuyển Trung Quốc – Việt Nam · Nhập khẩu chính ngạch · Khai báo hải quan · Đặt hàng 1688/Taobao/Pinduoduo. Không ghi giá cho tới khi có bảng giá thật.
 

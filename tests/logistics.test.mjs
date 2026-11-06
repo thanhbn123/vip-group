@@ -50,8 +50,8 @@ for (const p of BUILT) {
     assert.equal(bc.itemListElement.at(-1).item, `${SITE}${p}`);
     assert.equal(bc.itemListElement[0].item, `${SITE}/`);
     // Gọi điện / Zalo đều có data-track; Zalo đúng link VIPORDER công bố.
-    assert.match(html, /<a [^>]*href="tel:0968961962"[^>]*data-track="call_click"/);
-    assert.match(html, /<a [^>]*href="https:\/\/zalo\.me\/0968961962"[^>]*data-track="zalo_click"/);
+    assert.match(html, /<a [^>]*href="tel:0961102655"[^>]*data-track="call_click"/);
+    assert.match(html, /<a [^>]*href="https:\/\/zalo\.me\/0961102655"[^>]*data-track="zalo_click"/);
     assert.match(html, /<nav class="sticky-bar[^"]*" aria-label="Liên hệ nhanh"[^>]*>/, 'thanh liên hệ nhanh mobile');
     // Ghi rõ đơn vị vận hành.
     assert.match(text(html), /CÔNG TY TNHH XUẤT NHẬP KHẨU LOGISTICS VIP ORDER/);

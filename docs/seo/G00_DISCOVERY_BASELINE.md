@@ -70,3 +70,5 @@ Nguồn: `https://viporder.com.vn` (đọc 06/11/2026) + dữ liệu owner chố
 - Mã nguồn: Git (GitHub). Thay đổi nằm hoàn toàn trên nhánh `feature/vipg-web-021-logistics-seo`; `main`/production không đổi.
 - Production là Cloudflare Pages: mỗi lần deploy là một bản bất biến → rollback bằng "Rollback to this deployment" trong Cloudflare Pages hoặc chạy lại `production.yml` từ commit `main` trước đó (xem `docs/PRODUCTION.md`).
 - Thay đổi là **cộng thêm** (thư mục `/logistics/`, 1 mục menu, 1 link trên thẻ lĩnh vực) → gỡ bằng `git revert` merge commit là đủ.
+
+> **Cập nhật 06/11/2026:** owner đổi toàn bộ Hotline/Zalo liên hệ sang **0961 102 655** (`https://zalo.me/0961102655`). Số 0968 961 962 ở bảng trên là số đo được lúc khảo sát (vẫn đang ghi trên viporder.com.vn).
