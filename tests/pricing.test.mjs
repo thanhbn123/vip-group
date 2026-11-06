@@ -54,10 +54,15 @@ test('các mức khối lượng nối liền, không hở, không chồng (dữ
 test('song ngữ Việt – Trung: tiêu đề, cột, từng mức; chữ Trung gắn lang="zh-CN"', () => {
   assert.match(section, /<h2 id="price-title"[^>]*>\s*Bảng giá vận chuyển Trung Quốc – Việt Nam/);
   assert.match(section, /<span class="title-zh"[^>]*lang="zh-CN"[^>]*>中国—越南货物运输价格表<\/span>/);
-  for (const zh of ['重量', '单价', '0–5 公斤', '5 公斤以上至 100 公斤以下', '100 公斤至 500 公斤以下', '500–1,000 公斤', '1,000 公斤以上']) {
+  for (const zh of ['重量', '单价', '0–5 公斤', '超过 5 公斤，不足 100 公斤', '100 公斤至不足 500 公斤', '500–1,000 公斤', '超过 1,000 公斤']) {
     assert.ok(new RegExp(`lang="zh-CN"[^>]*>[^<]*${zh}`).test(section), `thiếu chữ Trung có lang: ${zh}`);
   }
   assert.ok(!/[一-鿿]/.test(section.replace(/<span[^>]*lang="zh-CN"[^>]*>[^<]*<\/span>/g, '')), 'mọi chữ Hán phải nằm trong phần tử lang="zh-CN"');
+});
+
+test('nhãn tiếng Trung không dùng 以上/以下 (dễ hiểu là gồm cả mốc → chồng mức)', () => {
+  const src = readFileSync(join(root, 'src/data/vi/pricing.ts'), 'utf8');
+  for (const [, zh] of src.matchAll(/labelZh: '([^']+)'/g)) assert.doesNotMatch(zh, /以上|以下/, zh);
 });
 
 test('giữ khẩu hiệu VIP GROUP trong khối bảng giá', () => {

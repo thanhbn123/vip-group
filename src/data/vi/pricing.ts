@@ -16,10 +16,10 @@ export const pricing: ShippingPricing = {
   noteZh: '附加费及税费（如有）将在正式报价前确认。',
   tiers: [
     { label: '0–5 kg', labelZh: '0–5 公斤', min: 0, minInclusive: true, max: 5, maxInclusive: true, price: 20000 },
-    { label: 'Trên 5 đến dưới 100 kg', labelZh: '5 公斤以上至 100 公斤以下', min: 5, minInclusive: false, max: 100, maxInclusive: false, price: 16000 },
-    { label: '100 đến dưới 500 kg', labelZh: '100 公斤至 500 公斤以下', min: 100, minInclusive: true, max: 500, maxInclusive: false, price: 15000 },
+    { label: 'Trên 5 đến dưới 100 kg', labelZh: '超过 5 公斤，不足 100 公斤', min: 5, minInclusive: false, max: 100, maxInclusive: false, price: 16000 },
+    { label: '100 đến dưới 500 kg', labelZh: '100 公斤至不足 500 公斤', min: 100, minInclusive: true, max: 500, maxInclusive: false, price: 15000 },
     { label: '500–1.000 kg', labelZh: '500–1,000 公斤', min: 500, minInclusive: true, max: 1000, maxInclusive: true, price: 14000 },
-    { label: 'Trên 1.000 kg', labelZh: '1,000 公斤以上', min: 1000, minInclusive: false, max: null, maxInclusive: false, price: 12000 },
+    { label: 'Trên 1.000 kg', labelZh: '超过 1,000 公斤', min: 1000, minInclusive: false, max: null, maxInclusive: false, price: 12000 },
   ],
   source: 'Owner cung cấp 06/11/2026',
   updated: '2026-11-06',
