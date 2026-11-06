@@ -169,41 +169,43 @@ export interface LogisticsProvider {
   registerUrl: string;
 }
 
-export interface Warehouse {
-  id: 'tham-quyen' | 'quang-chau';
+/** Mã 4 điểm nhận hàng tại Trung Quốc (owner xác nhận 06/11/2026 — VIPG-WEB-026). */
+export type PickupId = 'tham-quyen' | 'ha-mon' | 'quang-chau' | 'nghia-o';
+
+/**
+ * Điểm (kho) nhận hàng tại Trung Quốc. KHÔNG mô tả quyền sở hữu kho — chỉ là nơi VIP GROUP nhận hàng của khách.
+ * Trường mô tả thành phố/nguồn hàng (`context`, `goods`) là kiến thức địa lý – thương mại chung, không phải cam kết dịch vụ.
+ */
+export interface PickupPoint {
+  id: PickupId;
   city: string;
   cityZh: string;
-  address: Fact;
+  cityEn: string;
+  province: string;
+  provinceZh: string;
+  /** Quận/khu theo địa chỉ (tiếng Việt, phiên âm Hán Việt). */
+  district: string;
+  /** Địa chỉ tiếng Trung NGUYÊN VĂN owner cung cấp — không sửa, không rút gọn. */
+  addressZh: Fact;
+  /** Bối cảnh thành phố / nguồn hàng (tiếng Việt + tiếng Trung). */
+  context: string;
+  contextZh: string;
+  goods: string[];
+  goodsZh: string[];
+  /** Lưu ý giao tới kho — diễn giải từ chính địa chỉ owner cung cấp (không thêm dữ kiện ngoài địa chỉ). */
+  deliveryNotes: string[];
+  deliveryNotesZh: string[];
+  /** Chưa có nguồn → production hiện "báo theo lô" / ẩn. */
   receivingHours: Fact;
-  receiver: Fact;
-  /** Tuyến/cửa khẩu về Việt Nam. */
-  route: Fact;
   transitTime: Fact;
-  goodsFit: string[];
-}
-
-/** Một hình thức vận chuyển trên bảng so sánh tuyến Thâm Quyến. Mô tả `how/unit/papers/fit` là kiến thức chung của ngành. */
-export interface ShippingMode {
-  id: string;
-  name: string;
-  how: string;
-  unit: string;
-  papers: string;
-  fit: string;
-  /** VIPORDER có cung cấp hình thức này trên tuyến không — production chỉ hiện dòng đã xác nhận. */
-  offered: Fact;
-  transitHanoi: Fact;
-  price: Fact;
-}
-
-export interface ShenzhenRoute {
-  /** Ngày cập nhật dữ liệu trang (ISO). */
-  updated: string;
-  /** Xác nhận VIPORDER nhận hàng tại Thâm Quyến. */
-  served: Fact;
-  borderGate: Fact;
-  destinations: { city: string; transit: Fact; note: string }[];
-  modes: ShippingMode[];
+  /** Bảng giá chung (pricing.ts) có áp dụng cho hàng nhận tại điểm này không — owner chưa xác nhận từng kho. */
+  priceApplies: Fact;
+  /** Ảnh kho thật (đường dẫn trong /public) — chưa có. */
+  photos: Fact<string[]>;
+  /** Câu hỏi riêng của tuyến (tiếng Việt). */
+  faq: FaqItem[];
+  /** Câu hỏi tiếng Trung cho nhà cung cấp / khách nói tiếng Trung. */
+  faqZh: { q: string; a: string }[];
 }
 
 export interface FaqItem {
@@ -248,6 +250,8 @@ export interface LogisticsPage {
   h1: string;
   lead: string;
   status: PublishStatus;
+  /** Ẩn khỏi menu phụ (trang tuyến từng kho — đã có trang mạng lưới trong menu). */
+  hideInNav?: boolean;
   /** Lý do trang chưa `ready` — liệt kê trường OWNER INPUT PENDING. */
   pendingReason?: string;
   keyword: string;

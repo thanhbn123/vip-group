@@ -2,9 +2,10 @@
 import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
 import FaqList from '../../components/logistics/FaqList.astro';
 import Pending from '../../components/logistics/Pending.astro';
-import { pageByKey, telHref, prettyPhone, linkable, warehouseHref } from '../../lib/logistics';
+import { pageByKey, telHref, prettyPhone } from '../../lib/logistics';
+import PickupCards from '../../components/logistics/PickupCards.astro';
 import { serviceLd } from '../../lib/schema';
-import { provider, processSteps, serviceArea, warehouses } from '../../data/vi/logistics';
+import { provider, processSteps, serviceArea } from '../../data/vi/logistics';
 import type { FaqItem } from '../../data/types';
 
 const page = pageByKey('bac-ninh');
@@ -88,20 +89,8 @@ const localFaq: FaqItem[] = [
     <div class="container">
       <span class="kicker">Gửi hàng</span>
       <h2 id="route-title">Từ Trung Quốc về Bắc Ninh</h2>
-      <div class="grid grid-3">
-        {warehouses.filter((w) => linkable(warehouseHref(w.id))).map((w) => (
-          <a class="card card-link" href={warehouseHref(w.id)}>
-            <h3>{w.city} → Bắc Ninh</h3>
-            <p>Tuyến: <Pending fact={w.route} fallback="đang cập nhật" /></p>
-            <p class="more">Xem kho {w.city} →</p>
-          </a>
-        ))}
-        <a class="card card-link" href="/logistics/bang-gia/">
-          <h3>Nhà cung cấp ở đâu tại Trung Quốc?</h3>
-          <p>Gửi thông tin nơi nhà cung cấp, loại hàng và khối lượng để được tư vấn phương án và báo giá.</p>
-          <p class="more">Yêu cầu báo giá →</p>
-        </a>
-      </div>
+      <PickupCards />
+      <p class="muted bn-quote">Nhà cung cấp ở nơi khác? <a class="text-link" href="/logistics/bang-gia/#form-lien-he">Gửi yêu cầu báo giá →</a></p>
     </div>
   </section>
 

@@ -1,0 +1,22 @@
+---
+/** Thẻ 4 kho nhận hàng → trang tuyến từng kho (liên kết nội bộ dùng chung: hub, mạng lưới, Bắc Ninh, Trung–Việt). */
+import { pickupPoints } from '../../data/vi/logistics';
+import { pickupHref, linkable } from '../../lib/logistics';
+interface Props { exclude?: string; headingLevel?: 'h2' | 'h3' }
+const { exclude, headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+const items = pickupPoints.filter((p) => p.id !== exclude && linkable(pickupHref(p.id)));
+---
+<div class="grid pickup-cards">
+  {items.map((p) => (
+    <a class="card card-link" href={pickupHref(p.id)}>
+      <span class="card-index" lang="zh-CN">{p.cityZh} · {p.provinceZh}</span>
+      <H>Kho {p.city} → Việt Nam</H>
+      <p>{p.district.charAt(0).toUpperCase() + p.district.slice(1)}, {p.province}. {p.goods.slice(0, 2).join('; ')}.</p>
+      <p class="more">Xem tuyến {p.city} →</p>
+    </a>
+  ))}
+</div>
+<style>
+  .pickup-cards { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+</style>

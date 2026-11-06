@@ -1,9 +1,10 @@
 ---
 import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
 import FaqList from '../../components/logistics/FaqList.astro';
-import { pageByKey, linkable, warehouseHref } from '../../lib/logistics';
+import { pageByKey } from '../../lib/logistics';
+import PickupCards from '../../components/logistics/PickupCards.astro';
 import { serviceLd } from '../../lib/schema';
-import { services, processSteps, faqs, warehouses, provider } from '../../data/vi/logistics';
+import { services, processSteps, faqs, provider } from '../../data/vi/logistics';
 
 const page = pageByKey('home');
 const site = Astro.site!;
@@ -14,8 +15,6 @@ const ld = [serviceLd({
   url: new URL(page.href, site),
   areaServed: ['Bắc Ninh', 'Việt Nam'],
 })];
-// Thẻ kho chỉ hiện khi trang kho được xuất bản (owner xác nhận kho có thật) — verifier P0-1.
-const khoLinks = warehouses.map((w) => ({ ...w, href: warehouseHref(w.id) })).filter((w) => linkable(w.href));
 const audiences = [
   { title: 'Xưởng sản xuất, làng nghề', text: 'Nhập phụ kiện, vật tư, máy móc từ Trung Quốc theo lô, cần kiểm đếm và chứng từ rõ ràng.' },
   { title: 'Doanh nghiệp khu công nghiệp', text: 'Cần nhập khẩu chính ngạch, khai báo hải quan và bộ chứng từ phù hợp cho kế toán.' },
@@ -49,43 +48,13 @@ const audiences = [
     <div class="container">
       <div class="section-head">
         <div>
-          <span class="kicker">Hành trình hàng</span>
-          <h2 id="kho-title">{khoLinks.length ? `Nhận hàng tại ${khoLinks.map((w) => w.city).join(', ')}` : 'Từ nhà cung cấp Trung Quốc tới tay bạn'}</h2>
+          <span class="kicker">4 kho Trung Quốc</span>
+          <h2 id="kho-title">Nhận hàng tại Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô</h2>
         </div>
-        <p>Hàng được nhận tại Trung Quốc, vận chuyển về Việt Nam; khách nhận tại kho hoặc theo phương án giao hàng đã thỏa thuận.</p>
+        <a class="text-link" href="/logistics/kho-trung-quoc/">Xem địa chỉ 4 kho →</a>
       </div>
-      <div class="grid grid-3">
-        {khoLinks.length === 0 && (
-          <a class="card card-link" href="/logistics/quy-trinh-gui-hang/">
-            <span class="card-index">TRUNG QUỐC</span>
-            <h3>Nhận hàng tại Trung Quốc</h3>
-            <p>Đăng ký mã khách hàng, nhận hướng dẫn địa chỉ gửi hàng tại Trung Quốc qua hotline / Zalo.</p>
-            <p class="more">Xem quy trình →</p>
-          </a>
-        )}
-        {khoLinks.length === 0 && (
-          <a class="card card-link" href="/logistics/van-chuyen-trung-quoc-viet-nam/">
-            <span class="card-index">VIỆT NAM</span>
-            <h3>Vận chuyển và thủ tục</h3>
-            <p>Vận chuyển về Việt Nam, hỗ trợ nhập khẩu chính ngạch và khai báo hải quan khi cần.</p>
-            <p class="more">Xem dịch vụ →</p>
-          </a>
-        )}
-        {khoLinks.map((w) => (
-          <a class="card card-link" href={w.href}>
-            <span class="card-index">{w.cityZh}</span>
-            <h3>Nhận hàng tại {w.city}</h3>
-            <p>Nhà cung cấp giao hàng tới điểm nhận tại {w.city}; hàng được vận chuyển về Việt Nam.</p>
-            <p class="more">Xem tuyến {w.city} → Việt Nam →</p>
-          </a>
-        ))}
-        <a class="card card-link" href="/logistics/van-chuyen-trung-quoc-bac-ninh/">
-          <span class="card-index">BẮC NINH</span>
-          <h3>Khách hàng Bắc Ninh</h3>
-          <p>Văn phòng {provider.name} tại Đồng Nguyên, Bắc Ninh — thuận tiện cho khách hàng khu vực Từ Sơn, Đồng Kỵ liên hệ trực tiếp.</p>
-          <p class="more">Vận chuyển về Bắc Ninh →</p>
-        </a>
-      </div>
+      <PickupCards />
+      <p class="muted hub-bn">Khách hàng Bắc Ninh, Từ Sơn, Đồng Kỵ: <a class="text-link" href="/logistics/van-chuyen-trung-quoc-bac-ninh/">vận chuyển về Bắc Ninh →</a></p>
     </div>
   </section>
 
@@ -128,5 +97,6 @@ const audiences = [
   </section>
 </LogisticsLayout>
 <style>
+  .hub-bn { margin: 20px 0 0; }
   .hub-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
 </style>

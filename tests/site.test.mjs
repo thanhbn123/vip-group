@@ -14,7 +14,9 @@ const PAGES = ['/', '/gioi-thieu/', '/linh-vuc-hoat-dong/', '/cong-ty-thanh-vien
 const SITEMAP_EXTRA = ['/chinh-sach-bao-mat/'];
 // Trang Logistics trạng thái `ready` (VIPG-WEB-021) — cũng phải nằm trong sitemap. Trang `pending` thì không.
 const LOGISTICS_READY = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/',
-  '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/', '/logistics/bang-gia/', '/logistics/van-chuyen-tham-quyen-viet-nam/'];
+  '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/', '/logistics/bang-gia/',
+  '/logistics/kho-trung-quoc/', '/logistics/van-chuyen-tham-quyen-ve-viet-nam/', '/logistics/van-chuyen-ha-mon-ve-viet-nam/',
+  '/logistics/van-chuyen-quang-chau-ve-viet-nam/', '/logistics/van-chuyen-nghia-o-ve-viet-nam/'];
 
 const fileFor = (path) => join(dist, path, 'index.html');
 const read = (path) => readFileSync(fileFor(path), 'utf8');

@@ -29,7 +29,7 @@ export const pageByKey = (key: string): LogisticsPage => {
 };
 
 /** Trang hiện trong menu phụ: đã build được. */
-export const navPages = () => pages.filter((p) => isBuilt(p.status));
+export const navPages = () => pages.filter((p) => isBuilt(p.status) && !p.hideInNav);
 
 /** URL logistics cho sitemap: chỉ trang `ready` (và bài `ready`), không bao giờ ở DEMO. */
 export function sitemapPaths(): string[] {
@@ -49,8 +49,8 @@ export const linkable = (href: string) => {
   return a ? isBuilt(a.status) : true;
 };
 
-/** URL trang của một kho. Thâm Quyến dùng trang tuyến (một URL cho cả cụm "vận chuyển / kho Thâm Quyến"). */
-export const warehouseHref = (id: string) => (id === 'tham-quyen' ? pageByKey('tham-quyen').href : `/logistics/kho-${id}/`);
+/** URL trang tuyến của một kho nhận hàng (key trang = id kho). */
+export const pickupHref = (id: string) => pageByKey(id).href;
 
 export const telHref = (n: string) => `tel:${n.replace(/\s/g, '')}`;
 export const prettyPhone = (n: string) => n.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3');

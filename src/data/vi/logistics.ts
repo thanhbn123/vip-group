@@ -1,5 +1,5 @@
 import { contact } from './contact';
-import type { Article, FaqItem, LogisticsPage, LogisticsProvider, ShenzhenRoute, Warehouse, Fact } from '../types';
+import type { Article, FaqItem, LogisticsPage, LogisticsProvider, PickupId, PickupPoint, Fact } from '../types';
 
 /**
  * KHU LOGISTICS — VIPG-WEB-021.
@@ -64,103 +64,169 @@ export const processSteps = [
 
 const pending = (sample?: string): Fact => ({ value: null, source: null, sample });
 
-export const warehouses: Warehouse[] = [
-  {
-    id: 'quang-chau',
-    city: 'Quảng Châu',
-    cityZh: '广州',
-    address: pending('[MẪU] Số 00, đường Mẫu, quận Bạch Vân, Quảng Châu — KHÔNG PHẢI ĐỊA CHỈ THẬT'),
-    receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    receiver: pending('[MẪU] Tên người nhận + SĐT kho + mã khách hàng'),
-    route: pending('[MẪU] Quảng Châu → cửa khẩu Lạng Sơn → Bắc Ninh'),
-    transitTime: pending('[MẪU] 3–5 ngày làm việc'),
-    goodsFit: ['Hàng thời trang, phụ kiện', 'Hàng gia dụng', 'Hàng đặt từ 1688 / Taobao giao về Quảng Châu'],
-  },
+/* ───────────── 4 kho nhận hàng tại Trung Quốc (VIPG-WEB-026) ───────────── */
+
+/**
+ * NGUỒN: owner xác nhận 06/11/2026 (Project Controller — "VIP GROUP SEO MULTI-WAREHOUSE V2"):
+ * "VIP GROUP nhận hàng trực tiếp tại 4 địa điểm ở Trung Quốc" + địa chỉ tiếng Trung NGUYÊN VĂN.
+ * - KHÔNG viết "kho của VIP GROUP" / "thuộc sở hữu": chưa có chứng cứ sở hữu pháp lý.
+ * - KHÔNG công khai tên người nhận, SĐT kho, mã khách hàng (owner yêu cầu).
+ * - Bảng giá chung (pricing.ts) CHƯA được xác nhận áp dụng cho từng kho → `priceApplies` pending.
+ * - `context` / `goods` là kiến thức địa lý – thương mại chung về thành phố, không phải cam kết dịch vụ.
+ */
+export const SRC_OWNER_WAREHOUSES = 'Owner xác nhận 06/11/2026 (Project Controller — SEO Multi-Warehouse V2)';
+const owner = (value: string): Fact => ({ value, source: SRC_OWNER_WAREHOUSES });
+
+type PickupBase = Omit<PickupPoint, 'faq' | 'faqZh'> & { extraFaq: FaqItem; extraFaqZh?: { q: string; a: string } };
+
+const pickupBase: PickupBase[] = [
   {
     id: 'tham-quyen',
     city: 'Thâm Quyến',
     cityZh: '深圳',
-    address: pending('[MẪU] Số 00, đường Mẫu, quận Long Cương, Thâm Quyến — KHÔNG PHẢI ĐỊA CHỈ THẬT'),
+    cityEn: 'Shenzhen',
+    province: 'Quảng Đông',
+    provinceZh: '广东',
+    district: 'quận Bảo An',
+    addressZh: owner('深圳市宝安区福海街道海洋新城新钢物流园三期2栋'),
+    context:
+      'Thâm Quyến (深圳, Shenzhen) thuộc tỉnh Quảng Đông, sát Hồng Kông — một trong những trung tâm sản xuất điện tử, linh kiện và thiết bị công nghệ lớn nhất thế giới. Kho nhận hàng nằm ở quận Bảo An (宝安区), phía tây thành phố.',
+    contextZh: '深圳位于广东省，毗邻香港，是全球重要的电子产品、元器件及科技设备制造中心之一。收货仓位于深圳西部的宝安区。',
+    goods: ['Linh kiện, bo mạch, thiết bị điện tử', 'Phụ kiện điện thoại, máy tính, thiết bị thông minh', 'Đèn LED, thiết bị điện, máy móc nhỏ', 'Hàng từ nhà máy khu vực Thâm Quyến – Đông Quản'],
+    goodsZh: ['电子元器件、电路板、电子设备', '手机及电脑配件、智能设备', 'LED 灯具、电器、小型机械', '深圳及东莞地区工厂货物'],
+    deliveryNotes: ['Điểm nhận nằm trong khu logistics 新钢物流园, giai đoạn 3 (三期), tòa nhà số 2 (2栋) — ghi đủ "三期2栋" để tài xế tìm đúng tòa.', 'Khu vực: 海洋新城, phố 福海街道, quận Bảo An (宝安区), phía tây Thâm Quyến.'],
+    deliveryNotesZh: ['送货点位于新钢物流园三期2栋，请写全“三期2栋”，以免送错楼栋。', '区域：宝安区福海街道海洋新城。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    receiver: pending('[MẪU] Tên người nhận + SĐT kho + mã khách hàng'),
-    route: pending('[MẪU] Thâm Quyến → cửa khẩu Lạng Sơn → Bắc Ninh'),
-    transitTime: pending('[MẪU] 4–6 ngày làm việc'),
-    goodsFit: ['Linh kiện, thiết bị điện tử', 'Phụ kiện công nghệ', 'Hàng từ nhà cung cấp khu vực Thâm Quyến'],
+    transitTime: pending('[MẪU] 2–3 ngày về Hà Nội'),
+    priceApplies: pending('[MẪU] Áp dụng bảng giá chung'),
+    photos: { value: null, source: null },
+    extraFaq: {
+      q: 'Kho Thâm Quyến ở trang này có liên quan tới Shopee không?',
+      a: 'Không. Kho Thâm Quyến ở trang này là nơi VIP GROUP nhận hàng của khách tự nhập từ nhà cung cấp tại Trung Quốc rồi vận chuyển về Việt Nam; không liên quan tới Shopee hay sàn thương mại điện tử nào.',
+    },
+  },
+  {
+    id: 'ha-mon',
+    city: 'Hạ Môn',
+    cityZh: '厦门',
+    cityEn: 'Xiamen',
+    province: 'Phúc Kiến',
+    provinceZh: '福建',
+    district: 'quận Hải Thương',
+    addressZh: owner('福建省厦门市海沧区囷瑶路嘉功物流2号库3号仓'),
+    context:
+      'Hạ Môn (厦门, Xiamen) là thành phố cảng của tỉnh Phúc Kiến. Trong tỉnh có các vùng sản xuất giày dép, quần áo thể thao (Tấn Giang thuộc Tuyền Châu), gốm sứ (Đức Hóa) và đá ốp lát. Kho nhận hàng nằm ở quận Hải Thương (海沧区).',
+    contextZh: '厦门是福建省的港口城市。福建省内有晋江（泉州）鞋服产业、德化陶瓷及石材产区。收货仓位于海沧区。',
+    goods: ['Giày dép, quần áo thể thao', 'Gốm sứ, đồ gia dụng', 'Đá ốp lát, vật liệu trang trí', 'Hàng từ nhà cung cấp khu vực Phúc Kiến'],
+    goodsZh: ['鞋类、运动服装', '陶瓷、家居用品', '石材、装饰材料', '福建地区供应商货物'],
+    deliveryNotes: ['Điểm nhận là kho số 2, ô kho số 3 (2号库3号仓) trong khu kho 嘉功物流 trên đường 囷瑶路 — ghi đủ số kho và số ô.', 'Khu vực: quận Hải Thương (海沧区), Hạ Môn, tỉnh Phúc Kiến.'],
+    deliveryNotesZh: ['送货点为嘉功物流2号库3号仓（囷瑶路），请写全库号与仓号。', '区域：福建省厦门市海沧区。'],
+    receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
+    transitTime: pending('[MẪU] 3–5 ngày về Hà Nội'),
+    priceApplies: pending('[MẪU] Áp dụng bảng giá chung'),
+    photos: { value: null, source: null },
+    extraFaq: {
+      q: 'Nên gửi hàng về kho Hạ Môn hay kho Quảng Châu?',
+      a: `Chọn kho gần nhà cung cấp nhất để rút ngắn quãng giao nội địa Trung Quốc: nhà cung cấp ở Phúc Kiến (Hạ Môn, Tuyền Châu, Tấn Giang) nên giao về kho Hạ Môn; nhà cung cấp ở Quảng Đông nên giao về kho Quảng Châu hoặc Thâm Quyến. Chưa chắc chọn kho nào, gọi hoặc nhắn Zalo ${HOTLINE}.`,
+    },
+  },
+  {
+    id: 'quang-chau',
+    city: 'Quảng Châu',
+    cityZh: '广州',
+    cityEn: 'Guangzhou',
+    province: 'Quảng Đông',
+    provinceZh: '广东',
+    district: 'quận Bạch Vân',
+    addressZh: owner('广州市白云区钟落潭镇虎塘村凤岗路26号'),
+    context:
+      'Quảng Châu (广州, Guangzhou) là thủ phủ tỉnh Quảng Đông, nơi tổ chức Hội chợ Canton (广交会) và có nhiều chợ đầu mối bán buôn quần áo, giày dép, túi xách, phụ kiện. Kho nhận hàng nằm ở trấn Chung Lạc Đàm, quận Bạch Vân (白云区钟落潭镇), phía bắc thành phố.',
+    contextZh: '广州是广东省省会、广交会举办地，拥有众多服装、鞋类、箱包及饰品批发市场。收货仓位于广州北部的白云区钟落潭镇。',
+    goods: ['Quần áo, thời trang', 'Giày dép, túi xách', 'Phụ kiện, đồ gia dụng', 'Hàng đặt từ 1688 / Taobao giao về Quảng Châu'],
+    goodsZh: ['服装、时尚产品', '鞋类、箱包', '饰品、家居用品', '1688、淘宝订单发往广州'],
+    deliveryNotes: ['Địa chỉ ở thôn Hổ Đường (虎塘村), số 26 đường 凤岗路, trấn Chung Lạc Đàm — khu ngoại thành phía bắc Quảng Châu.', 'Gửi nhà cung cấp đủ tên người nhận và số điện thoại liên hệ (cung cấp khi đăng ký) để tài xế liên hệ khi tới.'],
+    deliveryNotesZh: ['地址位于广州北部白云区钟落潭镇虎塘村凤岗路26号。', '请将客户提供的收货人及联系电话一并告知司机，便于到达时联系。'],
+    receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
+    transitTime: pending('[MẪU] 3–5 ngày về Hà Nội'),
+    priceApplies: pending('[MẪU] Áp dụng bảng giá chung'),
+    photos: { value: null, source: null },
+    extraFaq: {
+      q: 'Đặt hàng 1688, Taobao có giao về kho Quảng Châu được không?',
+      a: 'Được. Khi đặt hàng, điền địa chỉ kho Quảng Châu làm địa chỉ nhận và ghi mã khách hàng theo hướng dẫn nhận được khi đăng ký. VIPORDER cũng hỗ trợ đặt hàng 1688 / Taobao / Pinduoduo nếu bạn cần.',
+    },
+  },
+  {
+    id: 'nghia-o',
+    city: 'Nghĩa Ô',
+    cityZh: '义乌',
+    cityEn: 'Yiwu',
+    province: 'Chiết Giang',
+    provinceZh: '浙江',
+    district: 'khu Bắc Uyển',
+    addressZh: owner('义乌市北苑三期秋实路121号6号楼10-12库西门，靠5号货梯'),
+    context:
+      'Nghĩa Ô (义乌, Yiwu) thuộc tỉnh Chiết Giang, nổi tiếng với Thành phố Thương mại Quốc tế Nghĩa Ô (义乌国际商贸城) — một trong những chợ bán buôn hàng tiêu dùng nhỏ lớn nhất thế giới. Kho nhận hàng nằm ở khu Bắc Uyển (北苑).',
+    contextZh: '义乌位于浙江省，以义乌国际商贸城闻名，是全球最大的小商品批发市场之一。收货仓位于北苑。',
+    goods: ['Đồ chơi, văn phòng phẩm', 'Đồ trang trí, quà tặng, đồ dùng lễ hội', 'Trang sức thời trang, phụ kiện', 'Đồ gia dụng nhỏ'],
+    goodsZh: ['玩具、文具', '装饰品、礼品、节日用品', '时尚饰品、配件', '小家居用品'],
+    deliveryNotes: ['Điểm nhận: khu Bắc Uyển giai đoạn 3 (北苑三期), số 121 đường 秋实路, tòa nhà số 6, kho 10 đến 12.', 'Vào cửa Tây (西门), dỡ hàng cạnh thang máy chở hàng số 5 (5号货梯).'],
+    deliveryNotesZh: ['送货点：北苑三期秋实路121号6号楼10-12库。', '请从西门进入，靠5号货梯卸货。'],
+    receivingHours: pending('[MẪU] 08:30–17:30, thứ Hai – thứ Bảy'),
+    transitTime: pending('[MẪU] 5–7 ngày về Hà Nội'),
+    priceApplies: pending('[MẪU] Áp dụng bảng giá chung'),
+    photos: { value: null, source: null },
+    extraFaq: {
+      q: 'Giao hàng tới kho Nghĩa Ô cần lưu ý gì?',
+      a: 'Theo địa chỉ kho, điểm nhận là kho 10 đến 12, tòa nhà số 6, cửa Tây, cạnh thang máy chở hàng số 5 (6号楼10-12库西门，靠5号货梯). Gửi nguyên văn địa chỉ tiếng Trung cho nhà cung cấp hoặc tài xế để giao đúng chỗ.',
+    },
+    extraFaqZh: { q: '送货到义乌仓需要注意什么？', a: '请按地址从西门进入，靠5号货梯卸货（6号楼10-12库）。' },
   },
 ];
 
-/* ───────────── Tuyến Thâm Quyến → Việt Nam (VIPG-WEB-024) ───────────── */
-
-/**
- * Dữ liệu trang /logistics/van-chuyen-tham-quyen-viet-nam/.
- * Con số trong `sample` lấy từ brief SEO 06/11/2026 (đề xuất nội dung), CHƯA phải cam kết dịch vụ của VIPORDER:
- * chỉ hiện ở bản DEMO kèm nhãn MẪU. Owner xác nhận bằng văn bản → điền `value` + `source`.
- */
-export const shenzhenRoute: ShenzhenRoute = {
-  updated: '2026-11-06',
-  // Owner xác nhận 06/11/2026: nhận hàng trực tiếp tại Thâm Quyến (KHÔNG khẳng định kho thuộc sở hữu VIP GROUP).
-  served: { value: 'Nhận hàng trực tiếp tại Thâm Quyến, Trung Quốc', source: 'Owner xác nhận 06/11/2026 (phiên Controller 8d)' },
-  borderGate: pending('[MẪU] cửa khẩu Lạng Sơn (Hữu Nghị / Tân Thanh)'),
-  destinations: [
-    { city: 'Hà Nội', transit: pending('[MẪU] 2–3 ngày'), note: 'Nhận tại kho hoặc giao tận nơi nội thành' },
-    { city: 'Bắc Ninh', transit: pending('[MẪU] 2–3 ngày'), note: 'Văn phòng VIPORDER tại Đồng Nguyên, Bắc Ninh' },
-    { city: 'Lạng Sơn', transit: pending('[MẪU] 1–2 ngày'), note: 'Tỉnh có cửa khẩu đường bộ với Trung Quốc' },
-    { city: 'TP.HCM', transit: pending('[MẪU] 4–6 ngày'), note: 'Chuyển tiếp nội địa từ miền Bắc vào miền Nam' },
-  ],
-  modes: [
+/** Câu hỏi chung cho mọi kho + 1 câu riêng. Câu phụ thuộc dữ kiện chưa có nguồn → `pending` (không vào FAQPage). */
+function pickupFaq(p: PickupBase): FaqItem[] {
+  const addr = p.addressZh.value ?? '';
+  return [
     {
-      id: 'duong-bo-kg',
-      name: 'Đường bộ – chuyển phát nhanh (hàng lẻ)',
-      how: 'Hàng gom theo kiện, đi xe tải qua cửa khẩu đường bộ biên giới phía Bắc.',
-      unit: 'kg hoặc kg quy đổi',
-      papers: 'Không kèm bộ chứng từ nhập khẩu đứng tên người mua',
-      fit: 'Đơn nhỏ, hàng mẫu, chủ shop',
-      offered: pending('[MẪU] Có'),
-      transitHanoi: pending('[MẪU] 2–3 ngày'),
-      price: pending('[MẪU] 00.000 đ/kg'),
+      q: `Địa chỉ kho nhận hàng ${p.city} ở đâu?`,
+      a: `Địa chỉ kho ${p.city} (${p.district}, ${p.province}): ${addr}. Tên người nhận, số điện thoại liên hệ khi giao và mã khách hàng ghi trên kiện được cung cấp riêng sau khi bạn đăng ký mã khách hàng — không đăng công khai trên website.`,
     },
     {
-      id: 'duong-bo-m3',
-      name: 'Đường bộ – hàng lô theo khối',
-      how: 'Hàng cồng kềnh hoặc số lượng lớn, tính theo thể tích, đi xe tải ghép hoặc nguyên xe.',
-      unit: 'm³',
-      papers: 'Tùy hình thức: ký gửi trọn gói hoặc chính ngạch',
-      fit: 'Xưởng sản xuất, hàng cồng kềnh',
-      offered: pending('[MẪU] Có'),
-      transitHanoi: pending('[MẪU] 3–5 ngày'),
-      price: pending('[MẪU] 0.000.000 đ/m³'),
+      q: `Gửi hàng từ ${p.city} về Việt Nam như thế nào?`,
+      a: `Đăng ký mã khách hàng trên viporder.com.vn, gửi địa chỉ kho ${p.city} cho nhà cung cấp và yêu cầu ghi mã khách hàng trên từng kiện. Sau khi hàng nhập kho, theo dõi bằng mã vận đơn / mã bao và nhận hàng tại Việt Nam theo phương án đã thỏa thuận.`,
     },
     {
-      id: 'chinh-ngach',
-      name: 'Nhập khẩu chính ngạch',
-      how: 'Doanh nghiệp đứng tên nhập khẩu, mở tờ khai hải quan, nộp thuế nhập khẩu và thuế GTGT khâu nhập khẩu.',
-      unit: 'cước vận chuyển + thuế, phí theo tờ khai',
-      papers: 'Tờ khai hải quan và bộ chứng từ nhập khẩu',
-      fit: 'Doanh nghiệp cần hồ sơ cho kế toán, thuế; hàng có C/O Form E',
-      // Có nguồn: VIPORDER công bố dịch vụ "Nhập khẩu chính ngạch" + "Khai báo hải quan".
-      offered: { value: 'Có', source: SRC_VIPORDER },
-      transitHanoi: pending('[MẪU] 3–5 ngày (tùy luồng hải quan)'),
-      price: pending('[MẪU] báo theo lô'),
+      q: `Cước vận chuyển từ ${p.city} về Việt Nam tính thế nào?`,
+      a: p.priceApplies.value
+        ? `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000), áp dụng bảng giá vận chuyển Trung Quốc – Việt Nam. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.`
+        : `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000). Bảng giá chung Trung Quốc – Việt Nam có tại trang Bảng giá; đơn giá áp dụng cho hàng nhận tại kho ${p.city} được xác nhận khi báo giá, cùng phụ phí và thuế (nếu có).`,
     },
     {
-      id: 'duong-bien',
-      name: 'Đường biển (cảng Thâm Quyến → Hải Phòng / TP.HCM)',
-      how: 'Hàng nguyên container (FCL) hoặc hàng lẻ ghép container (LCL), phù hợp lô lớn, không gấp.',
-      unit: 'container hoặc m³ (LCL)',
-      papers: 'Vận đơn đường biển + bộ chứng từ nhập khẩu',
-      fit: 'Lô hàng lớn, hàng nặng, ưu tiên chi phí',
-      offered: pending('[MẪU] Có'),
-      transitHanoi: pending('[MẪU] 7–12 ngày'),
-      price: pending('[MẪU] báo theo container'),
+      q: `Hàng từ ${p.city} về Việt Nam mất bao lâu?`,
+      a: `Thời gian phụ thuộc loại hàng, thủ tục và lịch xe. Gọi hoặc nhắn Zalo ${HOTLINE} để được báo thời gian cho lô hàng cụ thể.`,
+      pending: p.transitTime.value === null,
     },
-  ],
-};
-
-/** "…, 2–3 ngày" trong <title> — chỉ khi thời gian Hà Nội đã xác minh. */
-function shenzhenTitleSuffix() {
-  const hn = shenzhenRoute.destinations.find((d) => d.city === 'Hà Nội')?.transit;
-  return hn?.value && hn.source ? `, ${hn.value}` : '';
+    p.extraFaq,
+  ];
 }
+
+function pickupFaqZh(p: PickupBase): { q: string; a: string }[] {
+  return [
+    { q: `${p.cityZh}仓地址是什么？`, a: `${p.addressZh.value ?? ''}。收货人姓名、联系电话及客户编号（唛头）由客户注册后单独提供，网站不公开。` },
+    { q: '供应商如何发货？', a: '请按客户提供的收货信息发货，并在每件货物外箱标明客户编号（唛头）；如使用国内快递，请将快递单号告知客户。' },
+    { q: '运费如何计算？', a: '运费按计费重量（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 6000）以公斤计算，具体单价以正式报价为准；附加费及税费（如有）将在正式报价前确认。' },
+    ...(p.extraFaqZh ? [p.extraFaqZh] : []),
+    { q: '如何联系？', a: `热线 / Zalo：${HOTLINE}（越南号码）。` },
+  ];
+}
+
+export const pickupPoints: PickupPoint[] = pickupBase.map(({ extraFaq: _e, extraFaqZh: _z, ...p }, i) => ({
+  ...p,
+  faq: pickupFaq(pickupBase[i]),
+  faqZh: pickupFaqZh(pickupBase[i]),
+}));
+
+export const pickupById = (id: PickupId) => pickupPoints.find((p) => p.id === id)!;
 
 /** Hệ số quy đổi cân nặng thể tích (cm³ / kg) mà VIPORDER áp dụng — chưa được owner cung cấp. */
 // Owner xác nhận 06/11/2026: có quy đổi thể tích, hệ số 6000; tính theo số lớn hơn giữa cân thực và cân quy đổi.
@@ -208,9 +274,9 @@ export const faqs: FaqItem[] = [
     a: 'VIPORDER hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp. Hồ sơ cụ thể phụ thuộc mặt hàng — vui lòng gửi thông tin hàng để được tư vấn.',
   },
   {
-    q: 'Gửi hàng về địa chỉ nào tại Trung Quốc?',
-    a: `Địa chỉ nhận hàng tại Trung Quốc và cách ghi thông tin người nhận đang được cập nhật trên website. Vui lòng liên hệ hotline / Zalo ${HOTLINE} để được hướng dẫn.`,
-    pending: true,
+    // VIPG-WEB-026: owner xác nhận 4 điểm nhận hàng 06/11/2026 → câu này có căn cứ.
+    q: 'VIP GROUP nhận hàng ở đâu tại Trung Quốc?',
+    a: 'VIP GROUP nhận hàng trực tiếp tại 4 kho ở Trung Quốc: Thâm Quyến (quận Bảo An), Hạ Môn (quận Hải Thương), Quảng Châu (quận Bạch Vân) và Nghĩa Ô (Chiết Giang). Địa chỉ tiếng Trung từng kho có tại trang Kho Trung Quốc; tên người nhận và mã khách hàng ghi trên kiện được cung cấp sau khi đăng ký.',
   },
   {
     q: 'Bảng giá vận chuyển Trung Quốc – Việt Nam bao nhiêu một kg?',
@@ -279,36 +345,72 @@ export const pages: LogisticsPage[] = [
     status: 'ready',
     keyword: 'vận chuyển hàng Trung Quốc về Việt Nam',
   },
+  // ── VIPG-WEB-026: mạng lưới 4 kho + 4 trang tuyến (owner xác nhận 4 điểm nhận hàng 06/11/2026).
+  //    Thay cho /logistics/kho-quang-chau/ (nháp) và /logistics/van-chuyen-tham-quyen-viet-nam/ (ready trên nhánh 025, CHƯA lên
+//    staging/production). Nếu nhánh 025 phát hành trước V2 → cần 301 sang /logistics/van-chuyen-tham-quyen-ve-viet-nam/.
   {
-    key: 'quang-chau',
-    href: '/logistics/kho-quang-chau/',
-    nav: 'Kho Quảng Châu',
-    title: 'Kho Quảng Châu – vận chuyển Quảng Châu về Việt Nam',
+    key: 'kho-trung-quoc',
+    href: '/logistics/kho-trung-quoc/',
+    nav: 'Kho Trung Quốc',
+    title: 'Kho Trung Quốc: Thâm Quyến, Quảng Châu, Hạ Môn, Nghĩa Ô',
     description:
-      'Kho nhận hàng Quảng Châu (广州) gom hàng về Bắc Ninh và Việt Nam. Liên hệ để nhận địa chỉ kho, hướng dẫn ghi mã khách hàng và báo giá.',
-    h1: 'Kho Quảng Châu — nhận và gom hàng về Việt Nam',
-    lead: 'Phù hợp với hàng đặt từ nhà cung cấp và chợ đầu mối khu vực Quảng Châu, hàng mua trên 1688 / Taobao giao về kho Quảng Châu.',
-    // DRAFT (verifier P0-1): chưa có bằng chứng VIPORDER có kho tại Quảng Châu → không xuất bản.
-    status: 'draft',
-    pendingReason: 'Chưa có xác nhận kho Quảng Châu tồn tại + địa chỉ, giờ nhận hàng, người nhận, tuyến, thời gian vận chuyển.',
-    keyword: 'kho Quảng Châu, vận chuyển hàng Quảng Châu về Việt Nam',
+      `VIP GROUP nhận hàng tại 4 kho Trung Quốc: Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô. Địa chỉ tiếng Trung, hướng dẫn gửi hàng, cách tính cước. Hotline/Zalo ${HOTLINE}.`,
+    h1: '4 kho nhận hàng tại Trung Quốc',
+    lead: 'Địa chỉ tiếng Trung để gửi cho nhà cung cấp, hướng dẫn ghi mã khách hàng và cách chọn kho gần nguồn hàng nhất.',
+    status: 'ready',
+    keyword: 'kho Trung Quốc; kho nhận hàng Trung Quốc; 中国仓库地址',
   },
   {
-    // VIPG-WEB-022: trang tuyến Thâm Quyến thay cho /logistics/kho-tham-quyen/ — MỘT URL cho cụm từ khóa
-    // "vận chuyển (Trung Việt) từ Thâm Quyến về Việt Nam" + "kho Thâm Quyến" (tránh 2 URL tranh nhau).
     key: 'tham-quyen',
-    href: '/logistics/van-chuyen-tham-quyen-viet-nam/',
-    nav: 'Thâm Quyến – VN',
-    // Thời gian Hà Nội chỉ vào <title> khi owner đã xác nhận (xem shenzhenRoute.destinations).
-    title: `Vận chuyển Trung Việt từ Thâm Quyến về Việt Nam${shenzhenTitleSuffix()}`,
+    href: '/logistics/van-chuyen-tham-quyen-ve-viet-nam/',
+    nav: 'Thâm Quyến',
+    title: 'Vận chuyển Trung Việt từ Thâm Quyến về Việt Nam',
     description:
-      'Vận chuyển hàng từ Thâm Quyến (Shenzhen, 深圳) về Hà Nội, Bắc Ninh, TP.HCM: thời gian, cách tính cước, nhập khẩu chính ngạch, hải quan. VIPORDER vận hành.',
-    h1: 'Vận chuyển hàng hóa từ Thâm Quyến về Việt Nam',
-    lead: 'Dành cho doanh nghiệp, xưởng sản xuất và chủ shop nhập linh kiện, thiết bị điện tử, phụ kiện công nghệ từ nhà cung cấp khu vực Thâm Quyến (Quảng Đông).',
-    // READY (V1.1): owner xác nhận 06/11/2026 nhận hàng trực tiếp tại Thâm Quyến + bảng giá theo kg + quy đổi 6000.
-    // Thời gian từng tuyến, cửa khẩu, các hình thức ngoài chính ngạch vẫn chờ owner → hiển thị "liên hệ", không công bố.
+      `Kho nhận hàng Thâm Quyến (深圳, quận Bảo An) vận chuyển về Việt Nam: địa chỉ tiếng Trung, cách gửi hàng, cách tính cước theo kg. Hotline ${HOTLINE}.`,
+    h1: 'Vận chuyển hàng từ Thâm Quyến về Việt Nam',
+    lead: 'Nhận hàng trực tiếp tại Thâm Quyến cho doanh nghiệp, xưởng sản xuất và chủ shop nhập linh kiện, thiết bị điện tử, phụ kiện công nghệ.',
     status: 'ready',
-    keyword: 'vận chuyển trung việt từ thâm quyến về việt nam; vận chuyển Thâm Quyến Việt Nam; kho Thâm Quyến',
+    hideInNav: true,
+    keyword: 'vận chuyển trung việt từ thâm quyến về việt nam; kho Thâm Quyến; 深圳到越南物流',
+  },
+  {
+    key: 'ha-mon',
+    href: '/logistics/van-chuyen-ha-mon-ve-viet-nam/',
+    nav: 'Hạ Môn',
+    title: 'Vận chuyển hàng Hạ Môn (Phúc Kiến) về Việt Nam',
+    description:
+      'Kho nhận hàng Hạ Môn (厦门, quận Hải Thương, Phúc Kiến) vận chuyển về Việt Nam: giày dép, đồ thể thao, gốm sứ. Địa chỉ tiếng Trung và cách gửi hàng.',
+    h1: 'Vận chuyển hàng từ Hạ Môn về Việt Nam',
+    lead: 'Nhận hàng trực tiếp tại Hạ Môn cho nhà nhập khẩu giày dép, quần áo thể thao, gốm sứ và hàng từ nhà cung cấp Phúc Kiến.',
+    status: 'ready',
+    hideInNav: true,
+    keyword: 'vận chuyển Hạ Môn về Việt Nam; kho Hạ Môn; 厦门到越南物流',
+  },
+  {
+    key: 'quang-chau',
+    href: '/logistics/van-chuyen-quang-chau-ve-viet-nam/',
+    nav: 'Quảng Châu',
+    title: 'Vận chuyển Quảng Châu về Việt Nam – kho Bạch Vân',
+    description:
+      'Kho nhận hàng Quảng Châu (广州, quận Bạch Vân) vận chuyển về Việt Nam: quần áo, giày dép, túi xách, hàng 1688/Taobao. Địa chỉ tiếng Trung và cách gửi hàng.',
+    h1: 'Vận chuyển hàng từ Quảng Châu về Việt Nam',
+    lead: 'Nhận hàng trực tiếp tại Quảng Châu cho chủ shop thời trang, nhà bán buôn và khách đặt hàng 1688 / Taobao.',
+    status: 'ready',
+    hideInNav: true,
+    keyword: 'vận chuyển Quảng Châu về Việt Nam; kho Quảng Châu; 广州到越南物流',
+  },
+  {
+    key: 'nghia-o',
+    href: '/logistics/van-chuyen-nghia-o-ve-viet-nam/',
+    nav: 'Nghĩa Ô',
+    title: 'Vận chuyển hàng Nghĩa Ô (Yiwu, 义乌) về Việt Nam',
+    description:
+      'Kho nhận hàng Nghĩa Ô (义乌, Chiết Giang) vận chuyển về Việt Nam: đồ chơi, văn phòng phẩm, quà tặng, hàng tiêu dùng nhỏ. Địa chỉ tiếng Trung và cách gửi hàng.',
+    h1: 'Vận chuyển hàng từ Nghĩa Ô về Việt Nam',
+    lead: 'Nhận hàng trực tiếp tại Nghĩa Ô cho chủ shop và nhà bán buôn nhập đồ chơi, văn phòng phẩm, quà tặng, hàng tiêu dùng nhỏ.',
+    status: 'ready',
+    hideInNav: true,
+    keyword: 'vận chuyển Nghĩa Ô về Việt Nam; kho Nghĩa Ô; 义乌到越南物流',
   },
   {
     key: 'quy-trinh',
@@ -461,7 +563,7 @@ export const articles: Article[] = [
         paragraphs: ['Thiếu mã khách hàng, ghi sai số điện thoại kho, hoặc nhà cung cấp tự đổi đơn vị chuyển phát mà không báo mã vận đơn mới.'],
       },
     ],
-    related: ['/logistics/quy-trinh-gui-hang/', '/logistics/kho-quang-chau/'],
+    related: ['/logistics/quy-trinh-gui-hang/', '/logistics/kho-trung-quoc/'],
   },
   {
     slug: 'dong-goi-hang-gui-tu-trung-quoc',
@@ -551,7 +653,7 @@ export const articles: Article[] = [
         ],
       },
     ],
-    related: ['/logistics/van-chuyen-tham-quyen-viet-nam/', '/logistics/van-chuyen-trung-quoc-viet-nam/'],
+    related: ['/logistics/van-chuyen-tham-quyen-ve-viet-nam/', '/logistics/van-chuyen-trung-quoc-viet-nam/'],
   },
   // ── VIPG-WEB-024: 4 bài cụm Thâm Quyến (phiên ec soạn, nháp — cần chuyên môn duyệt: khoảng cách địa lý bài 1,
   //    nghĩa pháp lý 'tiểu ngạch' bài 2, phân luồng hải quan bài 3).
@@ -600,7 +702,7 @@ export const articles: Article[] = [
         ],
       },
     ],
-    related: ['/logistics/van-chuyen-tham-quyen-viet-nam/', '/logistics/quy-trinh-gui-hang/'],
+    related: ['/logistics/van-chuyen-tham-quyen-ve-viet-nam/', '/logistics/quy-trinh-gui-hang/'],
   },
   {
     slug: 'chinh-ngach-va-ky-gui-tron-goi-khac-nhau-the-nao',
@@ -645,7 +747,7 @@ export const articles: Article[] = [
         ],
       },
     ],
-    related: ['/logistics/van-chuyen-trung-quoc-viet-nam/', '/logistics/van-chuyen-tham-quyen-viet-nam/'],
+    related: ['/logistics/van-chuyen-trung-quoc-viet-nam/', '/logistics/van-chuyen-tham-quyen-ve-viet-nam/'],
   },
   {
     slug: 'thu-tuc-hai-quan-nhap-khau-hang-trung-quoc-duong-bo',
@@ -702,7 +804,7 @@ export const articles: Article[] = [
         ],
       },
     ],
-    related: ['/logistics/van-chuyen-trung-quoc-viet-nam/', '/logistics/van-chuyen-tham-quyen-viet-nam/'],
+    related: ['/logistics/van-chuyen-trung-quoc-viet-nam/', '/logistics/van-chuyen-tham-quyen-ve-viet-nam/'],
   },
   {
     slug: 'hang-dien-tu-co-pin-tu-trung-quoc',
@@ -742,6 +844,6 @@ export const articles: Article[] = [
         ],
       },
     ],
-    related: ['/logistics/van-chuyen-tham-quyen-viet-nam/', '/logistics/quy-trinh-gui-hang/'],
+    related: ['/logistics/van-chuyen-tham-quyen-ve-viet-nam/', '/logistics/quy-trinh-gui-hang/'],
   },
 ];

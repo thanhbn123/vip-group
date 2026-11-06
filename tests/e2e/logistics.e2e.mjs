@@ -12,9 +12,9 @@ const OUT = process.argv[2] ?? 'evidence/screenshots';
 mkdirSync(OUT, { recursive: true });
 
 const PAGES = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/',
-  '/logistics/van-chuyen-tham-quyen-viet-nam/', '/logistics/quy-trinh-gui-hang/', '/logistics/bang-gia/',
+  '/logistics/van-chuyen-tham-quyen-ve-viet-nam/', '/logistics/quy-trinh-gui-hang/', '/logistics/bang-gia/',
   '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/', '/', '/lien-he/', '/chinh-sach-bao-mat/'];
-const DEMO_ONLY = ['/logistics/kho-quang-chau/', '/logistics/kien-thuc/', '/logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/'];
+const DEMO_ONLY = ['/logistics/kien-thuc/', '/logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/'];
 
 const results = [];
 const check = (name, ok, detail = '') => { results.push({ name, ok: !!ok, detail }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ' — ' + detail : ''}`); };
@@ -46,7 +46,7 @@ for (const [base, label, list] of [[PROD, 'prod', PAGES], [DEMO, 'demo', [...PAG
         const small = await page.evaluate(() => [...document.querySelectorAll('.sticky-bar a, .contact-actions a, .btn')].filter((a) => { const r = a.getBoundingClientRect(); return r.width > 0 && (r.height < 44 || r.width < 44); }).length);
         check(`[${label}/${vp}] ${p} vùng chạm nút ≥ 44px`, small === 0, `${small} nút nhỏ`);
       }
-      if (['/logistics/', '/logistics/bang-gia/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-tham-quyen-viet-nam/', '/logistics/kho-quang-chau/', '/', '/logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/'].includes(p)) {
+      if (['/logistics/', '/logistics/bang-gia/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-tham-quyen-ve-viet-nam/', '/logistics/kho-trung-quoc/', '/', '/logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/'].includes(p)) {
         await page.screenshot({ path: join(OUT, `${label}-${vp}-${slug(p)}.png`), fullPage: true });
       }
       await page.close();

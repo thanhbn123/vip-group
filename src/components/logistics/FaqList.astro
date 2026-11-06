@@ -1,5 +1,6 @@
 ---
 import type { FaqItem } from '../../data/types';
+import Mixed from './Mixed.astro';
 interface Props { items: FaqItem[]; headingLevel?: 'h2' | 'h3' }
 const { items, headingLevel = 'h3' } = Astro.props;
 const H = headingLevel;
@@ -9,7 +10,7 @@ const H = headingLevel;
     <details class="faq-item">
       <summary><H class="faq-q">{f.q}</H></summary>
       <div class="faq-a">
-        <p>{f.a}</p>
+        <p><Mixed text={f.a} /></p>
         {f.pending && <p class="faq-note">Thông tin chi tiết đang được cập nhật.</p>}
       </div>
     </details>

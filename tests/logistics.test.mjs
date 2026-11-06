@@ -12,15 +12,27 @@ const dist = join(root, 'dist');
 const demo = join(root, 'dist-demo');
 const SITE = 'https://www.vipgroup.com.vn';
 
+// V2: 4 trang tuyến kho (key → URL) và địa chỉ NGUYÊN VĂN owner cung cấp.
+const ROUTES = ['/logistics/van-chuyen-tham-quyen-ve-viet-nam/', '/logistics/van-chuyen-ha-mon-ve-viet-nam/',
+  '/logistics/van-chuyen-quang-chau-ve-viet-nam/', '/logistics/van-chuyen-nghia-o-ve-viet-nam/'];
+const ADDR = {
+  '/logistics/van-chuyen-tham-quyen-ve-viet-nam/': '深圳市宝安区福海街道海洋新城新钢物流园三期2栋',
+  '/logistics/van-chuyen-ha-mon-ve-viet-nam/': '福建省厦门市海沧区囷瑶路嘉功物流2号库3号仓',
+  '/logistics/van-chuyen-quang-chau-ve-viet-nam/': '广州市白云区钟落潭镇虎塘村凤岗路26号',
+  '/logistics/van-chuyen-nghia-o-ve-viet-nam/': '义乌市北苑三期秋实路121号6号楼10-12库西门，靠5号货梯',
+};
+// URL cũ (nháp, chưa từng phát hành) — thay bằng mạng lưới + trang tuyến, không được sinh ở bất kỳ bản nào.
+const RETIRED = ['/logistics/kho-quang-chau/', '/logistics/kho-tham-quyen/', '/logistics/van-chuyen-tham-quyen-viet-nam/'];
 const READY = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/',
   '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/',
   // V1.1: bảng giá (đơn giá owner 06/11/2026) + tuyến Thâm Quyến (owner xác nhận nhận hàng tại Thâm Quyến) → ready.
-  '/logistics/bang-gia/', '/logistics/van-chuyen-tham-quyen-viet-nam/'];
+  '/logistics/bang-gia/',
+  // V2 (VIPG-WEB-026): owner xác nhận 4 kho nhận hàng + địa chỉ 06/11/2026 → mạng lưới + 4 trang tuyến ready.
+  '/logistics/kho-trung-quoc/', ...ROUTES];
 const PENDING = [];
 // Trang kho: DRAFT cho tới khi owner xác nhận kho có thật (verifier P0-1).
 const KT = '/logistics/kien-thuc/';
-// Trang kho Quảng Châu + tuyến Thâm Quyến: DRAFT cho tới khi owner xác nhận nhận hàng/kho tại đó (verifier P0-1).
-const DRAFT = ['/logistics/kho-quang-chau/', KT,
+const DRAFT = [KT,
   ...['cach-tinh-so-khoi-va-can-nang-quy-doi', 'ghi-ma-khach-hang-khi-dat-hang-1688-taobao', 'dong-goi-hang-gui-tu-trung-quoc',
     'c-o-form-e-va-ma-hs-hang-tham-quyen', 'tham-quyen-o-dau-nhap-hang-tham-quyen', 'chinh-ngach-va-ky-gui-tron-goi-khac-nhau-the-nao',
     'thu-tuc-hai-quan-nhap-khau-hang-trung-quoc-duong-bo', 'hang-dien-tu-co-pin-tu-trung-quoc'].map((s) => `${KT}${s}/`)];
@@ -154,16 +166,85 @@ test('mọi dữ kiện có value đều phải có source (không xuất bản 
   assert.match(readFileSync(join(root, 'src/lib/logistics.ts'), 'utf8'), /thiếu source/);
 });
 
-test('không trang ready nào khẳng định có kho Quảng Châu / Thâm Quyến khi trang kho chưa xuất bản', () => {
+test('không khẳng định sở hữu kho, không dịch vụ gom hàng chưa có nguồn', () => {
   for (const p of READY) {
     const t = text(read(p));
-    // Thâm Quyến: owner xác nhận nhận hàng 06/11/2026. Quảng Châu: trang còn nháp → không được khẳng định.
-    assert.doesNotMatch(t, /[Kk]ho Quảng Châu/, `${p}: khẳng định có kho chưa xác minh`);
-    assert.doesNotMatch(t, /kho (?:thuộc sở hữu|của) VIP GROUP/i, `${p}: không khẳng định sở hữu kho`);
+    assert.doesNotMatch(t, /kho (?:thuộc sở hữu |riêng )?(?:của )?VIP ?GROUP|kho riêng|thuộc sở hữu|自有|自营|我司|本公司仓/i, `${p}: không khẳng định sở hữu kho`);
     assert.doesNotMatch(t, /gom hàng|[Gg]om nhiều đơn/, `${p}: dịch vụ gom hàng chưa có nguồn`);
   }
 });
 
+test('V2: URL kho/tuyến cũ không còn được sinh (production + DEMO)', () => {
+  for (const p of RETIRED) assert.ok(!existsSync(join(dist, p, 'index.html')), `còn ${p}`);
+});
+
+test('V2: địa chỉ 4 kho NGUYÊN VĂN, tiếng Trung, có nút sao chép, trên trang tuyến và trang mạng lưới', () => {
+  const net = read('/logistics/kho-trung-quoc/');
+  for (const [p, addr] of Object.entries(ADDR)) {
+    const html = read(p);
+    assert.match(html, new RegExp(`<p class="addr"[^>]*lang="zh-CN"[^>]*>${addr}</p>`), `${p}: địa chỉ phải đúng nguyên văn trong khối zh-CN`);
+    assert.match(html, /<button type="button" class="btn btn-primary copy-btn"[^>]*data-copy-btn/, `${p}: nút sao chép`);
+    assert.ok(net.includes(addr), `mạng lưới thiếu địa chỉ ${addr}`);
+    // Place schema mang đúng địa chỉ hiển thị.
+    const place = ldAll(html).find((d) => d['@type'] === 'Place');
+    assert.equal(place?.address?.streetAddress, addr, `${p}: Place.address khớp địa chỉ hiển thị`);
+    assert.equal(place.address.addressCountry, 'CN');
+  }
+});
+
+test('V2: trang tuyến — nội dung riêng, liên kết mạng lưới, phần tiếng Trung, schema hợp lệ', () => {
+  const h1s = new Set();
+  for (const p of ROUTES) {
+    const html = read(p);
+    const t = text(html);
+    h1s.add(text(html.match(/<h1[^>]*>[\s\S]*?<\/h1>/)[0]).trim());
+    assert.match(html, /href="\/logistics\/kho-trung-quoc\/"/, `${p}: phải liên kết về trang mạng lưới`);
+    assert.match(html, /<section [^>]*lang="zh-CN"/, `${p}: thiếu phần tiếng Trung`);
+    assert.match(t, /Tóm tắt nhanh/);
+    const lds = ldAll(html);
+    const svc = lds.find((d) => d['@type'] === 'Service');
+    assert.equal(svc.provider.name, 'VIPORDER');
+    const bc = lds.find((d) => d['@type'] === 'BreadcrumbList');
+    assert.deepEqual(bc.itemListElement.map((x) => x.name).slice(0, 3), ['Trang chủ', 'Logistics', 'Kho Trung Quốc']);
+    const faq = lds.find((d) => d['@type'] === 'FAQPage');
+    assert.ok(faq.mainEntity.length >= 3, `${p}: FAQPage`);
+    for (const q of faq.mainEntity) {
+      assert.ok(t.includes(q.name), `${p}: câu hỏi schema phải hiển thị: ${q.name}`);
+      assert.doesNotMatch(q.name, /mất bao lâu/, `${p}: câu thời gian (chưa có nguồn) không vào FAQPage`);
+    }
+    // Lưu ý giao hàng riêng từng kho (diễn giải từ địa chỉ owner) — phần nội dung không lặp giữa các tuyến.
+    assert.match(t, /Lưu ý khi giao hàng tới kho/, `${p}: thiếu lưu ý giao hàng riêng`);
+    // Không gắn bảng giá chung cho tuyến cụ thể khi owner chưa xác nhận (priceApplies pending).
+    assert.doesNotMatch(t, /(?:20|16|15|14|12)\.000\s*đ/, `${p}: không hiện đơn giá chung trên trang tuyến`);
+    assert.doesNotMatch(html, /"offers"/, `${p}: không khai Offer trên trang tuyến`);
+    // Không công khai SĐT nội bộ (di động TQ) hay số khác ngoài hotline.
+    assert.doesNotMatch(t, /(?<!\d)1[3-9]\d{9}(?!\d)|\+86|(?<!\d)0\d{2,3}-\d{7,8}(?!\d)/, `${p}: lộ số điện thoại Trung Quốc`);
+    for (const m of t.matchAll(/0\d{2,3}[\s.]?\d{3}[\s.]?\d{3,4}/g)) assert.equal(m[0].replace(/\D/g, ''), '0961102655', `${p}: số lạ ${m[0]}`);
+  }
+  assert.equal(h1s.size, ROUTES.length, 'H1 mỗi tuyến phải khác nhau');
+  // Trang mạng lưới cũng không gắn đơn giá chung cho các kho.
+  const net = text(read('/logistics/kho-trung-quoc/'));
+  assert.doesNotMatch(net, /(?:20|16|15|14|12)\.000\s*đ/, 'mạng lưới: không hiện đơn giá chung');
+  // FAQPage không trùng câu giữa trang mạng lưới và trang Hỏi đáp.
+  const names = (path) => (ldAll(read(path)).find((d) => d['@type'] === 'FAQPage')?.mainEntity ?? []).map((q) => q.name);
+  const dup = names('/logistics/kho-trung-quoc/').filter((n) => names('/logistics/cau-hoi-thuong-gap/').includes(n));
+  assert.deepEqual(dup, [], 'câu hỏi FAQPage trùng giữa 2 trang');
+});
+
+test('V2: trang mạng lưới liên kết đủ 4 tuyến, ItemList khớp; trang tuyến chỉ có 1 mục menu phụ (mạng lưới)', () => {
+  const net = read('/logistics/kho-trung-quoc/');
+  for (const p of ROUTES) assert.match(net, new RegExp(`href="${p}"`));
+  const list = ldAll(net).find((d) => d['@type'] === 'ItemList');
+  assert.deepEqual(list.itemListElement.map((x) => x.url), ROUTES.map((p) => `${SITE}${p}`));
+  const nav = net.slice(net.indexOf('aria-label="Mục Logistics"'), net.indexOf('</nav>', net.indexOf('aria-label="Mục Logistics"')));
+  assert.match(nav, /href="\/logistics\/kho-trung-quoc\/"/);
+  for (const p of ROUTES) assert.doesNotMatch(nav, new RegExp(`href="${p}"`), 'trang tuyến không chen vào menu phụ');
+  // Hub + Bắc Ninh dẫn về trang tuyến.
+  for (const src of ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/']) {
+    const h = read(src);
+    for (const p of ROUTES) assert.match(h, new RegExp(`href="${p}"`), `${src} thiếu link ${p}`);
+  }
+});
 test('FAQPage chỉ chứa câu trả lời đã có căn cứ', () => {
   const html = read('/logistics/cau-hoi-thuong-gap/');
   const faq = ldAll(html).find((d) => d['@type'] === 'FAQPage');
@@ -243,9 +324,11 @@ test('DEMO (VIPG_DEMO=1): ra dist-demo/, mọi trang noindex, có nhãn MẪU, c
   for (const file of allHtml(demo)) assert.match(readFileSync(file, 'utf8'), /<meta name="robots" content="noindex"/, `${file} DEMO phải noindex`);
   assert.equal((readFileSync(join(demo, 'sitemap.xml'), 'utf8').match(/<loc>/g) ?? []).length, 0, 'DEMO: sitemap rỗng');
   for (const p of DRAFT) assert.ok(existsSync(join(demo, p, 'index.html')), `DEMO thiếu ${p}`);
-  const kho = read('/logistics/kho-quang-chau/', demo);
-  assert.match(text(kho), /MẪU/);
+  const kho = read('/logistics/van-chuyen-nghia-o-ve-viet-nam/', demo);
+  assert.match(text(kho), /MẪU/, 'DEMO: giờ nhận hàng / thời gian mẫu có nhãn');
   assert.match(text(kho), /BẢN DEMO NGHIỆM THU/);
-  // Build DEMO không được ghi đè dist/ production.
-  assert.ok(!existsSync(join(dist, 'logistics/kho-quang-chau/index.html')), 'build DEMO không ghi đè dist/');
+  for (const p of RETIRED) assert.ok(!existsSync(join(demo, p, 'index.html')), `DEMO còn URL cũ ${p}`);
+  assert.doesNotMatch(text(kho), /Áp dụng bảng giá/, 'DEMO: dữ liệu mẫu priceApplies không được thành câu khẳng định');
+  // Build DEMO không được ghi đè dist/ production: bản production không có nhãn MẪU.
+  assert.doesNotMatch(text(read('/logistics/van-chuyen-nghia-o-ve-viet-nam/')), /\bMẪU\b/, 'build DEMO không ghi đè dist/');
 });

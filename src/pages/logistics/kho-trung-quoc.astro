@@ -1,0 +1,154 @@
+---
+/**
+ * Trang mạng lưới 4 kho nhận hàng tại Trung Quốc (VIPG-WEB-026) — trang trung tâm của cụm "kho Trung Quốc",
+ * mọi trang tuyến liên kết về đây. Không khai quyền sở hữu kho; không gắn bảng giá chung cho từng kho.
+ */
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import FaqList from '../../components/logistics/FaqList.astro';
+import CopyAddress from '../../components/logistics/CopyAddress.astro';
+import { pageByKey, pickupHref, shown, prettyPhone, linkable } from '../../lib/logistics';
+import { serviceLd } from '../../lib/schema';
+import { pickupPlaceLd } from '../../lib/pickup';
+import { pickupPoints, provider, faqs } from '../../data/vi/logistics';
+import type { FaqItem } from '../../data/types';
+
+const page = pageByKey('kho-trung-quoc');
+const site = Astro.site!;
+const url = new URL(page.href, site).href;
+const pretty = prettyPhone(provider.hotline);
+const updated = '2026-11-06';
+
+const answer =
+  `VIP GROUP nhận hàng trực tiếp tại 4 kho ở Trung Quốc: Thâm Quyến (quận Bảo An, Quảng Đông), Hạ Môn (quận Hải Thương, Phúc Kiến), ` +
+  `Quảng Châu (quận Bạch Vân, Quảng Đông) và Nghĩa Ô (Chiết Giang), rồi vận chuyển về Việt Nam; dịch vụ do ${provider.name} vận hành. ` +
+  `Chọn kho gần nhà cung cấp nhất, gửi nguyên văn địa chỉ tiếng Trung và ghi mã khách hàng trên từng kiện. Hotline/Zalo ${pretty}.`;
+
+const choose = [
+  { need: 'Linh kiện, thiết bị điện tử, phụ kiện công nghệ', id: 'tham-quyen' },
+  { need: 'Giày dép, quần áo thể thao, gốm sứ, hàng Phúc Kiến', id: 'ha-mon' },
+  { need: 'Quần áo, giày dép, túi xách, hàng 1688 / Taobao', id: 'quang-chau' },
+  { need: 'Đồ chơi, văn phòng phẩm, quà tặng, hàng tiêu dùng nhỏ', id: 'nghia-o' },
+] as const;
+const cityOf = (id: string) => pickupPoints.find((x) => x.id === id)!;
+// Chỉ liệt kê kho có trang tuyến được build (tránh link hỏng nếu một tuyến chuyển về draft).
+const points = pickupPoints.filter((p) => linkable(pickupHref(p.id)));
+// Câu "VIP GROUP nhận hàng ở đâu…" đã nằm trong FAQPage của /logistics/cau-hoi-thuong-gap/ → hiển thị ở đây nhưng không khai lại schema.
+const SHARED_Q = 'VIP GROUP nhận hàng ở đâu tại Trung Quốc?';
+
+const faq: FaqItem[] = [
+  faqs.find((f) => f.q === SHARED_Q)!,
+  {
+    q: 'Nên gửi hàng về kho nào?',
+    a: `Chọn kho gần nhà cung cấp nhất để rút ngắn quãng giao nội địa Trung Quốc: Quảng Đông giao về kho Thâm Quyến hoặc Quảng Châu, Phúc Kiến giao về kho Hạ Môn, Chiết Giang và hàng chợ Nghĩa Ô giao về kho Nghĩa Ô. Chưa chắc chọn kho nào, gọi hoặc nhắn Zalo ${pretty}.`,
+  },
+  {
+    q: 'Vì sao website không đăng tên người nhận và số điện thoại kho?',
+    a: 'Tên người nhận, số điện thoại khi giao và mã khách hàng là thông tin riêng của từng khách, được cung cấp sau khi đăng ký mã khách hàng. Không đăng công khai giúp hạn chế hàng gửi nhầm và bảo vệ thông tin vận hành.',
+  },
+  {
+    q: 'Cước vận chuyển từ các kho Trung Quốc tính thế nào?',
+    a: 'Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000). Đơn giá cho hàng nhận tại từng kho được xác nhận khi báo giá, cùng phụ phí và thuế (nếu có).',
+  },
+];
+const ld = [
+  serviceLd({
+    name: 'Nhận hàng tại 4 kho Trung Quốc, vận chuyển về Việt Nam',
+    serviceType: 'Nhận hàng tại Trung Quốc và vận chuyển về Việt Nam',
+    description: page.description,
+    url: new URL(page.href, site),
+    areaServed: ['Việt Nam'],
+  }),
+  {
+    '@type': 'ItemList',
+    name: 'Kho nhận hàng tại Trung Quốc',
+    itemListElement: points.map((p, i) => ({ '@type': 'ListItem', position: i + 1, name: `Vận chuyển ${p.city} về Việt Nam`, url: new URL(pickupHref(p.id), site).href })),
+  },
+  ...points.map((p) => pickupPlaceLd(p, new URL(pickupHref(p.id), site).href)),
+  { '@type': 'WebPage', '@id': `${url}#webpage`, url, name: page.h1, inLanguage: 'vi', dateModified: updated },
+  { '@type': 'FAQPage', mainEntity: faq.filter((f) => !f.pending && f.q !== SHARED_Q).map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+];
+---
+<LogisticsLayout page={page} jsonLd={ld}>
+  <section class="section net-answer" aria-labelledby="net-sum">
+    <div class="container">
+      <div class="answer-box">
+        <h2 id="net-sum" class="answer-title">Tóm tắt nhanh</h2>
+        <p class="answer">{answer}</p>
+        <p class="answer-zh" lang="zh-CN">VIP GROUP 在中国四个仓库直接收货：深圳（宝安区）、厦门（海沧区）、广州（白云区）、义乌，并运往越南。请选择离供应商最近的仓库，按中文地址原文发货，并在每件货物上标明客户编号。</p>
+        <p class="updated">Cập nhật: <time datetime={updated}>06/11/2026</time></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="net-table">
+    <div class="container">
+      <span class="kicker">So sánh 4 kho</span>
+      <h2 id="net-table">Chọn kho theo nguồn hàng</h2>
+      <div class="table-wrap" role="region" aria-labelledby="net-table" tabindex="0">
+        <table class="data-table">
+          <caption>Bốn kho nhận hàng tại Trung Quốc: tỉnh, khu vực và nhóm hàng thường nhập</caption>
+          <thead><tr><th scope="col">Kho</th><th scope="col">Tỉnh</th><th scope="col">Khu vực</th><th scope="col">Hàng thường nhập</th><th scope="col">Chi tiết</th></tr></thead>
+          <tbody>
+            {points.map((p) => (
+              <tr>
+                <th scope="row">{p.city} <span lang="zh-CN">{p.cityZh}</span></th>
+                <td>{p.province} <span lang="zh-CN">{p.provinceZh}</span></td>
+                <td>{p.district}</td>
+                <td>{p.goods.slice(0, 2).join('; ')}</td>
+                <td><a class="text-link" href={pickupHref(p.id)}>Tuyến {p.city} →</a></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <ul class="choose">
+        {choose.filter((c) => linkable(pickupHref(c.id))).map((c) => <li><strong>{c.need}</strong> → kho <a class="text-link" href={pickupHref(c.id)}>{cityOf(c.id).city}</a></li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="net-addr">
+    <div class="container">
+      <span class="kicker">Địa chỉ · <span lang="zh-CN">仓库地址</span></span>
+      <h2 id="net-addr">Địa chỉ 4 kho bằng tiếng Trung</h2>
+      <p class="muted">Gửi nguyên văn địa chỉ cho nhà cung cấp. Tên người nhận, số điện thoại khi giao và mã khách hàng được cung cấp sau khi đăng ký.</p>
+      <div class="addr-grid">
+        {points.map((p) => (
+          <div>
+            <h3 class="addr-h">Kho {p.city} <span lang="zh-CN">{p.cityZh}</span></h3>
+            <CopyAddress id={p.id} city={p.city} cityZh={p.cityZh} address={shown(p.addressZh).value ?? ''} />
+            <p><a class="text-link" href={pickupHref(p.id)}>Hướng dẫn gửi hàng tới kho {p.city} →</a></p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="net-faq">
+    <div class="container split">
+      <div>
+        <h2 id="net-faq">Câu hỏi về kho Trung Quốc</h2>
+        <p><a class="text-link" href="/logistics/bang-gia/">Bảng giá chung Trung Quốc – Việt Nam →</a></p>
+        <p><a class="text-link" href="/logistics/quy-trinh-gui-hang/">Quy trình gửi hàng →</a></p>
+      </div>
+      <FaqList items={faq} />
+    </div>
+  </section>
+</LogisticsLayout>
+<style>
+  .net-answer { padding-bottom: 0; }
+  .answer-box { border-left: 4px solid var(--brand); background: var(--bg-alt); border-radius: var(--radius-sm); padding: 20px 24px; max-width: 920px; }
+  .answer-title { font-size: 18px; margin-bottom: 8px; }
+  .answer { margin: 0 0 8px; font-size: 17px; line-height: 1.65; }
+  .answer-zh { margin: 0 0 10px; color: var(--text-2); line-height: 1.7; }
+  .updated { margin: 0; font-size: 14px; color: var(--muted); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); margin: 16px 0 24px; }
+  .data-table { width: 100%; border-collapse: collapse; min-width: 720px; }
+  .data-table caption { caption-side: top; text-align: left; padding: 12px 18px 0; font-size: 14px; color: var(--muted); }
+  .data-table th, .data-table td { padding: 14px 18px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  .data-table thead th { background: var(--bg-alt); font-size: 14px; }
+  .data-table tbody tr:last-child > * { border-bottom: 0; }
+  .choose { display: grid; gap: 8px; padding-left: 20px; margin: 0; }
+  .addr-grid { display: grid; gap: 28px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); margin-top: 20px; }
+  .addr-h { font-size: 20px; margin-bottom: 10px; }
+</style>
