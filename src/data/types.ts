@@ -89,6 +89,11 @@ export interface ContactInfo {
   formBackendReady: boolean;
   /** Thu lead (VIPG-WEB-023): endpoint cùng tên miền + mã site Turnstile công khai (null = chưa cài). */
   lead: { endpoint: string; turnstileSiteKey: string | null; privacyHref: string };
+  /**
+   * Cổng khách hàng (P1 — VIP ID + CRM). null = chưa bật: website KHÔNG hiện nút đăng nhập/đăng ký.
+   * Chỉ đặt URL khi owner phê duyệt phát hành cổng (docs/cong-khach-hang/KIEN_TRUC_P1.md §6).
+   */
+  portal: { loginUrl: string; registerUrl: string } | null;
 }
 
 export interface SiteContent {

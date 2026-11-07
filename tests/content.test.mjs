@@ -96,3 +96,13 @@ test('owner 07/11/2026: website TÁCH khỏi VIPORDER — không link viporder.c
     assert.doesNotMatch(text(html), /Số 62 Khu đô thị Nam Hồng|Đồng Nguyên/, `${file.replace(dist, '')}: còn địa chỉ văn phòng VIPORDER`);
   }
 });
+
+// Cổng khách hàng P1: website KHÔNG hiện nút đăng nhập/đăng ký khi contact.portal = null (Production NO-GO).
+test('cổng khách hàng tắt: không có link khachhang./tai-khoan trong bản build', () => {
+  const src = readFileSync(new URL('../src/data/vi/contact.ts', import.meta.url), 'utf8');
+  assert.match(src, /^\s*portal: null,/m, 'contact.portal phải là null cho tới khi owner phê duyệt');
+  for (const f of allHtml()) {
+    const html = readFileSync(f, 'utf8');
+    assert.ok(!/khachhang\.vipgroup\.com\.vn|\/tai-khoan\/|data-portal/.test(html), `${f} lộ link cổng khách hàng`);
+  }
+});
