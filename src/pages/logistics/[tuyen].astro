@@ -97,7 +97,7 @@ const ld = [
       <span class="kicker">Hướng dẫn</span>
       <h2 id="rt-how">Cách gửi hàng tới kho {p.city}</h2>
       <ol class="rt-steps">{pickupSteps(p).map((s) => <li><h3>{s.title}</h3><p>{s.text}</p></li>)}</ol>
-      <a class="btn btn-primary" href={provider.registerUrl} rel="noopener" target="_blank" data-track="register_click" data-track-location="route_steps" data-track-route={p.id}>Đăng ký mã khách hàng<span class="visually-hidden"> (mở tab mới)</span></a>
+      <a class="btn btn-primary" href={provider.registerHref} data-track="register_click" data-track-location="route_steps" data-track-route={p.id}>Đăng ký khách hàng</a>
     </div>
   </section>
 

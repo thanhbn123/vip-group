@@ -75,14 +75,24 @@ test('dữ liệu pháp nhân hiển thị trên site (không còn "Đang cập 
   }
 });
 
-test('VIPG-WEB-013: trang chủ + công ty thành viên không còn thẻ "Đang hoàn thiện", có ghi chú nguồn ĐKDN', () => {
-  for (const f of ['index.html', 'cong-ty-thanh-vien/index.html']) {
+test('công ty thành viên (owner 07/11/2026 tách VIPORDER): trang thành viên có ghi chú ĐKDN; trang chủ không còn khối thành viên', () => {
+  assert.ok(!readFileSync(join(dist, 'index.html'), 'utf8').includes('id="members-title"'), 'trang chủ không hiện khối Công ty thành viên khi chưa có thành viên');
+  for (const f of ['cong-ty-thanh-vien/index.html']) {
     const t = text(readFileSync(join(dist, f), 'utf8'));
     assert.ok(!t.includes('Đang hoàn thiện'), `${f}: còn thẻ giữ chỗ`);
     assert.ok(!t.includes('Công ty thành viên khối'), `${f}: còn nhãn giữ chỗ`);
     assert.ok(t.includes('chưa có công ty thành viên riêng'), `${f}: thiếu ghi chú`);
-    assert.ok(t.includes('ngành nghề đăng ký của CÔNG TY TNHH VIP GROUP'), `${f}: ghi chú thiếu nguồn`);
+    assert.ok(t.includes('CÔNG TY TNHH VIP GROUP trực tiếp thực hiện theo ngành nghề đăng ký'), `${f}: ghi chú thiếu nguồn`);
   }
   const tuyen = readFileSync(join(dist, 'tuyen-dung/index.html'), 'utf8');
   assert.ok(tuyen.includes('mailto:viporder@vipgroup.com.vn'), 'tuyển dụng phải gửi về email chính thức');
+});
+
+test('owner 07/11/2026: website TÁCH khỏi VIPORDER — không link viporder.com.vn, không nhắc tên VIPORDER / VIP ORDER (trừ email đã chốt)', () => {
+  for (const file of allHtml()) {
+    const html = readFileSync(file, 'utf8').replace(/viporder@vipgroup\.com\.vn/g, 'EMAIL');
+    assert.doesNotMatch(html, /viporder\.com\.vn|khachhang\.viporder/i, `${file.replace(dist, '')}: còn link VIPORDER`);
+    assert.doesNotMatch(html, /VIPORDER|VIP ORDER|XUẤT NHẬP KHẨU LOGISTICS VIP/i, `${file.replace(dist, '')}: còn tên VIPORDER`);
+    assert.doesNotMatch(text(html), /Số 62 Khu đô thị Nam Hồng|Đồng Nguyên/, `${file.replace(dist, '')}: còn địa chỉ văn phòng VIPORDER`);
+  }
 });

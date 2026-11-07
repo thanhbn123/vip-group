@@ -67,12 +67,13 @@ for (const p of BUILT) {
     assert.ok(bc, 'thiếu BreadcrumbList');
     assert.equal(bc.itemListElement.at(-1).item, `${SITE}${p}`);
     assert.equal(bc.itemListElement[0].item, `${SITE}/`);
-    // Gọi điện / Zalo đều có data-track; Zalo đúng link VIPORDER công bố.
+    // Gọi điện / Zalo đều có data-track; Zalo đúng số VIP GROUP.
     assert.match(html, /<a [^>]*href="tel:0961102655"[^>]*data-track="call_click"/);
     assert.match(html, /<a [^>]*href="https:\/\/zalo\.me\/0961102655"[^>]*data-track="zalo_click"/);
     assert.match(html, /<nav class="sticky-bar[^"]*" aria-label="Liên hệ nhanh"[^>]*>/, 'thanh liên hệ nhanh mobile');
     // Ghi rõ đơn vị vận hành.
-    assert.match(text(html), /CÔNG TY TNHH XUẤT NHẬP KHẨU LOGISTICS VIP ORDER/);
+    // Owner 07/11/2026: đơn vị cung cấp dịch vụ là CÔNG TY TNHH VIP GROUP.
+    assert.match(text(html), /Dịch vụ logistics trên trang này do\s+CÔNG TY TNHH VIP GROUP\s+\(mã số doanh nghiệp 4900951703\) cung cấp/);
   });
 }
 
@@ -133,14 +134,14 @@ test('production KHÔNG chứa dữ liệu MẪU, giá, thời gian giao hay đ�
   }
 });
 
-test('Service schema: đơn vị cung cấp là VIPORDER, không gán địa chỉ Bắc Ninh cho VIP GROUP', () => {
+test('Service schema: đơn vị cung cấp là VIP GROUP (@id Organization), không khai địa chỉ Bắc Ninh khi chưa có nguồn', () => {
   for (const p of ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/']) {
     const lds = ldAll(read(p));
     const svc = lds.find((d) => d['@type'] === 'Service');
     assert.ok(svc, `${p}: thiếu Service`);
-    assert.equal(svc.provider.name, 'VIPORDER');
-    assert.equal(svc.provider.legalName, 'CÔNG TY TNHH XUẤT NHẬP KHẨU LOGISTICS VIP ORDER');
-    assert.equal(svc.provider.url, 'https://viporder.com.vn');
+    assert.equal(svc.provider['@id'], `${SITE}/#organization`);
+    assert.equal(svc.provider.legalName, 'CÔNG TY TNHH VIP GROUP');
+    assert.equal(svc.provider.address, undefined, 'chưa có địa chỉ Bắc Ninh của VIP GROUP → không khai');
     const org = lds[0];
     assert.equal(org.address.addressRegion, 'Tỉnh Lạng Sơn', 'địa chỉ VIP GROUP giữ nguyên');
     assert.ok(!JSON.stringify(org).includes('Bắc Ninh'));
@@ -149,13 +150,10 @@ test('Service schema: đơn vị cung cấp là VIPORDER, không gán địa ch�
   assert.deepEqual(bn.areaServed, [{ '@type': 'AdministrativeArea', name: 'Bắc Ninh' }]);
 });
 
-test('địa chỉ Bắc Ninh chỉ xuất hiện kèm ghi chú nguồn VIPORDER', () => {
-  for (const file of allHtml(dist)) {
-    const t = text(readFileSync(file, 'utf8'));
-    if (!t.includes('Số 62 Khu đô thị Nam Hồng')) continue;
-    assert.ok(file.replace(dist, '').startsWith('/logistics/'), `${file}: địa chỉ VIPORDER lọt ra trang tập đoàn`);
-    assert.match(t, /VIPORDER/, file);
-  }
+test('trang Bắc Ninh: điểm giao dịch VIP GROUP — địa chỉ chờ owner, hiện "liên hệ" (không dùng địa chỉ cũ)', () => {
+  const t = text(read('/logistics/van-chuyen-trung-quoc-bac-ninh/'));
+  assert.match(t, /Điểm giao dịch VIP GROUP tại Bắc Ninh/);
+  assert.match(read('/logistics/van-chuyen-trung-quoc-bac-ninh/'), /data-owner-input-pending/);
 });
 
 test('mọi dữ kiện có value đều phải có source (không xuất bản thông tin không nguồn)', () => {
@@ -203,7 +201,7 @@ test('V2: trang tuyến — nội dung riêng, liên kết mạng lưới, phầ
     assert.match(t, /Tóm tắt nhanh/);
     const lds = ldAll(html);
     const svc = lds.find((d) => d['@type'] === 'Service');
-    assert.equal(svc.provider.name, 'VIPORDER');
+    assert.equal(svc.provider.legalName, 'CÔNG TY TNHH VIP GROUP');
     const bc = lds.find((d) => d['@type'] === 'BreadcrumbList');
     assert.deepEqual(bc.itemListElement.map((x) => x.name).slice(0, 3), ['Trang chủ', 'Logistics', 'Kho Trung Quốc']);
     const faq = lds.find((d) => d['@type'] === 'FAQPage');

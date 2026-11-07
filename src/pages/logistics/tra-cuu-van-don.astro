@@ -1,40 +1,45 @@
 ---
+/**
+ * Tra cứu vận đơn — TẠM THỜI qua Zalo / hotline VIP GROUP (owner 07/11/2026: tách khỏi hệ thống VIPORDER).
+ * Khi có cổng khách hàng riêng của VIP GROUP (phương án P1 — CRM V5 + VIP ID), thay bằng tra cứu trực tuyến.
+ */
 import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
-import { pageByKey } from '../../lib/logistics';
+import { pageByKey, telHref, prettyPhone } from '../../lib/logistics';
 import { provider } from '../../data/vi/logistics';
 
 const page = pageByKey('tra-cuu');
+const phone = prettyPhone(provider.hotline);
 ---
 <LogisticsLayout page={page} showActions={false}>
   <section class="section" aria-labelledby="track-title">
     <div class="container split">
       <div>
         <span class="kicker">Tra cứu</span>
-        <h2 id="track-title">Tra cứu trên hệ thống {provider.name}</h2>
-        <p class="muted">Dữ liệu vận đơn nằm trên hệ thống chính thức của {provider.name}. Trang này không lưu và không hiển thị lại mã vận đơn của bạn.</p>
+        <h2 id="track-title">Gửi mã vận đơn cho VIP GROUP</h2>
+        <p class="muted">Nhân viên VIP GROUP tra cứu và báo lại tình trạng lô hàng. Website không lưu và không hiển thị lại mã vận đơn của bạn.</p>
       </div>
       <div class="grid track-cards">
         <article class="card">
-          <h3>Tra mã vận đơn / mã bao</h3>
-          <p>Nhập mã vận đơn hoặc mã kiện để xem tình trạng hiện tại. Không cần đăng nhập.</p>
-          <a class="btn btn-primary" href={provider.trackingUrl} rel="noopener" target="_blank" data-track="tracking_click" data-track-location="tracking_page">Mở trang tra cứu<span class="visually-hidden"> (mở tab mới, viporder.com.vn)</span></a>
+          <h3>Nhắn Zalo (nhanh nhất)</h3>
+          <p>Gửi <strong>mã vận đơn</strong> (hoặc mã kiện) kèm <strong>mã khách hàng</strong> và tên người đặt hàng.</p>
+          <a class="btn btn-primary" href={provider.zaloUrl} rel="noopener" target="_blank" data-track="zalo_click" data-track-location="tracking_page">Nhắn Zalo {phone}<span class="visually-hidden"> (mở tab mới)</span></a>
         </article>
         <article class="card">
-          <h3>Khách hàng đã có tài khoản</h3>
-          <p>Đăng nhập hệ thống khách hàng để xem đơn hàng, kiện hàng và thông tin tài khoản.</p>
-          <a class="btn btn-ghost" href={provider.customerPortalUrl} rel="noopener" target="_blank" data-track="portal_login_click" data-track-location="tracking_page">Đăng nhập hệ thống khách hàng<span class="visually-hidden"> (mở tab mới)</span></a>
+          <h3>Gọi hotline</h3>
+          <p>Đọc mã vận đơn cho nhân viên trong giờ làm việc.</p>
+          <a class="btn btn-ghost" href={telHref(provider.hotline)} data-track="call_click" data-track-location="tracking_page">Gọi {phone}</a>
         </article>
       </div>
     </div>
   </section>
   <section class="section section-alt" aria-labelledby="code-title">
     <div class="container split">
-      <div><h2 id="code-title">Không tìm thấy mã?</h2></div>
+      <div><h2 id="code-title">Chuẩn bị gì khi tra cứu?</h2></div>
       <ul class="check-list">
-        <li>Kiểm tra lại mã vận đơn nội địa Trung Quốc nhà cung cấp gửi cho bạn — không có khoảng trắng thừa.</li>
-        <li>Hàng mới gửi có thể chưa được kho quét nhận; thử lại sau.</li>
-        <li>Thử tra theo mã bao nếu hàng đã được đóng bao tại kho.</li>
-        <li>Vẫn không thấy? Gọi hoặc nhắn Zalo hotline kèm mã vận đơn và mã khách hàng.</li>
+        <li>Mã vận đơn nội địa Trung Quốc nhà cung cấp gửi cho bạn — chép đúng, không có khoảng trắng thừa.</li>
+        <li>Mã khách hàng VIP GROUP (nếu chưa có: <a class="text-link" href={provider.registerHref}>đăng ký khách hàng</a>).</li>
+        <li>Kho nhận tại Trung Quốc (Thâm Quyến, Hạ Môn, Quảng Châu hay Nghĩa Ô) và ngày nhà cung cấp gửi hàng.</li>
+        <li>Hàng mới gửi có thể chưa được kho quét nhận — nhân viên sẽ báo khi hàng nhập kho.</li>
       </ul>
     </div>
   </section>

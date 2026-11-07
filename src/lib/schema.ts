@@ -1,13 +1,12 @@
 import { provider } from '../data/vi/logistics';
 
-/** schema.org Organization của đơn vị vận hành (VIPORDER) — chỉ trường có nguồn. */
+/** Đơn vị cung cấp dịch vụ = Organization VIP GROUP của site (owner 07/11/2026). Tham chiếu @id, không lặp dữ liệu. */
 export const providerLd = () => ({
   '@type': 'Organization',
+  '@id': 'https://www.vipgroup.com.vn/#organization',
   name: provider.name,
   legalName: provider.legalName,
-  url: provider.url,
-  telephone: provider.hotline.replace(/^0/, '+84'),
-  // Địa chỉ văn phòng VIPORDER công bố (có nguồn) — giúp Google/AI nối dịch vụ với pháp nhân có thật.
+  // Điểm giao dịch Bắc Ninh — chỉ khai khi owner đã cung cấp địa chỉ (value + source).
   ...(provider.officeAddress.value && provider.officeAddress.source
     ? { address: { '@type': 'PostalAddress', streetAddress: provider.officeAddress.value, addressCountry: 'VN' } }
     : {}),
