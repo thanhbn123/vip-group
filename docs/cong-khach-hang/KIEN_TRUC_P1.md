@@ -204,3 +204,26 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
    - nhân viên tự cân nhắc trước khi duyệt;
    - đăng ký bị từ chối thì SĐT được giải phóng.
 5. **Không cần email thật để lên production.** Điểm chặn A8 được gỡ khi `COWORK_KHACH_EMAIL_ENABLED=0`.
+
+## 14. Mốc thu hồi phiên chính xác đến mili-giây (07/11/2026, CRM 580efe1, VIP ID theo sau)
+
+1. **Body `POST /api/internal/portal/thu-hoi`:**
+
+   ```
+   {subject, reason, revoked_at, revoked_at_ms}
+   ```
+
+   - `revoked_at_ms`: số nguyên, unix mili-giây, ghi lúc VIP ID thu hồi (không phải lúc gửi).
+   - `revoked_at`: giây, giữ để tương thích.
+   - `reason`: `dang_xuat` | `dat_lai_mat_khau` | `doi_mat_khau`.
+2. **Cách CRM chọn mốc:** ưu tiên `revoked_at_ms`, nếu thiếu thì dùng `revoked_at`, thiếu cả hai thì lấy lúc CRM nhận. Mốc không vượt quá thời điểm hiện tại và chỉ tiến, không lùi. Sai kiểu dữ liệu trả 422 `THU_HOI_INVALID`.
+3. **Phạm vi huỷ:** CRM chỉ huỷ phiên portal có `created_at` < mốc. Phiên tạo sau mốc được giữ nên thu-hoi đến trễ qua hàng đợi không huỷ nhầm phiên mới.
+4. **Launch token có claim `iat_ms`:**
+   - `iat_ms` phải nằm trong giây `iat`, lệch thì CRM trả 401 `TOKEN_CLAIMS`.
+   - Thiếu `iat_ms` thì CRM coi là `iat*1000`.
+   - `iat_ms` < mốc thì CRM trả 401 `TOKEN_REVOKED`.
+5. **Đổi mật khẩu hoặc đặt lại:** VIP ID ghi `revoked_at_ms` **trước** khi tạo phiên hoặc token mới, bảo đảm `iat_ms > revoked_at_ms`.
+6. **Thay đổi kèm theo:**
+   - Email signup là tuỳ chọn: `null`, thiếu hoặc rỗng đều lưu NULL.
+   - `/portal/api/me` trả thêm `email` (string|null) và `agent` ({code,name}|null).
+   - CRM có thêm `POST /api/portal/outbox/:id/abandon` cho sự kiện thất bại vĩnh viễn.
