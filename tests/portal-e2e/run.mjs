@@ -283,7 +283,7 @@ async function main() {
     t.eq((await textOf(pg, '#portal-code')), who.code, 'cổng CRM hiển thị đúng mã VG');
     const vp = (await ctx.cookies(B.portal)).find((c) => c.name === 'vg_portal');
     t.ok(vp && vp.httpOnly && vp.path === '/' && !vp.domain.startsWith('.'), 'cookie vg_portal host-only, HttpOnly, Path=/');
-    t.eq(vp.sameSite, 'Strict', 'vg_portal SameSite=Strict');
+    t.eq(vp.sameSite, 'Lax', 'vg_portal SameSite=Lax (CRM 36cd80c)');
     await inspect(pg, shot);
     return null;
   }
@@ -900,7 +900,7 @@ async function main() {
     const launchOnStaff = await raw({ port: cfg.CRM_PORT, path: '/portal/auth/launch?token=x', hostHeader: `127.0.0.1:${cfg.CRM_PORT}` });
     t.eq(launchOnStaff.status, 404, 'host nhân viên CRM: /portal/auth/launch → 404');
     const sc = (c1.launch.setCookies || []).find((x) => x.startsWith('vg_portal='));
-    t.ok(/HttpOnly/i.test(sc) && /SameSite=Strict/i.test(sc) && /Path=\//i.test(sc) && !/Domain=/i.test(sc), 'Set-Cookie vg_portal: HttpOnly; SameSite=Strict; Path=/; không Domain');
+    t.ok(/HttpOnly/i.test(sc) && /SameSite=Lax/i.test(sc) && /Path=\//i.test(sc) && !/Domain=/i.test(sc), 'Set-Cookie vg_portal: HttpOnly; SameSite=Lax; Path=/; không Domain');
   });
 
   await check('SEC-06c', 'Khách không dùng được CRM nhân viên: (a) tài khoản khách do VIP ID tạo không đăng nhập local; (c) khách cũ có mật khẩu local: mặc định được phép, STAFF_HOST_ALLOW_LEGACY_CUSTOMERS=0 → 403', 'real', async (t) => {

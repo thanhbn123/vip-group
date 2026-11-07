@@ -22,7 +22,7 @@ Ngày 07/11/2026 (bản cập nhật theo mô hình **bốn tên miền + crm**,
 
 | # | Điều kiện | Trạng thái | Bằng chứng / việc còn lại |
 |---|---|---|---|
-| 1 | E2E thật CRM ↔ VIP ID, có khôi phục mật khẩu | ⏳ Đang chạy E2E **nhiều host** (dangky / dangnhap / khachhang) | Lần trước (một host, CRM `5007252` + VIP ID `6030e14`): 34/0/2 |
+| 1 | E2E thật CRM ↔ VIP ID, có khôi phục mật khẩu | ✅ **57 PASS / 0 FAIL / 1 PENDING** (chỉ chạy ở mock), E2E thật nhiều host, CRM `36cd80c` + VIP ID `c3d848f`, verifier độc lập tự chạy lại | Gồm cả cấp link đặt lại từ CRM, pilot hai lớp, hai công tắc, COWORK → CRM |
 | 2 | Cách ly dữ liệu khách và đại lý | ✅ Dev (verifier độc lập + E2E SEC-01/02) | Kiểm lại trên staging sau khi lên RC |
 | 3 | Không còn P0/P1 bảo mật | ✅ VIP ID: verifier vòng 9 **GO** cho cả `feature/khach-p1` (`a63b430`) và `feature/cowork-crm` (`a41911d`, 329 test PASS) | CRM: kiểm phần thay đổi sau `c78e5af` (§4 P-07) |
 | 4 | Role DB riêng cho cổng, quyền tối thiểu, kiểm quyền thực tế | ⏳ CRM đã có `portal-role.sql` + `ops/verify-portal-role.sh` (PASS trên DB dev) | Chạy trên staging → **prod (P-08)** |
@@ -73,12 +73,12 @@ Trình duyệt: dangnhap ─(launch token 60 s, một lần)─► khachhang/por
 | P-04 | Tạo widget **Turnstile riêng cho cổng khách** (Managed) trên Cloudflare, khai **hai hostname** `dangky.vipgroup.com.vn` và `dangnhap.vipgroup.com.vn`. Ghi Site Key + Secret Key vào file 0600 trên VPS (không qua chat) | **Owner** | 10 phút | Owner tự làm, báo "xong P-04" |
 | P-05 | Sinh `VIPID_PORTAL_SECRET` trên VPS (`openssl rand -hex 32`, 0600): VIP ID `/data/portal_secret.key`, CRM `~/vipcrm6-prod/secrets/vipid_portal_secret` (**cùng giá trị**). Đặt biến production VIP ID và CRM (§5) | Website Controller + CRM Controller qua SSH | 10 phút | `DUYỆT P-05 SECRET` |
 | P-06 | Nối mạng docker: `docker network connect` cho `cowork-staging` vào mạng `edge` của CRM prod (hoặc ngược lại), kiểm hai URL nội bộ ở §5 | CRM Controller qua SSH | 5 phút, không gián đoạn | `DUYỆT P-06 MẠNG` |
-| P-07 | CRM: RC mới **≥ `c78e5af` và phải gồm `55da95a`** (link đặt lại chỉ bắt buộc https ở production; tìm khách theo SĐT mọi định dạng; `thu-hoi` nhận reason `rut_pilot`). `main` hiện tại `4f80fd5` đã gồm cả hai. Lên staging, chạy E2E (~1 giờ). Diễn tập G9e update + rollback (~1 giờ). Backup + restore-drill. **update-prod** (15–20 phút, dừng app < 1 phút) với `PORTAL_ENABLED=1`, file Pilot rỗng, `PORTAL_OFF_FILE` có sẵn | CRM Controller | ~2,5 giờ | Theo quy trình CRM: `CONFIRM_STAGING_PASSED`, `I_APPROVE_UPDATE_<rel>` |
+| P-07 | CRM: RC mới **≥ `c78e5af` và phải gồm `55da95a`** (link đặt lại chỉ bắt buộc https ở production; tìm khách theo SĐT mọi định dạng; `thu-hoi` nhận reason `rut_pilot`). Dùng **`main` ≥ `36cd80c`** (cookie `vg_portal` SameSite=Lax, bí mật COWORK dạng docker secret, mount `portal-ctl`), cộng các sửa P2 của verifier cuối nếu đã có. Lên staging, chạy E2E (~1 giờ). Diễn tập G9e update + rollback (~1 giờ). Backup + restore-drill. **update-prod** (15–20 phút, dừng app < 1 phút) với `PORTAL_ENABLED=1`, file Pilot rỗng, `PORTAL_OFF_FILE` có sẵn | CRM Controller | ~2,5 giờ | Theo quy trình CRM: `CONFIRM_STAGING_PASSED`, `I_APPROVE_UPDATE_<rel>` |
 | P-08 | CRM: tạo role `vipcrm6_portal` (`portal-role.sql`: LOGIN NOINHERIT, chỉ là thành viên `crm_portal`), đặt `PORTAL_DATABASE_URL`, chạy `ops/verify-portal-role.sh` trên prod | CRM Controller | 15 phút | `DUYỆT P-08 ROLE DB` |
 | P-09 | Thêm ba khối Caddy `dangky`, `dangnhap`, `khachhang` (§6.1–6.3), `caddy validate` rồi reload | **Owner hoặc người giữ root** | 15 phút | Người root thực hiện, báo "xong P-09" |
 | P-09b | Thêm khối Caddy `crm.vipgroup.com.vn` → CRM prod (§6.4, theo kế hoạch HTTPS của CRM `VIP_CRM_V6_HTTPS_GO_PUBLIC_PLAN.md`) | **Owner hoặc người giữ root** | 10 phút | Người root thực hiện, báo "xong P-09b" |
 | P-10 | Nạp danh sách Pilot: SĐT của owner và nhân viên được chỉ định (VIP ID, `cowork.cli khach-pilot add`), mã VG/subject sau khi duyệt (CRM `PORTAL_PILOT_FILE`) | Website + CRM Controller | 5 phút | Owner gửi danh sách SĐT, kèm `DUYỆT P-10 PILOT` |
-| P-11 | Mở Pilot: bật `COWORK_KHACH_ENABLED=1` + Pilot, xoá file bảo trì **hai bên**. Smoke bằng **tài khoản thật của owner** (§8.1) | Hai Controller + owner | 20 phút | `DUYỆT P-11 MỞ PILOT` |
+| P-11 | **Trước tiên chạy thử kiểm cấu hình** `khach.kiem_cau_hinh()` trong container tạm với đúng `.env` production (cấu hình sai làm **toàn bộ VIP ID dừng**, kéo theo COWORK nhân viên). Đạt thì mới bật `COWORK_KHACH_ENABLED=1` + Pilot, xoá file bảo trì **hai bên**. Smoke bằng **tài khoản thật của owner** (§8.1) | Hai Controller + owner | 20 phút | `DUYỆT P-11 MỞ PILOT` |
 | P-12 | Sinh **một** bí mật launch mới: `openssl rand -hex 32`. Ghi vào **tệp 0600 ở cả hai bên**: VIP ID `/data/crm_launch_secret.key`; CRM prod tệp secret riêng, trỏ bằng `COWORK_SHARED_SECRET_FILE` (CRM `52fcdeb`). CRM prod hiện **chưa có** `COWORK_SHARED_SECRET`. Không qua chat hay log. Bí mật này **phải khác** `VIPID_PORTAL_SECRET`. Khởi động lại app CRM (< 1 phút); VIP ID đọc tệp khi phát token, không cần restart | VIP ID + CRM Controller qua SSH | 10 phút | `DUYỆT P-12 SECRET CRM` |
 | P-13 | Cấp quyền `crm.view` và `crm.use` trong COWORK: màn **Vai trò** (theo vai trò) hoặc **Phân quyền module** (từng người). Có audit | **Owner** (giao diện COWORK) | 10 phút | Owner tự làm |
 | P-14 | Liên kết nhân sự trong CRM: vip_admin đặt `vip_subject = cowork:<ID đăng nhập COWORK>` (màn Nhân sự). Mỗi nhân viên xem mã của mình ở `https://cowork.vipgroup.com.vn/crm`. Smoke §8.2 | vip_admin CRM | 15 phút | Owner chỉ định danh sách |
@@ -146,12 +146,12 @@ VIPID_PORTAL_HOST=dangnhap.vipgroup.com.vn                      # Host khi gọi
 PORTAL_PILOT_FILE=<đường dẫn trong container>/portal_pilot.txt  # subject hoặc mã VG, reload 5 s; thiếu file ⇒ từ chối tất cả
 PORTAL_OFF_FILE=<đường dẫn trong container>/portal.off          # có file ⇒ 503 /portal* và /api/internal/portal/*
 PORTAL_DATABASE_URL=postgres://vipcrm6_portal:<P-08>@db:5432/vipcrm6_prod
-COWORK_SHARED_SECRET_FILE=<đường dẫn tệp 0600, P-12>           # cùng giá trị bí mật launch của VIP ID (CRM 52fcdeb)
+COWORK_SHARED_SECRET_FILE=/run/secrets/cowork_shared_secret    # docker secret (CRM b0a25c6); tệp host 0600 do update/deploy tạo; rỗng = tắt adapter
 # VIPID_PORTAL_SECRET_FILE=/run/secrets/vipid_portal_secret    (đã cố định trong compose.yml, file secrets/vipid_portal_secret)
 ```
 
 - `update-prod.sh` chỉ tự thêm `PORTAL_ENABLED`, `PORTAL_HOST`, `PORTAL_PUBLIC_URL`, `VIPID_PORTAL_URL` khi thiếu. Các biến còn lại CRM Controller **đặt tay** trong `secrets/app.env`.
-- Container CRM `read_only`, compose hiện **chưa** có bind mount cho `PORTAL_PILOT_FILE` / `PORTAL_OFF_FILE`. CRM Controller phải bổ sung mount từ host (để `touch`/`rm` từ host có hiệu lực) và chốt đường dẫn trước P-07.
+- Compose CRM (`66e3470`) đã mount `~/vipcrm6-prod/secrets/portal-ctl` → `/run/portal-ctl` (chỉ đọc). Thư mục 750, file Pilot 640 rỗng (fail-closed). Tắt cổng: `touch ~/vipcrm6-prod/secrets/portal-ctl/portal.off`. `update-prod.sh`/`deploy-prod.sh` tự thêm (khi thiếu) `VIPID_PORTAL_HOST`, `PORTAL_LOGIN_URL`, `VIPID_PUBLIC_URL`, `PORTAL_DATABASE_URL`, `PORTAL_OFF_FILE`, `PORTAL_PILOT_FILE`; các giá trị trống phải điền. **Phải diễn tập trên VPS:** quyền thư mục với user `node` trong container. Verifier ghi nhận công tắc CRM có thể mở khi gặp lỗi quyền.
 - Kiểm bắt buộc trước khởi động: CRM từ chối chạy khi `PORTAL_HOST` trống, URL công khai không https, `VIPID_PORTAL_SECRET` < 32 byte hoặc trùng `VIPID_SHARED_SECRET` / bí mật COWORK.
 
 ## 6. Khối Caddy (P-09 / P-09b, người giữ root áp dụng)
@@ -253,7 +253,7 @@ Dùng nguyên khối `vip-group-khoqctq/deploy/production/Caddyfile.prod.snippet
 | COWORK → CRM: tất cả | Bỏ `crm.use` khỏi các vai trò (màn Vai trò) | Ngay, không restart | Không |
 | COWORK → CRM: cắt kết nối | `COWORK_CRM_ENABLED=0` + restart COWORK; hoặc gỡ `COWORK_SHARED_SECRET_FILE` phía CRM + restart CRM (CRM trả 503 cho launch) | < 1 phút | COWORK hoặc CRM dừng < 1 phút |
 | Lỗi CRM sau update | Rollback app về release cũ (đã diễn tập G9d). DB: `ops/portal-down.sql` khi chưa có dữ liệu cổng, hoặc `restore-db.sh` từ backup trước migrate | 15–30 phút | CRM dừng ngắn |
-| Lỗi VIP ID sau update | Chạy lại image cũ (`docs/ROLLBACK.md`) + **khôi phục backup P-02** (schema v6 không lùi tại chỗ). Phần COWORK → CRM chỉ bổ sung, không đổi bảng | ~15 phút | COWORK dừng ngắn |
+| Lỗi VIP ID sau update | Chạy lại image cũ (`docs/ROLLBACK.md`). Verifier đã thử: **code cũ chạy được trên DB v6**, nên rollback chỉ-code không mất dữ liệu khách ghi sau backup. Khôi phục backup P-02 chỉ khi DB hỏng. Phần COWORK → CRM chỉ bổ sung, không đổi bảng | ~15 phút | COWORK dừng ngắn |
 
 - Thu hồi quyền hoặc khoá tài khoản COWORK **không** huỷ phiên CRM đang mở; phiên tự hết hạn theo `sessionTtlHours`. Muốn chặn ngay: vip_admin khoá user trong CRM. Đồng bộ thu hồi COWORK → CRM để P2.
 
