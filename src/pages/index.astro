@@ -8,6 +8,7 @@ import CtaBand from '../components/CtaBand.astro';
 import MemberNote from '../components/MemberNote.astro';
 import PriceTable from '../components/PriceTable.astro';
 import { getContent } from '../data';
+import { heroBanner } from '../data/vi/hero';
 import { linkable } from '../lib/logistics';
 
 const { company, sectors, subsidiaries, news, careers, contact, pricing } = getContent('vi');
@@ -26,9 +27,22 @@ const sloganParts = company.slogan.split(' - ').map((s) => s.trim());
 const sloganLast = sloganParts.pop();
 ---
 <BaseLayout title="Trang chủ" description={company.tagline} jsonLd={[priceLd]}>
-  <section class="hero" aria-labelledby="hero-title">
+  <section class:list={['hero', { 'hero--banner': heroBanner }]} aria-labelledby="hero-title">
+    {heroBanner && (
+      <picture class="hero-photo">
+        <source type="image/webp" srcset={heroBanner.widths.map((w) => `${heroBanner.base}-${w}.webp ${w}w`).join(', ')}
+          sizes="(max-width: 900px) 100vw, 62vw" />
+        <img src={`${heroBanner.base}-${heroBanner.widths[0]}.jpg`} alt={heroBanner.alt} width={heroBanner.width} height={heroBanner.height} fetchpriority="high" decoding="async" />
+      </picture>
+    )}
     <div class="container hero-grid">
-      <div>
+      <div class="hero-text">
+        {heroBanner && (
+          <picture class="hero-logo">
+            <source srcset="/logo-vip-group-400.webp 400w, /logo-vip-group-600.webp 600w" sizes="140px" type="image/webp" />
+            <img src="/logo-vip-group.png" alt={`Logo ${company.name}`} width="720" height="661" />
+          </picture>
+        )}
         <span class="kicker">{company.legalName ?? company.name}</span>
         <h1 id="hero-title">{sloganParts.map((p) => <>{p}.<br /></>)}<span class="nhan">{sloganLast}.</span></h1>
         <p class="lead">{company.tagline}</p>
@@ -37,12 +51,14 @@ const sloganLast = sloganParts.pop();
           <a class="btn btn-ghost" href="/lien-he/">Liên hệ hợp tác</a>
         </div>
       </div>
-      <div class="hero-card">
+      {!heroBanner && (
+        <div class="hero-card">
         <picture>
           <source srcset="/logo-vip-group-400.webp 400w, /logo-vip-group-600.webp 600w, /logo-vip-group.webp 720w" sizes="(max-width: 900px) min(420px, calc(100vw - 72px)), 400px" type="image/webp" />
           <img src="/logo-vip-group.png" alt={`Logo ${company.name}`} width="720" height="661" fetchpriority="high" />
         </picture>
-      </div>
+        </div>
+      )}
     </div>
   </section>
 
@@ -129,6 +145,27 @@ const sloganLast = sloganParts.pop();
   .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
   .hero-card { border-radius: 32px; padding: clamp(20px, 3vw, 36px); background: var(--bg); border: 1px solid var(--line); box-shadow: var(--shadow); max-width: 460px; justify-self: center; width: 100%; }
   .hero-card img { width: 100%; height: auto; display: block; }
+  /* ── Biến thể banner (owner 07/11/2026): ảnh xe hàng bên trái, logo + slogan đỏ in hoa bên phải ── */
+  .hero--banner { position: relative; min-height: min(640px, calc(100svh - var(--header-h))); background: linear-gradient(90deg, #eef3f9 0%, #dde7f3 100%); overflow: hidden; }
+  .hero--banner .hero-photo { position: absolute; inset: 0 38% 0 0; }
+  .hero--banner .hero-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 40% 60%; }
+  .hero--banner .hero-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 55%, #dde7f3 100%); }
+  .hero--banner .hero-grid { position: relative; grid-template-columns: 1fr; justify-items: end; padding: 56px 0; }
+  .hero--banner .hero-text { width: min(470px, 40%); text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .hero--banner .hero-logo img { width: 140px; height: auto; margin: 0 auto 4px; }
+  .hero--banner h1 { color: var(--brand); text-transform: uppercase; font-size: clamp(32px, 4vw, 56px); letter-spacing: 0; line-height: 1.12; }
+  .hero--banner .nhan { color: var(--brand); }
+  .hero--banner .lead { font-size: 16px; color: var(--text-2); }
+  .hero--banner .hero-actions { justify-content: center; }
+  @media (max-width: 900px) {
+    .hero--banner { display: block; min-height: 0; background: #e6edf6; }
+    .hero--banner .hero-photo { position: relative; inset: auto; display: block; aspect-ratio: 16 / 10; }
+    .hero--banner .hero-photo::after { background: linear-gradient(180deg, transparent 70%, #e6edf6 100%); }
+    .hero--banner .hero-grid { justify-items: center; padding: 8px 0 40px; }
+    .hero--banner .hero-text { width: 100%; }
+    .hero--banner .hero-logo img { width: 96px; }
+    .hero--banner h1 { font-size: clamp(30px, 9vw, 40px); }
+  }
   @media (max-width: 900px) {
     .hero { min-height: auto; }
     .hero-grid { grid-template-columns: 1fr; gap: 32px; padding: 56px 0; }
