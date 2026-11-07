@@ -22,7 +22,7 @@ export const pickupPlaceLd = (p: PickupPoint, pageUrl: string) => ({
 
 /** Đoạn trả lời trực tiếp đầu trang tuyến (< 100 từ) — cho Google AI Overview / Gemini trích dẫn. */
 export const pickupAnswer = (p: PickupPoint) =>
-  `VIP GROUP nhận hàng trực tiếp tại kho ${p.city} (${p.cityZh}, ${p.district}, ${p.province}) và vận chuyển về Việt Nam; dịch vụ do ${provider.name} vận hành. ` +
+  `VIP GROUP nhận hàng tại kho ${p.city} (${p.cityZh}, ${p.district}, ${p.province}) và vận chuyển về Việt Nam; dịch vụ do ${provider.name} vận hành. ` +
   `Nhà cung cấp giao hàng tới địa chỉ kho, ghi mã khách hàng trên từng kiện. ` +
   (p.priceApplies.value
     ? `Cước theo bảng giá chung cho cả 4 kho (5 bậc giá theo kg); bậc giá xác định theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân thực và cân quy đổi (dài × rộng × cao cm ÷ 6000), không gộp cả lô. `

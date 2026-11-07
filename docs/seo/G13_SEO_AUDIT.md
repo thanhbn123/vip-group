@@ -1,5 +1,8 @@
 # G13 — Kiểm tra SEO độc lập (kỹ thuật + nội dung)
 
+> **LỖI THỜI MỘT PHẦN (07/11/2026):** chính sách giá đã đổi theo owner directive 07/11 — bậc giá theo **từng kiện**, bảng giá chung cho 4 kho; V2 thay trang Thâm Quyến cũ bằng 4 trang `/logistics/van-chuyen-*-ve-viet-nam/`. Trạng thái mới nhất: `docs/seo/G17_BAO_CAO_NGHIEM_THU_CUOI.md`.
+
+
 - Ngày: 06/11/2026 · Nhánh `feature/vipg-web-025-seo-v11` · commit `500cd4c`
 - Người kiểm: SEO Agent (độc lập, chỉ đọc; không sửa mã, không commit/deploy)
 - **Kết luận: PASS WITH FINDINGS** (0 P0 · 5 P1 · 9 P2)

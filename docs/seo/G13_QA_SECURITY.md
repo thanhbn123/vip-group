@@ -1,5 +1,8 @@
 # G13 — QA / Security độc lập (V1.2: G09 hotline, G10 bảng giá, G11 form lead)
 
+> **LỖI THỜI MỘT PHẦN (07/11/2026):** chính sách giá đã đổi theo owner directive 07/11 — bậc giá theo **từng kiện**, bảng giá chung cho 4 kho; V2 thay trang Thâm Quyến cũ bằng 4 trang `/logistics/van-chuyen-*-ve-viet-nam/`. Trạng thái mới nhất: `docs/seo/G17_BAO_CAO_NGHIEM_THU_CUOI.md`.
+
+
 - Người kiểm: QA/Security Agent độc lập (không viết code này). Ngày: 06/11/2026.
 - Đối tượng: nhánh `feature/vipg-web-025-seo-v11` HEAD `500cd4c`. Production so sánh: `origin/main` `5ee2efd` + `https://www.vipgroup.com.vn/` (curl 06/11/2026 15:06 GMT).
 - Không sửa file nào trong repo ngoài file báo cáo này; không commit/push/deploy; không gọi Google Sheet / Zalo / CRM thật (mọi thử worker dùng `fetch` giả, host `sheet.invalid`). Đột biến làm trên bản sao `/tmp/g13qa`.

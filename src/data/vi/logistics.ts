@@ -96,7 +96,7 @@ const pickupBase: PickupBase[] = [
     contextZh: '深圳位于广东省，毗邻香港，是全球重要的电子产品、元器件及科技设备制造中心之一。收货仓位于深圳西部的宝安区。',
     goods: ['Linh kiện, bo mạch, thiết bị điện tử', 'Phụ kiện điện thoại, máy tính, thiết bị thông minh', 'Đèn LED, thiết bị điện, máy móc nhỏ', 'Hàng từ nhà máy khu vực Thâm Quyến – Đông Quản'],
     goodsZh: ['电子元器件、电路板、电子设备', '手机及电脑配件、智能设备', 'LED 灯具、电器、小型机械', '深圳及东莞地区工厂货物'],
-    deliveryNotes: ['Điểm nhận nằm trong khu logistics 新钢物流园, giai đoạn 3 (三期), tòa nhà số 2 (2栋) — ghi đủ "三期2栋" để tài xế tìm đúng tòa.', 'Khu vực: 海洋新城, phố 福海街道, quận Bảo An (宝安区), phía tây Thâm Quyến.'],
+    deliveryNotes: ['Điểm nhận nằm trong khu logistics 新钢物流园, giai đoạn 3 (三期), tòa nhà số 2 (2栋) — ghi đủ "三期2栋" để tài xế tìm đúng tòa.', 'Khu vực: 海洋新城, phường 福海街道 (Phúc Hải), quận Bảo An (宝安区), phía tây Thâm Quyến.'],
     deliveryNotesZh: ['送货点位于新钢物流园三期2栋，请写全“三期2栋”，以免送错楼栋。', '区域：宝安区福海街道海洋新城。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
     transitTime: pending('[MẪU] 2–3 ngày về Hà Nội'),
@@ -283,7 +283,7 @@ export const faqs: FaqItem[] = [
   {
     // VIPG-WEB-026: owner xác nhận 4 điểm nhận hàng 06/11/2026 → câu này có căn cứ.
     q: 'VIP GROUP nhận hàng ở đâu tại Trung Quốc?',
-    a: 'VIP GROUP nhận hàng trực tiếp tại 4 kho ở Trung Quốc: Thâm Quyến (quận Bảo An), Hạ Môn (quận Hải Thương), Quảng Châu (quận Bạch Vân) và Nghĩa Ô (Chiết Giang). Địa chỉ tiếng Trung từng kho có tại trang Kho Trung Quốc; tên người nhận và mã khách hàng ghi trên kiện được cung cấp sau khi đăng ký.',
+    a: 'VIP GROUP nhận hàng tại 4 kho ở Trung Quốc: Thâm Quyến (quận Bảo An), Hạ Môn (quận Hải Thương), Quảng Châu (quận Bạch Vân) và Nghĩa Ô (Chiết Giang). Địa chỉ tiếng Trung từng kho có tại trang Kho Trung Quốc; tên người nhận và mã khách hàng ghi trên kiện được cung cấp sau khi đăng ký.',
   },
   {
     q: 'Bảng giá vận chuyển Trung Quốc – Việt Nam bao nhiêu một kg?',

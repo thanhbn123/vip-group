@@ -1,5 +1,8 @@
 # BÁO CÁO NGHIỆM THU — SEO V1.1 + CHỈ THỊ V1.2 (G09–G13) + V2 4 ĐIỂM NHẬN HÀNG
 
+> **LỖI THỜI MỘT PHẦN (07/11/2026):** chính sách giá đã đổi theo owner directive 07/11 — bậc giá theo **từng kiện**, bảng giá chung cho 4 kho; V2 thay trang Thâm Quyến cũ bằng 4 trang `/logistics/van-chuyen-*-ve-viet-nam/`. Trạng thái mới nhất: `docs/seo/G17_BAO_CAO_NGHIEM_THU_CUOI.md`.
+
+
 Ngày 06/11/2026 · Controller: phiên `vip-group-com-vn-8d` (owner chỉ định single-writer).
 Nhánh: `feature/vipg-web-025-seo-v11` (local, **chưa push**) · Production hiện tại: `main@5ee2efd` (không đổi).
 

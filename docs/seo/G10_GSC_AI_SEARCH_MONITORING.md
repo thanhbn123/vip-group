@@ -1,6 +1,6 @@
 # G10 — Google Search Console & theo dõi hiển thị trên Google / AI Overview / Gemini
 
-**Phạm vi:** vipgroup.com.vn — trang chủ lực `/logistics/van-chuyen-tham-quyen-viet-nam/` và khu `/logistics/`.
+**Phạm vi:** vipgroup.com.vn — trang chủ lực `/logistics/van-chuyen-tham-quyen-ve-viet-nam/` và khu `/logistics/`.
 **Soạn:** phiên ec, 06/11/2026 · **Trạng thái:** kế hoạch, chưa thực hiện.
 **Nguyên tắc:** chỉ ghi kết quả đo thực tế, có ngày giờ và ảnh chụp. Không tuyên bố "đã lên top" hay "đã được AI trích dẫn" khi chưa có bằng chứng. Không cam kết thứ hạng.
 
@@ -21,7 +21,7 @@ Ghi vào sổ nghiệm thu: ngày xác minh, tài khoản sở hữu, ảnh ch�
 
 ### A2. Gửi sitemap (sau khi phát hành production)
 
-1. Kiểm tra trước: mở `https://www.vipgroup.com.vn/sitemap.xml`. Phải có `/logistics/van-chuyen-tham-quyen-viet-nam/` và các trang `/logistics/` ở trạng thái `ready`. Không được có trang nháp hoặc trang noindex.
+1. Kiểm tra trước: mở `https://www.vipgroup.com.vn/sitemap.xml`. Phải có `/logistics/van-chuyen-tham-quyen-ve-viet-nam/` và các trang `/logistics/` ở trạng thái `ready`. Không được có trang nháp hoặc trang noindex.
 2. Kiểm tra `https://www.vipgroup.com.vn/robots.txt` có dòng `Sitemap: https://www.vipgroup.com.vn/sitemap.xml`.
 3. GSC → **Sơ đồ trang web** → nhập `sitemap.xml` → **Gửi**.
 4. Sau 1–3 ngày: trạng thái phải là "Thành công", "Số URL đã phát hiện" phải bằng số URL thực có trong sitemap.
@@ -32,7 +32,7 @@ Làm cho từng URL ưu tiên, theo thứ tự sau:
 
 | # | URL | Lý do ưu tiên |
 |---|-----|---------------|
-| 1 | `/logistics/van-chuyen-tham-quyen-viet-nam/` | Trang dịch vụ chủ lực |
+| 1 | `/logistics/van-chuyen-tham-quyen-ve-viet-nam/` | Trang dịch vụ chủ lực |
 | 2 | `/` | Trang chủ (có bảng giá song ngữ) |
 | 3 | `/logistics/` | Hub |
 | 4 | `/logistics/van-chuyen-trung-quoc-viet-nam/` | Cụm rộng |

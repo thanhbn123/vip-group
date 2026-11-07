@@ -117,3 +117,40 @@ test('FAQ trang tuyến (vi + zh) nêu đủ 5 mức và "từng kiện"', () =>
     assert.match(text(html), /按每件货物的计费重量确定/, `${p}: FAQ zh`);
   }
 });
+
+test('verifier P1-1: KHÔNG câu nào nói áp giá theo cả lô / 整批 — mọi câu nhắc "lô"/整批/同一批 phải là câu phủ định', () => {
+  const walk = (d) => readdirSync(d).flatMap((n) => { const p = join(d, n); return statSync(p).isDirectory() ? walk(p) : p.endsWith('.html') ? [p] : []; });
+  for (const f of walk(dist)) {
+    const html = readFileSync(f, 'utf8');
+    // Gồm cả chữ hiển thị và JSON-LD (FAQPage/Service) — nơi Google/AI đọc.
+    const all = text(html) + ' ' + [...html.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)].map((m) => m[1]).join(' ');
+    for (const sentence of all.split(/[.;。；!?！？]\s|[。；]/)) {
+      // Lookaround Unicode: `\b` của JS không nhận chữ có dấu ("lô", "cả").
+      if (/(?<!\p{L})(?:cả|toàn bộ|tổng)(?!\p{L})[^.]{0,60}?(?<!\p{L})lô(?!\p{L})|(?<!\p{L})gộp(?!\p{L})[^.]{0,20}lô|整批|同一批|总重量/u.test(sentence)) {
+        assert.match(sentence, /(?<!\p{L})không(?!\p{L})|不/u, `${f.replace(dist, '')}: câu áp giá theo lô: "${sentence.trim().slice(0, 160)}"`);
+      }
+    }
+  }
+});
+
+test('verifier P1-2: công cụ tính gọi estimate THEO KIỆN (kg 1 kiện + số kiện), không tự tính gộp', () => {
+  const src = readFileSync(join(root, 'src/components/logistics/VolumeCalculator.astro'), 'utf8');
+  const script = src.slice(src.indexOf('<script>'));
+  assert.match(script, /import \{ estimate \} from '\.\.\/\.\.\/lib\/pricing'/);
+  assert.match(script, /estimate\(pricing\.tiers, \{ lCm: num\('vc-l'\), wCm: num\('vc-w'\), hCm: num\('vc-h'\), kg: num\('vc-kg'\), count: n \}, divisor\)/,
+    'phải truyền cân nặng MỘT kiện + số kiện');
+  assert.doesNotMatch(script, /tierFor|price\s*\*|\.tiers\.find|\.tiers\.filter/, 'không được có logic chọn bậc riêng trong component');
+});
+
+test('verifier P1-2: nút sao chép chép TOÀN BỘ địa chỉ; chuỗi trên trang khớp nguyên văn 4 địa chỉ owner', () => {
+  const src = readFileSync(join(root, 'src/components/logistics/CopyAddress.astro'), 'utf8');
+  assert.match(src, /const text = \(src\.textContent \?\? ''\)\.trim\(\);/);
+  assert.match(src, /navigator\.clipboard\.writeText\(text\)/);
+  assert.doesNotMatch(src.slice(src.indexOf('<script>')), /\.slice\(|substring|substr\(|replace\(/, 'không được cắt/sửa chuỗi trước khi chép');
+  const ADDR = ['深圳市宝安区福海街道海洋新城新钢物流园三期2栋', '福建省厦门市海沧区囷瑶路嘉功物流2号库3号仓', '广州市白云区钟落潭镇虎塘村凤岗路26号', '义乌市北苑三期秋实路121号6号楼10-12库西门，靠5号货梯'];
+  const seen = new Set();
+  for (const p of ['/logistics/kho-trung-quoc/', ...ROUTES]) {
+    for (const [, t] of read(p).matchAll(/<p class="addr"[^>]*data-copy-text[^>]*>([^<]*)</g)) { assert.ok(ADDR.includes(t.trim()), `${p}: chuỗi sao chép lạ "${t}"`); seen.add(t.trim()); }
+  }
+  assert.equal(seen.size, 4, 'đủ 4 địa chỉ có nút sao chép');
+});

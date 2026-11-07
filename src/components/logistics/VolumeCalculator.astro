@@ -19,9 +19,9 @@ const { value: divisor, isSample } = shown(volumetricDivisor);
   </div>
   <dl class="calc-out" aria-live="polite">
     <div><dt>Tổng số khối</dt><dd data-out="m3">0,12 m³</dd></div>
-    <div><dt>Tổng cân nặng thực</dt><dd data-out="kg">12 kg</dd></div>
+    <div><dt>Tổng cân nặng thực (mọi kiện)</dt><dd data-out="kg">12 kg</dd></div>
     <div>
-      <dt>Cân nặng quy đổi {isSample && <span class="sample-tag">MẪU</span>}</dt>
+      <dt>Tổng cân quy đổi (mọi kiện) {isSample && <span class="sample-tag">MẪU</span>}</dt>
       <dd data-out="dim">{divisor ? '—' : 'Hệ số quy đổi được báo theo từng lô hàng'}</dd>
     </div>
   </dl>
@@ -73,7 +73,7 @@ const { value: divisor, isSample } = shown(volumetricDivisor);
       if (divisor) out('dim')!.textContent = `${fmt(cm3 / divisor, 1)} kg`;
       if (divisor && out('charge')) {
         const e = estimate(pricing.tiers, { lCm: num('vc-l'), wCm: num('vc-w'), hCm: num('vc-h'), kg: num('vc-kg'), count: n }, divisor);
-        out('charge')!.textContent = `${fmt(e.chargeablePerPackage, 2)} kg`;
+        out('charge')!.textContent = `${fmt(e.chargeablePerPackage, 3)} kg`;
         out('tier')!.textContent = `${e.tier.price.toLocaleString('vi-VN')} đ/kg (${e.tier.label})`;
         out('cost')!.textContent = `${Math.round(e.total).toLocaleString('vi-VN')} đ`;
         out('cost-per')!.textContent = `${Math.round(e.perPackage).toLocaleString('vi-VN')} đ/kiện × ${e.count}`;

@@ -57,7 +57,7 @@ test('song ngữ Việt – Trung: tiêu đề, cột, từng mức; chữ Trung
   assert.match(section, /<span class="title-zh"[^>]*lang="zh-CN"[^>]*>VIP GROUP 运输价格表<\/span>/);
   assert.match(text(section), /Trung Quốc – Việt Nam \/ 中国 – 越南/);
   assert.match(section, /<a [^>]*href="tel:0961102655"[^>]*>Gọi tư vấn: 0961 102 655<\/a>/, 'G10: nút Gọi tư vấn hoạt động trên điện thoại');
-  for (const zh of ['重量', '单价', '0–5 公斤', '超过 5 公斤，不足 100 公斤', '100 公斤至不足 500 公斤', '500–1,000 公斤', '超过 1,000 公斤']) {
+  for (const zh of ['重量', '单价', '0–5 公斤', '超过 5 公斤，不足 100 公斤', '100 公斤至不足 500 公斤', '500–1,000 公斤（含 1,000）', '超过 1,000 公斤']) {
     assert.ok(new RegExp(`lang="zh-CN"[^>]*>[^<]*${zh}`).test(section), `thiếu chữ Trung có lang: ${zh}`);
   }
   assert.ok(!/[一-鿿]/.test(section.replace(/<span[^>]*lang="zh-CN"[^>]*>[^<]*<\/span>/g, '')), 'mọi chữ Hán phải nằm trong phần tử lang="zh-CN"');
