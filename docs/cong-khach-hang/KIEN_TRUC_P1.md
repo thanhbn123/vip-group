@@ -245,7 +245,7 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
 4. **CSRF.** Form VIP ID post cùng origin (dangky→dangky, dangnhap→dangnhap). Portal gọi API cùng origin khachhang. Đăng xuất từ portal: `POST /portal/api/logout` rồi chuyển `https://dangnhap…/tai-khoan/dang-xuat` (trang xác nhận + POST có CSRF).
 5. **Turnstile.** Widget riêng cho `dangky` và `dangnhap` (hostname kiểm tại server).
 6. **COWORK → CRM.**
-   - Module `crm` hiện với vai trò có quyền `crm.open`.
+   - Module `crm`: quyền `crm.view` (thấy module) và `crm.use` (mở CRM). Vai trò dưới nhân viên (partner) bị từ chối ở backend.
    - COWORK ký `{ver:1, aud:'vip-crm', sub:<id nhân viên COWORK>, tenant_code, iat, exp≤60s, nonce}` bằng `COWORK_SHARED_SECRET` rồi chuyển hướng `https://crm.vipgroup.com.vn/api/auth/cowork/launch?token=`.
    - CRM ánh xạ `sub` → `users.vip_subject` (`kind='staff'`).
    - Nhân viên CRM phải được admin liên kết `vip_subject` trước.
@@ -258,7 +258,7 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
 - Payload:
 
   ```
-  {ver:1, aud:'vip-crm', sub:'cowork:<uuid users.id COWORK>', tenant_code:'VIP', iat, exp:iat+60, nonce:uuid4}
+  {ver:1, aud:'vip-crm', sub:'cowork:<users.id COWORK — ID đăng nhập bất biến, vd cowork:anh-thanh>', tenant_code:'VIP', iat, exp:iat+60, nonce:uuid4}
   ```
 
 - Bí mật: một giá trị **riêng** dùng chung hai bên.
