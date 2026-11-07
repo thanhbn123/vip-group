@@ -250,3 +250,39 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
    - CRM ánh xạ `sub` → `users.vip_subject` (`kind='staff'`).
    - Nhân viên CRM phải được admin liên kết `vip_subject` trước.
 7. **DNS cần thêm:** `dangky`, `dangnhap` (A → 160.22.170.20). `khachhang` đã có. `crm`: kiểm.
+
+### 15.6. Đã chốt giữa ba Controller (CRM, VIP ID, Website)
+
+**COWORK → CRM**
+- Định dạng: `cowork-launch/1`, **giữ nguyên JWT HS256 compact mà CRM đang kiểm** (`server/modules/adapters/tokens.js`). Không thêm claim.
+- Payload:
+
+  ```
+  {ver:1, aud:'vip-crm', sub:'cowork:<uuid users.id COWORK>', tenant_code:'VIP', iat, exp:iat+60, nonce:uuid4}
+  ```
+
+- Bí mật: một giá trị **riêng** dùng chung hai bên.
+  - Ở VIP ID: biến `COWORK_CRM_LAUNCH_SECRET`.
+  - Ở CRM: biến `COWORK_SHARED_SECRET`.
+- Kiểm tra phía CRM: CRM kiểm nonce dùng một lần. Phía COWORK có route `GET /crm/mo` → 303 tới `https://crm.vipgroup.com.vn/api/auth/cowork/launch?token=`.
+- Tenant: `tenant_code` lấy qua `COWORK_CRM_TENANT_MAP`, mặc định `vip-group → VIP`.
+
+**CRM (khachhang)**
+- `/` → 302 `/portal/`.
+- Trang HTML `/portal/*` khi chưa có phiên → 302 tới `PORTAL_LOGIN_URL?tiep=<URL khachhang>`. `tiep` chỉ dựng từ `PORTAL_PUBLIC_URL` + path, không lấy từ Host.
+- API `/portal/api/*` khi chưa có phiên → 401 JSON.
+- Biến mới:
+  - `PORTAL_LOGIN_URL`
+  - `VIPID_PUBLIC_URL` (link hồ sơ, đổi mật khẩu, đăng xuất)
+  - `VIPID_PORTAL_HOST` (Host khi gọi `/api/internal/khach/*`)
+- `GET /portal/api/config` (công khai, no-store) trả `{login_url, account_url, change_password_url, logout_url}`. Web-portal đọc endpoint này.
+
+**Pilot và tắt nhanh**
+- CRM:
+  - `PORTAL_PILOT_FILE`: subject hoặc mã VG, reload 5 giây. Không có trong danh sách → 401 `PILOT_NOT_ALLOWED`. Thiếu file thì từ chối tất cả.
+  - `PORTAL_OFF_FILE`: 503 cho `/portal*` và `/api/internal/portal/*`, cache 2 giây.
+- VIP ID:
+  - `COWORK_KHACH_PILOT_FILE`: SĐT.
+  - `COWORK_KHACH_MAINTENANCE_FILE`.
+
+**DNS** (kiểm 07/11): `dangky`, `dangnhap`, `khachhang`, `crm`, `cowork` đều A → 160.22.170.20.
