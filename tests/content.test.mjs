@@ -100,9 +100,9 @@ test('owner 07/11/2026: website TÁCH khỏi VIPORDER — không link viporder.c
 // Cổng khách hàng P1: website KHÔNG hiện nút đăng nhập/đăng ký khi contact.portal = null (Production NO-GO).
 test('cổng khách hàng tắt: không có link khachhang./tai-khoan trong bản build', () => {
   const src = readFileSync(new URL('../src/data/vi/contact.ts', import.meta.url), 'utf8');
-  assert.match(src, /^\s*portal: null,/m, 'contact.portal phải là null cho tới khi owner phê duyệt');
+  assert.match(src, /^const PORTAL_LIVE = false;/m, 'PORTAL_LIVE phải là false cho tới khi owner GO mở cổng khách');
   for (const f of allHtml()) {
     const html = readFileSync(f, 'utf8');
-    assert.ok(!/khachhang\.vipgroup\.com\.vn|\/tai-khoan\/|data-portal/.test(html), `${f} lộ link cổng khách hàng`);
+    assert.ok(!/khachhang\.vipgroup\.com\.vn|dangky\.vipgroup\.com\.vn|dangnhap\.vipgroup\.com\.vn|\/tai-khoan\/|data-portal|<nav class="account-bar/.test(html), `${f} lộ link cổng khách hàng`);
   }
 });

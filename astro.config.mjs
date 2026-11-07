@@ -12,10 +12,12 @@ const DEMO = /** @type {any} */ (globalThis).process?.env?.VIPG_DEMO === '1';
 // Mã site Cloudflare Turnstile (công khai) ghi đè khi build thử: VIPG_TURNSTILE_SITE_KEY=… npm run build.
 // Bình thường lấy từ src/data/vi/contact.ts (lead.turnstileSiteKey).
 const TURNSTILE_OVERRIDE = /** @type {any} */ (globalThis).process?.env?.VIPG_TURNSTILE_SITE_KEY ?? '';
+// Bật nút Đăng nhập/Đăng ký khi build THỬ (preview/staging): VIPG_PORTAL=1 npm run build. Production bật bằng contact.portal.
+const PORTAL_OVERRIDE = /** @type {any} */ (globalThis).process?.env?.VIPG_PORTAL === '1';
 
 export default defineConfig({
   site: SITE_URL,
-  vite: { define: { __VIPG_DEMO__: JSON.stringify(DEMO), __VIPG_TURNSTILE_OVERRIDE__: JSON.stringify(TURNSTILE_OVERRIDE) } },
+  vite: { define: { __VIPG_DEMO__: JSON.stringify(DEMO), __VIPG_TURNSTILE_OVERRIDE__: JSON.stringify(TURNSTILE_OVERRIDE), __VIPG_PORTAL_OVERRIDE__: JSON.stringify(PORTAL_OVERRIDE) } },
   output: 'static',
   // DEMO ra thư mục riêng → không bao giờ lẫn vào dist/ phát hành. VIPG_OUTDIR cho bản build thử (tests/lead.test.mjs).
   outDir: /** @type {any} */ (globalThis).process?.env?.VIPG_OUTDIR || (DEMO ? './dist-demo' : './dist'),

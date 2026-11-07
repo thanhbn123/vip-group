@@ -15,6 +15,9 @@ import type { ContactInfo } from '../types';
 const TURNSTILE_SITE_KEY: string | null = '0x4AAAAAAF2QZNcXX6-6puJf';
 const siteKey = __VIPG_TURNSTILE_OVERRIDE__ || TURNSTILE_SITE_KEY;
 
+const PORTAL_LIVE = false;
+const PORTAL_URLS = { loginUrl: 'https://dangnhap.vipgroup.com.vn/', registerUrl: 'https://dangky.vipgroup.com.vn/' };
+
 export const contact: ContactInfo = {
   email: 'viporder@vipgroup.com.vn',
   hotline: '0961102655',
@@ -25,7 +28,7 @@ export const contact: ContactInfo = {
   domain: 'vipgroup.com.vn',
   formBackendReady: siteKey !== null,
   lead: { endpoint: '/api/lead', turnstileSiteKey: siteKey, privacyHref: '/chinh-sach-bao-mat/' },
-  // Cổng khách hàng: TẮT cho tới khi owner phê duyệt (Production NO-GO). Khi bật:
-  // { loginUrl: 'https://khachhang.vipgroup.com.vn/tai-khoan/dang-nhap', registerUrl: 'https://khachhang.vipgroup.com.vn/tai-khoan/dang-ky' }
-  portal: null,
+  // Cổng khách hàng (owner 07/11/2026: dangky / dangnhap / khachhang). TẮT trên production cho tới khi
+  // realm khách VIP ID mở Pilot; đổi PORTAL_LIVE = true bằng PR riêng khi owner GO.
+  portal: PORTAL_LIVE || __VIPG_PORTAL_OVERRIDE__ ? PORTAL_URLS : null,
 };
