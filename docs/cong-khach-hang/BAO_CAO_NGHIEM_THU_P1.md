@@ -135,3 +135,23 @@ Chi tiết trong `GOI_TRIEN_KHAI_P1.md`.
 - Gỡ khối Caddy.
 - CRM: chạy `portal-down.sql` (đảo 660, 700–706).
 - VIP ID schema v6: **cần backup** nếu phải lùi code.
+
+---
+
+## CẬP NHẬT: SẴN SÀNG PRODUCTION PILOT (phía code), 07/11/2026
+
+| Hệ thống | SHA | Kiểm thử |
+|---|---|---|
+| VIP ID (realm khách 2 tên miền + module CRM trong COWORK) | `feature/cowork-crm` @`c3d848f` (gồm `feature/khach-p1` @`a63b430`) | 329/329; verifier độc lập 9 vòng: GO |
+| CRM | `main` @`36cd80c` | 537/537; portal UI 22/22 |
+| E2E thật, 5 tên miền | dangky / dangnhap / khachhang / cowork / crm | **57 PASS / 0 FAIL / 1 PENDING** (chỉ chạy ở mock) |
+
+**Verifier độc lập toàn hệ thống cuối: READY cho Production Pilot có kiểm soát (phía code), 0 P0/P1.** Đã kiểm thực tế các điều kiện 1–6, 8, 9, 10 của owner. Điều kiện 7 (NTP) do CRM xác nhận trên VPS.
+
+**P2 còn lại, đã chuyển CRM:**
+- adapter COWORK chưa bắt buộc tiền tố `cowork:`;
+- công tắc `portal.off` có thể "mở" khi gặp lỗi quyền;
+- chưa bắt buộc `PORTAL_DATABASE_URL` ở production;
+- login-CSRF qua launch (rủi ro thấp).
+
+**Bước tiếp:** owner duyệt từng thao tác trong `PHUONG_AN_PILOT_P1.md` §4 (P-01 … P-14).
