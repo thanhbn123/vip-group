@@ -6,6 +6,9 @@
 import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
 import { pageByKey, telHref, prettyPhone } from '../../lib/logistics';
 import { provider } from '../../data/vi/logistics';
+import { getContent } from '../../data';
+const { contact } = getContent('vi');
+const portal = contact.portal;
 
 const page = pageByKey('tra-cuu');
 const phone = prettyPhone(provider.hotline);
@@ -19,6 +22,14 @@ const phone = prettyPhone(provider.hotline);
         <p class="muted">Nhân viên VIP GROUP tra cứu và báo lại tình trạng lô hàng. Website không lưu và không hiển thị lại mã vận đơn của bạn.</p>
       </div>
       <div class="grid track-cards">
+        {portal && (
+          <article class="card" data-portal>
+            <h3>Tra cứu trực tuyến</h3>
+            <p>Khách hàng đã có tài khoản VIP GROUP đăng nhập bằng số điện thoại để xem danh sách kiện và trạng thái vận chuyển.</p>
+            <a class="btn btn-primary" href={portal.loginUrl} data-track="portal_login_click" data-track-location="tracking_page">Đăng nhập cổng khách hàng</a>
+            <a class="text-link portal-reg" href={portal.registerUrl} data-track="portal_register_click" data-track-location="tracking_page">Chưa có tài khoản? Đăng ký</a>
+          </article>
+        )}
         <article class="card">
           <h3>Nhắn Zalo (nhanh nhất)</h3>
           <p>Gửi <strong>mã vận đơn</strong> (hoặc mã kiện) kèm <strong>mã khách hàng</strong> và tên người đặt hàng.</p>
@@ -47,4 +58,5 @@ const phone = prettyPhone(provider.hotline);
 <style>
   .track-cards { grid-template-columns: 1fr; }
   .track-cards .btn { margin-top: 4px; }
+  .portal-reg { display: inline-block; margin-top: 12px; }
 </style>

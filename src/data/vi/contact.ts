@@ -25,4 +25,7 @@ export const contact: ContactInfo = {
   domain: 'vipgroup.com.vn',
   formBackendReady: siteKey !== null,
   lead: { endpoint: '/api/lead', turnstileSiteKey: siteKey, privacyHref: '/chinh-sach-bao-mat/' },
+  // Cổng khách hàng: TẮT cho tới khi owner phê duyệt (Production NO-GO). Khi bật:
+  // { loginUrl: 'https://khachhang.vipgroup.com.vn/tai-khoan/dang-nhap', registerUrl: 'https://khachhang.vipgroup.com.vn/tai-khoan/dang-ky' }
+  portal: null,
 };
