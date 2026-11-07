@@ -15,7 +15,7 @@ import type { Article, FaqItem, LogisticsPage, LogisticsProvider, PickupId, Pick
 
 const HOTLINE = contact.hotlineDisplay!;
 
-// Owner directive 07/11/2026: CÔNG TY TNHH VIP GROUP trực tiếp cung cấp dịch vụ logistics, TÁCH khỏi VIP GROUP (không link, không nhắc tên).
+// Owner directive 07/11/2026: CÔNG TY TNHH VIP GROUP trực tiếp cung cấp dịch vụ logistics, TÁCH khỏi VIPORDER (không link, không nhắc tên).
 const SRC_OWNER_PROVIDER = 'Owner directive 07/11/2026 — VIP GROUP cung cấp dịch vụ logistics';
 
 export const provider: LogisticsProvider = {
@@ -30,7 +30,8 @@ export const provider: LogisticsProvider = {
   registerHref: '/lien-he/?nhu-cau=khac&dang-ky=1#form-lien-he',
 };
 
-/** Dịch vụ VIP GROUP cung cấp (nguồn: SRC_OWNER_PROVIDER). */
+/** Dịch vụ VIP GROUP cung cấp — nguồn: SRC_OWNER_PROVIDER. */
+export const servicesSource = SRC_OWNER_PROVIDER;
 export const services = [
   {
     title: 'Vận chuyển Trung Quốc – Việt Nam',

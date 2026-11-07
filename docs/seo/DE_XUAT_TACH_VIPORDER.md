@@ -1,4 +1,6 @@
-# ĐỀ XUẤT TÁCH vipgroup.com.vn KHỎI viporder.com.vn — CHỜ OWNER CHỐT
+# ĐỀ XUẤT TÁCH vipgroup.com.vn KHỎI viporder.com.vn — ĐÃ CHỐT 07/11/2026 (đã triển khai, PR #45)
+
+> **Owner chốt:** Q1 = CÔNG TY TNHH VIP GROUP cung cấp dịch vụ · Q2 = VIP GROUP có điểm giao dịch Bắc Ninh (**chờ địa chỉ**) · Q3 = bỏ VIPORDER khỏi website · Q4 = P3 ngay (đăng ký = form), P1 sau · Q5 = tra cứu qua Zalo/hotline · Q6 = giữ email.
 
 Ngày 07/11/2026 · Owner: *"tách khỏi viporder.com.vn ra riêng, không gộp vào nhau, đăng ký đăng nhập sẽ làm riêng khách"*.
 **Chưa sửa code.** NO-GO PRODUCTION vẫn giữ nguyên.

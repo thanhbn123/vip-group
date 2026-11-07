@@ -9,7 +9,8 @@ import MemberNote from '../components/MemberNote.astro';
 import PriceTable from '../components/PriceTable.astro';
 import { getContent } from '../data';
 import { heroBanner } from '../data/vi/hero';
-const heroSrcset = heroBanner ? heroBanner.widths.map((w) => `${heroBanner.base}-${w}.webp ${w}w`).join(', ') : '';
+const hb = heroBanner;
+const heroSrcset = hb ? hb.widths.map((w) => `${hb.base}-${w}.webp ${w}w`).join(', ') : '';
 import { linkable } from '../lib/logistics';
 
 const { company, sectors, subsidiaries, news, careers, contact, pricing } = getContent('vi');
