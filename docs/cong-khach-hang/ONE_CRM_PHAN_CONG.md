@@ -41,9 +41,9 @@ Mọi route chạy trên host khách, yêu cầu phiên `vg_portal`, và chỉ t
 | Route | Trả về | Ghi chú |
 |---|---|---|
 | `GET /portal/auth/launch?token=` | 303 → `/portal/` + cookie `vg_portal` | Token từ VIP ID (hợp đồng §4) |
-| `GET /portal/api/me` | Mã VG, tên, SĐT che bớt, email, đại lý (nếu có) | Trang hồ sơ trong cổng |
-| `GET /portal/api/parcels?status=&page=` | Danh sách kiện **đã xác minh chủ**, có phân trang | |
-| `GET /portal/api/parcels/search?tracking=` | Một kiện. Không thấy thì 404 giống hệt trường hợp không tồn tại | Có giới hạn tần suất |
+| `GET /portal/api/me` | Mã VG, tên, SĐT che bớt, **`email` (string\|null)**, **`agent` ({code,name}\|null)** | Trang hồ sơ trong cổng. v1.1: thêm email/agent (đề xuất 07/11, chờ CRM) |
+| `GET /portal/api/parcels?status=&page=` | `{items, page, pages, total}`, chỉ kiện **đã xác minh chủ** | Tuỳ chọn P2: `counts` theo trạng thái |
+| `GET /portal/api/parcels/search?tracking=` → `{items:[…]}` | Một kiện. Không thấy thì 404 giống hệt trường hợp không tồn tại | Có giới hạn tần suất |
 | `GET /portal/api/warehouses` | 4 kho, XM/YW `planned` | |
 | `POST /portal/api/logout` | Huỷ phiên `vg_portal` | Sau đó chuyển `/tai-khoan/dang-xuat` để VIP ID huỷ phiên của mình |
 | *(P2)* `GET /portal/api/parcels/:id/history` | Hành trình, chuyến, POD | CRM đã có dữ liệu `movements`; cần route nếu chưa có |
