@@ -188,3 +188,109 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
    - duyệt song song thì các mã khác nhau;
    - VG999, VG01001, VG000001 bị từ chối;
    - đăng nhập bằng `vg1001` được.
+
+## 13. Bỏ bước xác minh (owner 07/11/2026: "bỏ bước xác minh đó chỉ lưu thông tin khách hàng gửi là được" → chọn "Bỏ cả hai")
+
+1. **Không còn xác minh email.** Khách đăng ký xong, tài khoản vào ngay trạng thái `cho_duyet` và VIP ID gửi signup sang CRM. Email là thông tin liên hệ, không bắt buộc.
+2. **Không còn gọi xác minh SĐT.** Bước duyệt của nhân viên là cổng duy nhất. Khi duyệt, VIP ID ghi `phone_verified_at` = thời điểm duyệt, với `method = 'duyet_crm'`.
+3. **Khôi phục mật khẩu do nhân viên hỗ trợ:**
+   - Khách liên hệ hotline/Zalo **0961 102 655**.
+   - Nhân viên xác nhận danh tính, rồi bấm "Tạo link đặt lại" trong CRM. CRM gọi VIP ID qua `POST /api/internal/khach/tao-link-dat-lai` (HMAC).
+   - Link dùng một lần, hạn 30 phút. Nhân viên gửi cho khách qua Zalo; link không được lưu trong DB hay log.
+   - Email reset chỉ bật lại khi có kênh gửi thật (`COWORK_KHACH_EMAIL_ENABLED=1`).
+4. **Rủi ro owner chấp nhận:** người khác có thể đăng ký bằng SĐT của khách thật. Biện pháp giảm thiểu:
+   - SĐT unique, nên tài khoản thứ hai cùng SĐT không được tạo;
+   - cờ `phone_conflict` hiện trên màn duyệt;
+   - nhân viên tự cân nhắc trước khi duyệt;
+   - đăng ký bị từ chối thì SĐT được giải phóng.
+5. **Không cần email thật để lên production.** Điểm chặn A8 được gỡ khi `COWORK_KHACH_EMAIL_ENABLED=0`.
+
+## 14. Mốc thu hồi phiên chính xác đến mili-giây (07/11/2026, CRM 580efe1, VIP ID theo sau)
+
+1. **Body `POST /api/internal/portal/thu-hoi`:**
+
+   ```
+   {subject, reason, revoked_at, revoked_at_ms}
+   ```
+
+   - `revoked_at_ms`: số nguyên, unix mili-giây, ghi lúc VIP ID thu hồi (không phải lúc gửi).
+   - `revoked_at`: giây, giữ để tương thích.
+   - `reason`: `dang_xuat` | `dat_lai_mat_khau` | `doi_mat_khau`.
+2. **Cách CRM chọn mốc:** ưu tiên `revoked_at_ms`, nếu thiếu thì dùng `revoked_at`, thiếu cả hai thì lấy lúc CRM nhận. Mốc không vượt quá thời điểm hiện tại và chỉ tiến, không lùi. Sai kiểu dữ liệu trả 422 `THU_HOI_INVALID`.
+3. **Phạm vi huỷ:** CRM chỉ huỷ phiên portal có `created_at` < mốc. Phiên tạo sau mốc được giữ nên thu-hoi đến trễ qua hàng đợi không huỷ nhầm phiên mới.
+4. **Launch token có claim `iat_ms`:**
+   - `iat_ms` phải nằm trong giây `iat`, lệch thì CRM trả 401 `TOKEN_CLAIMS`.
+   - Thiếu `iat_ms` thì CRM coi là `iat*1000`.
+   - `iat_ms` < mốc thì CRM trả 401 `TOKEN_REVOKED`.
+5. **Đổi mật khẩu hoặc đặt lại:** VIP ID ghi `revoked_at_ms` **trước** khi tạo phiên hoặc token mới, bảo đảm `iat_ms > revoked_at_ms`.
+6. **Thay đổi kèm theo:**
+   - Email signup là tuỳ chọn: `null`, thiếu hoặc rỗng đều lưu NULL.
+   - `/portal/api/me` trả thêm `email` (string|null) và `agent` ({code,name}|null).
+   - CRM có thêm `POST /api/portal/outbox/:id/abandon` cho sự kiện thất bại vĩnh viễn.
+
+## 15. Bốn tên miền chính thức (OWNER DIRECTIVE "DOMAIN & COWORK INTEGRATION", 07/11/2026)
+
+| Tên miền | Ứng dụng | Phục vụ | `/` |
+|---|---|---|---|
+| `dangky.vipgroup.com.vn` | **VIP ID**, realm khách | Chỉ trang đăng ký và trang "chờ duyệt" | → form đăng ký |
+| `dangnhap.vipgroup.com.vn` | **VIP ID**, realm khách | Đăng nhập (SĐT là chính, mã VG phụ), đăng xuất, hồ sơ tài khoản, đổi mật khẩu, quên mật khẩu (hotline), đặt lại (`/dat-lai?t=`), `vao-cong` | → form đăng nhập |
+| `khachhang.vipgroup.com.vn` | **CRM** portal | `/portal/*`, `/portal/api/*`, `/portal/auth/launch`. Chưa có phiên → **302 sang dangnhap** kèm `tiep=` | → `/portal/` |
+| `cowork.vipgroup.com.vn` | **VIP ID** realm nhân viên (COWORK) | Thêm **module "CRM"** cho nhân viên có quyền: COWORK ký launch token `cowork-launch/1` và chuyển sang CRM nhân viên | (giữ nguyên) |
+| `crm.vipgroup.com.vn` | **CRM** nhân viên (đã có trong kế hoạch deploy CRM) | Toàn bộ CRM nội bộ. **Chỉ vào qua COWORK** (SSO); khách bị từ chối (C0) | (CRM) |
+
+**Quy tắc chung**
+1. **Cookie host-only cho từng tên miền.** Không bao giờ đặt `Domain=.vipgroup.com.vn`. Phiên VIP ID khách (`vg_khach`) chỉ ở dangnhap; phiên portal (`vg_portal`) chỉ ở khachhang; phiên COWORK chỉ ở cowork; phiên CRM chỉ ở crm.
+2. **Chuyển hướng sau đăng nhập.** Tham số `tiep` chỉ chấp nhận URL tuyệt đối `https://khachhang.vipgroup.com.vn/portal…`, khớp danh sách cấu hình `COWORK_KHACH_TIEP_CHO_PHEP`. Không khớp thì bỏ qua và về `vao-cong`. Mọi đường về khachhang đều đi qua launch token một lần (60 giây, nonce, aud `vip-crm-portal`).
+3. **Gọi nội bộ CRM ↔ VIP ID** đi qua mạng docker. CRM gửi `Host: dangnhap.vipgroup.com.vn` (biến mới phía CRM: `VIPID_PORTAL_HOST`) khi gọi `/api/internal/khach/*`. VIP ID gửi Host phù hợp CRM. `/api/internal/*` trả **404 trên mọi tên miền công khai**.
+4. **CSRF.** Form VIP ID post cùng origin (dangky→dangky, dangnhap→dangnhap). Portal gọi API cùng origin khachhang. Đăng xuất từ portal: `POST /portal/api/logout` rồi chuyển `https://dangnhap…/tai-khoan/dang-xuat` (trang xác nhận + POST có CSRF).
+5. **Turnstile.** Một widget, hai hostname `dangky` và `dangnhap`. VIP ID chỉ có một biến site key; server kiểm hostname khớp host đang phục vụ.
+6. **COWORK → CRM.**
+   - Module `crm`: quyền `crm.view` (thấy module) và `crm.use` (mở CRM). Vai trò dưới nhân viên (partner) bị từ chối ở backend.
+   - COWORK ký `{ver:1, aud:'vip-crm', sub:<id nhân viên COWORK>, tenant_code, iat, exp≤60s, nonce}` bằng `COWORK_SHARED_SECRET` rồi chuyển hướng `https://crm.vipgroup.com.vn/api/auth/cowork/launch?token=`.
+   - CRM ánh xạ `sub` → `users.vip_subject` (`kind='staff'`).
+   - Nhân viên CRM phải được admin liên kết `vip_subject` trước.
+7. **DNS cần thêm:** `dangky`, `dangnhap` (A → 160.22.170.20). `khachhang` đã có. `crm`: kiểm.
+
+### 15.6. Đã chốt giữa ba Controller (CRM, VIP ID, Website)
+
+**COWORK → CRM**
+- Định dạng: `cowork-launch/1`, **giữ nguyên JWT HS256 compact mà CRM đang kiểm** (`server/modules/adapters/tokens.js`). Không thêm claim.
+- Payload:
+
+  ```
+  {ver:1, aud:'vip-crm', sub:'cowork:<users.id COWORK — ID đăng nhập bất biến, vd cowork:anh-thanh>', tenant_code:'VIP', iat, exp:iat+60, nonce:uuid4}
+  ```
+
+- Bí mật: một giá trị **riêng** dùng chung hai bên.
+  - Ở VIP ID: biến `COWORK_CRM_LAUNCH_SECRET`.
+  - Ở CRM: biến `COWORK_SHARED_SECRET`.
+- Kiểm tra phía CRM: CRM kiểm nonce dùng một lần. Phía COWORK có route `POST /crm/mo` (có CSRF) → 303 tới `https://crm.vipgroup.com.vn/api/auth/cowork/launch?token=`.
+- Tenant: `tenant_code` lấy qua `COWORK_CRM_TENANT_MAP`, mặc định `vip-group → VIP`.
+
+**CRM (khachhang)**
+- `/` → 302 `/portal/`.
+- Trang HTML `/portal/*` khi chưa có phiên → 302 tới `PORTAL_LOGIN_URL?tiep=<URL khachhang>`. `tiep` chỉ dựng từ `PORTAL_PUBLIC_URL` + path, không lấy từ Host.
+- API `/portal/api/*` khi chưa có phiên → 401 JSON.
+- Biến mới:
+  - `PORTAL_LOGIN_URL`
+  - `VIPID_PUBLIC_URL` (link hồ sơ, đổi mật khẩu, đăng xuất)
+  - `VIPID_PORTAL_HOST` (Host khi gọi `/api/internal/khach/*`)
+- `GET /portal/api/config` (công khai, no-store) trả `{login_url, account_url, change_password_url, logout_url}`. Web-portal đọc endpoint này.
+
+**Pilot và tắt nhanh**
+- CRM:
+  - `PORTAL_PILOT_FILE`: subject hoặc mã VG, reload 5 giây. Không có trong danh sách → 401 `PILOT_NOT_ALLOWED`. Thiếu file thì từ chối tất cả.
+  - `PORTAL_OFF_FILE`: 503 cho `/portal*` và `/api/internal/portal/*`, cache 2 giây.
+- VIP ID:
+  - `COWORK_KHACH_PILOT_FILE`: SĐT.
+  - `COWORK_KHACH_MAINTENANCE_FILE`.
+
+**DNS** (kiểm 07/11): `dangky`, `dangnhap`, `khachhang`, `crm`, `cowork` đều A → 160.22.170.20.
+
+### 15.7. Bổ sung sau vòng kiểm tra độc lập 9 (07/11/2026)
+- **Reason thu hồi mới: `rut_pilot`.** VIP ID gửi `rut_pilot` khi SĐT bị gỡ khỏi danh sách Pilot. Lúc gỡ, VIP ID huỷ phiên của tài khoản đó và gửi `thu-hoi` (có `revoked_at_ms`) sang CRM. CRM phải chấp nhận reason này.
+- **Tắt nhanh khi có sự cố: bật CẢ HAI công tắc.**
+  - File bảo trì VIP ID (`COWORK_KHACH_MAINTENANCE_FILE`) **không** đóng phiên portal CRM đang mở.
+  - Phải bật thêm `PORTAL_OFF_FILE` phía CRM.
+- **VIP ID nhánh khách:** `feature/khach-p1` @`a63b430`.
+- **VIP ID nhánh COWORK → CRM:** `feature/cowork-crm` (gộp sau `khach-p1`). Nhánh này giữ phần kiểm chéo: `VIPID_PORTAL_SECRET` phải khác `COWORK_CRM_LAUNCH_SECRET`.

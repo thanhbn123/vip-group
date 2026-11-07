@@ -85,11 +85,17 @@ const b64u = (buf) => Buffer.from(buf).toString('base64url');
 export const newNonce = () => crypto.randomBytes(18).toString('base64url');
 /**
  * Ký launch token ĐÚNG NHƯ VIP ID: header {"alg":"HS256","typ":"JWT"}, payload JSON gọn (không khoảng trắng),
- * thứ tự khoá ver, aud, sub, crm_customer_id, portal_code, iat, exp, nonce; base64url không padding.
+ * thứ tự khoá ver, aud, sub, crm_customer_id, portal_code, iat, iat_ms, exp, nonce (§14: iat_ms nằm trong giây iat); base64url không padding.
+ * iat_ms = null → bỏ claim (mô phỏng token cũ).
  */
-export function mintLaunch(secret, { sub, crm_customer_id, portal_code, iat = now(), ttl = 60, exp, nonce = newNonce(), ver = 1, aud = AUD_LAUNCH, header } = {}) {
+export function mintLaunch(secret, { sub, crm_customer_id, portal_code, iat_ms, iat, ttl = 60, exp, nonce = newNonce(), ver = 1, aud = AUD_LAUNCH, header } = {}) {
+  if (iat === undefined) { iat_ms = iat_ms ?? Date.now(); iat = Math.floor(iat_ms / 1000); }
+  else if (iat_ms === undefined) iat_ms = iat * 1000 + (Date.now() % 1000);
   const h = b64u(JSON.stringify(header || { alg: 'HS256', typ: 'JWT' }));
-  const p = b64u(JSON.stringify({ ver, aud, sub, crm_customer_id, portal_code, iat, exp: exp ?? iat + ttl, nonce }));
+  const claims = { ver, aud, sub, crm_customer_id, portal_code, iat };
+  if (iat_ms !== null) claims.iat_ms = iat_ms;
+  claims.exp = exp ?? iat + ttl; claims.nonce = nonce;
+  const p = b64u(JSON.stringify(claims));
   return `${h}.${p}.${b64u(crypto.createHmac('sha256', secret).update(`${h}.${p}`).digest())}`;
 }
 export function verifyLaunch(secret, token, nonces) {
@@ -107,7 +113,7 @@ export function verifyLaunch(secret, token, nonces) {
   if (c.aud !== AUD_LAUNCH) return { error: 'TOKEN_AUDIENCE' };
   if (!Number.isInteger(c.iat) || !Number.isInteger(c.exp) || c.exp <= c.iat || c.exp - c.iat > 60) return { error: 'TOKEN_TTL' };
   if (c.exp <= now()) return { error: 'TOKEN_EXPIRED' };
-  if (c.iat - now() > 30) return { error: 'TOKEN_IAT_FUTURE' };
+  if (c.iat - now() > 5) return { error: 'TOKEN_IAT_FUTURE' }; // CRM 5007252: lệch tương lai tối đa 5 s
   if (typeof c.sub !== 'string' || !c.sub.startsWith('cust:') || !/^VG[1-9]\d{3,8}$/.test(String(c.portal_code)) || !c.nonce) return { error: 'TOKEN_CLAIMS' };
   if (nonces) { if (nonces.has(c.nonce)) return { error: 'TOKEN_REPLAYED' }; nonces.add(c.nonce); }
   return { claims: c };
@@ -245,7 +251,7 @@ async function modeCrm() {
       `số dòng=${f.rows.length}; phone_conflict=${row.phone_conflict}; phone_conflict_count=${row.phone_conflict_count}`);
   }
   // C15 thu-hoi cho subject lạ (VIP ID chỉ gửi cho subject của mình; CRM phải trả 2xx, không để VIP ID thử lại mãi)
-  { const s2 = fakeSubject(); const b = vipJson({ subject: s2, reason: 'dang_xuat' });
+  { const s2 = fakeSubject(); const rms2 = Date.now(); const b = vipJson({ subject: s2, reason: 'dang_xuat', revoked_at: Math.floor(rms2 / 1000), revoked_at_ms: rms2 });
     r = await post(PATH_THU_HOI_CRM, b, signed(PATH_THU_HOI_CRM, b, { idem: `thu-hoi:${s2}:dang_xuat:${rand(8)}` }));
     expect('C15', 'thu-hoi {subject, reason:"dang_xuat"} chữ ký đúng', r, r.status >= 200 && r.status < 300, '2xx'); }
   // C16 endpoint nội bộ trên host cổng khách
@@ -280,9 +286,9 @@ async function modeCrm() {
     deny('L10', 'launch: portal_code không khớp (VG999998)', await launch(mintLaunch(secret, { ...L, portal_code: L.portal_code === 'VG999998' ? 'VG999997' : 'VG999998' })));
     deny('L11', 'launch: crm_customer_id không khớp', await launch(mintLaunch(secret, { ...L, crm_customer_id: crypto.randomUUID() })));
     if (env.KIT_DESTRUCTIVE === '1') {
-      const b = vipJson({ subject: L.sub, reason: 'dang_xuat' });
+      const rms = Date.now(); const b = vipJson({ subject: L.sub, reason: 'dang_xuat', revoked_at: Math.floor(rms / 1000), revoked_at_ms: rms });
       const rr = await post(PATH_THU_HOI_CRM, b, signed(PATH_THU_HOI_CRM, b, { idem: `thu-hoi:${L.sub}:dang_xuat:${rand(8)}` }));
-      r = await launch(mintLaunch(secret, L));
+      r = await launch(mintLaunch(secret, { ...L, iat_ms: rms + 1 })); // VIP ID bảo đảm iat_ms > revoked_at_ms sau đăng nhập lại (§14.5)
       expect('L12', 'sau thu-hoi "dang_xuat" khách vẫn đăng nhập lại được (launch mới → 303)', r, rr.status < 300 && r.status === 303,
         `thu-hoi 2xx rồi launch 303 (thu-hoi=${rr.status})`);
     } else record('L12', 'sau thu-hoi "dang_xuat" khách vẫn đăng nhập lại được', 'SKIP', 'KIT_DESTRUCTIVE=1 (CRM hiện khoá vĩnh viễn user!)');

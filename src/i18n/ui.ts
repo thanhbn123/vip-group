@@ -13,6 +13,10 @@ const ui = {
     closeMenu: 'Đóng menu',
     mainNav: 'Điều hướng chính',
     updating: 'Đang cập nhật',
+    accountNav: 'Tài khoản khách hàng',
+    accountLabel: 'Khách hàng VIP GROUP',
+    login: 'Đăng nhập',
+    register: 'Đăng ký tài khoản',
     nav: [
       { key: 'home', label: 'Trang chủ', href: '/' },
       { key: 'about', label: 'Giới thiệu', href: '/gioi-thieu/' },
