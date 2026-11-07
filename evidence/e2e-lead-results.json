@@ -1,0 +1,112 @@
+{
+  "at": "2026-11-06T07:39:07.910Z",
+  "total": 21,
+  "failed": 0,
+  "res": [
+    {
+      "n": "[desktop] Turnstile cấp mã xác minh",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[desktop] không tràn ngang",
+      "ok": true,
+      "d": "0px"
+    },
+    {
+      "n": "[desktop] SĐT sai → báo lỗi, focus ô SĐT",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[desktop] chưa tích đồng ý → không gửi",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[desktop] gửi hợp lệ → \"Đã nhận yêu cầu\" + mã lead",
+      "ok": true,
+      "d": "Đã nhận yêu cầu (mã VG-E2E-0005). Chúng tôi sẽ liên hệ lại sớm. Cần gấp: gọi/Zalo 0961102655."
+    },
+    {
+      "n": "[desktop] Sheet nhận đúng 1 dòng, đúng dữ liệu",
+      "ok": true,
+      "d": "{\"lead_id\":\"VG-E2E-0005\",\"idempotency_key\":\"2695b111-687f-4a43-a976-b3372678897a\",\"source\":\"vipgroup.com.vn\",\"page\":\"/lien-he/\",\"utm\":{\"source\":\"\",\"medium\":\"\",\"campaign\":\"\"},\"name\":\"Khách Thử E2E\",\"phone\":\"0961102655\",\"email\":null,\"need\":\"bao-gia-van-chuyen\",\"weight_kg\":250,\"message\":\"Lô hàng thử desktop\",\"consent_at\":\"2026-11-06T07:38:59.324Z\",\"created_at\":\"2026-11-06T07:38:59.324Z\"}"
+    },
+    {
+      "n": "[desktop] form khoá sau khi gửi (chống gửi lặp)",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[desktop] đo lường lead_submit, không chứa dữ liệu cá nhân",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[desktop] không lỗi console / CSP",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile] Turnstile cấp mã xác minh",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile] không tràn ngang",
+      "ok": true,
+      "d": "0px"
+    },
+    {
+      "n": "[mobile] SĐT sai → báo lỗi, focus ô SĐT",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile] chưa tích đồng ý → không gửi",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile] gửi hợp lệ → \"Đã nhận yêu cầu\" + mã lead",
+      "ok": true,
+      "d": "Đã nhận yêu cầu (mã VG-E2E-0006). Chúng tôi sẽ liên hệ lại sớm. Cần gấp: gọi/Zalo 0961102655."
+    },
+    {
+      "n": "[mobile] Sheet nhận đúng 1 dòng, đúng dữ liệu",
+      "ok": true,
+      "d": "{\"lead_id\":\"VG-E2E-0006\",\"idempotency_key\":\"9ee31e63-65fa-474e-940b-02f2d386a670\",\"source\":\"vipgroup.com.vn\",\"page\":\"/lien-he/\",\"utm\":{\"source\":\"\",\"medium\":\"\",\"campaign\":\"\"},\"name\":\"Khách Thử E2E\",\"phone\":\"0961102655\",\"email\":null,\"need\":\"bao-gia-van-chuyen\",\"weight_kg\":250,\"message\":\"Lô hàng thử mobile\",\"consent_at\":\"2026-11-06T07:39:06.186Z\",\"created_at\":\"2026-11-06T07:39:06.186Z\"}"
+    },
+    {
+      "n": "[mobile] form khoá sau khi gửi (chống gửi lặp)",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile] đo lường lead_submit, không chứa dữ liệu cá nhân",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile] không lỗi console / CSP",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "trang chủ → Gửi yêu cầu báo giá → chọn sẵn \"Báo giá vận chuyển\"",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "tắt JS: nút gửi disabled + có hướng dẫn gọi",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "API: request từ tên miền khác → 403",
+      "ok": true,
+      "d": ""
+    }
+  ]
+}

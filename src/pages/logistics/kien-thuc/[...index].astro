@@ -1,0 +1,28 @@
+---
+import LogisticsLayout from '../../../layouts/LogisticsLayout.astro';
+import { knowledgeIndex, articles } from '../../../data/vi/logistics';
+import { isBuilt } from '../../../lib/logistics';
+
+// Production: mục lục chưa xuất bản (draft) → không sinh trang. DEMO: sinh để nghiệm thu.
+export function getStaticPaths() {
+  return isBuilt(knowledgeIndex.status) ? [{ params: { index: undefined } }] : [];
+}
+const list = articles.filter((a) => isBuilt(a.status));
+---
+<LogisticsLayout page={knowledgeIndex} showActions={false}>
+  <section class="section">
+    <div class="container grid grid-3">
+      {list.map((a) => (
+        <a class="card card-link" href={`/logistics/kien-thuc/${a.slug}/`}>
+          <span class="card-index">{a.status === 'draft' ? 'NHÁP — CHỜ DUYỆT' : a.updated}</span>
+          <h2 class="kt-title">{a.title}</h2>
+          <p>{a.description}</p>
+          <p class="more">Đọc bài →</p>
+        </a>
+      ))}
+    </div>
+  </section>
+</LogisticsLayout>
+<style>
+  .kt-title { font-size: 20px; margin-top: 12px; }
+</style>

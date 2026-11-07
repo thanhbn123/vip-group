@@ -1,0 +1,75 @@
+---
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import FaqList from '../../components/logistics/FaqList.astro';
+import { pageByKey } from '../../lib/logistics';
+import { serviceLd } from '../../lib/schema';
+import { services, faqs, provider } from '../../data/vi/logistics';
+
+const page = pageByKey('viet-nam');
+const site = Astro.site!;
+const ld = [serviceLd({
+  name: 'Vận chuyển Trung Quốc – Việt Nam, nhập khẩu chính ngạch',
+  serviceType: 'Vận chuyển hàng hóa quốc tế và thủ tục hải quan',
+  description: page.description,
+  url: new URL(page.href, site),
+  areaServed: ['Việt Nam'],
+})];
+const paths = [
+  {
+    title: 'Doanh nghiệp nhập khẩu chính ngạch',
+    points: ['Tư vấn bộ chứng từ phù hợp theo mặt hàng', 'Hỗ trợ khai báo và thủ tục thông quan', 'Phù hợp khi cần hồ sơ nhập khẩu cho kế toán, thuế'],
+  },
+  {
+    title: 'Chủ shop, hộ kinh doanh',
+    points: ['Đặt hàng 1688 / Taobao / Pinduoduo', "Quản lý nhiều đơn bằng một mã khách hàng", 'Theo dõi hàng bằng mã vận đơn, mã bao'],
+  },
+];
+---
+<LogisticsLayout page={page} jsonLd={ld}>
+  <section class="section" aria-labelledby="svc-title">
+    <div class="container">
+      <span class="kicker">Dịch vụ</span>
+      <h2 id="svc-title">Các dịch vụ {provider.name} đang cung cấp</h2>
+      <div class="grid grid-4">
+        {services.map((s) => <article class="card"><h3>{s.title}</h3><p>{s.text}</p></article>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="path-title">
+    <div class="container">
+      <h2 id="path-title">Chọn hình thức phù hợp với bạn</h2>
+      <div class="grid paths">
+        {paths.map((p) => (
+          <article class="card">
+            <h3>{p.title}</h3>
+            <ul class="check-list">{p.points.map((x) => <li>{x}</li>)}</ul>
+          </article>
+        ))}
+      </div>
+      <p class="muted">Chưa chắc nên chọn hình thức nào? Gửi thông tin hàng hóa để được tư vấn trước khi đặt hàng.</p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="where-title">
+    <div class="container">
+      <h2 id="where-title">Gửi từ đâu, nhận ở đâu?</h2>
+      <div class="grid grid-3">
+        <a class="card card-link" href="/logistics/kho-trung-quoc/"><h3>4 kho Trung Quốc</h3><p>Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô — địa chỉ tiếng Trung để gửi nhà cung cấp.</p><p class="more">Xem địa chỉ kho →</p></a>
+        <a class="card card-link" href="/logistics/quy-trinh-gui-hang/"><h3>Gửi từ Trung Quốc</h3><p>Đăng ký mã khách hàng và nhận hướng dẫn địa chỉ gửi hàng.</p><p class="more">Xem quy trình →</p></a>
+        <a class="card card-link" href="/logistics/van-chuyen-trung-quoc-bac-ninh/"><h3>Khách hàng Bắc Ninh</h3><p>Văn phòng tại Đồng Nguyên — gần Từ Sơn, Đồng Kỵ.</p><p class="more">Xem chi tiết →</p></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="vnfaq-title">
+    <div class="container split">
+      <div><h2 id="vnfaq-title">Hỏi đáp nhanh</h2><a class="text-link" href="/logistics/cau-hoi-thuong-gap/">Tất cả câu hỏi →</a></div>
+      <FaqList items={faqs.filter((f) => /chính ngạch|1688|bắt đầu|cấm/i.test(f.q))} />
+    </div>
+  </section>
+</LogisticsLayout>
+<style>
+  .paths { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 20px; }
+  @media (max-width: 760px) { .paths { grid-template-columns: 1fr; } }
+</style>

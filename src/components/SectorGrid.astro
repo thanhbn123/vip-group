@@ -14,6 +14,10 @@ const items = [...sectors].sort((a, b) => a.order - b.order);
       <ul class="chip-list" aria-label={`Trọng tâm: ${s.title}`}>
         {s.focus.map((f) => <li>{f}</li>)}
       </ul>
+      {s.link && <p class="sector-link"><a class="text-link" href={s.link.href}>{s.link.label} →</a></p>}
     </article>
   ))}
 </div>
+<style>
+  .sector-link { margin: 20px 0 0; }
+</style>

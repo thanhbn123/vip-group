@@ -1,0 +1,49 @@
+---
+import { priceOffers } from '../../lib/pricing';
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import PriceTable from '../../components/PriceTable.astro';
+import ContactForm from '../../components/ContactForm.astro';
+import VolumeCalculator from '../../components/logistics/VolumeCalculator.astro';
+import { pageByKey } from '../../lib/logistics';
+import { priceFactors } from '../../data/vi/logistics';
+import { getContent } from '../../data';
+
+const page = pageByKey('bang-gia');
+const { company, contact, pricing } = getContent('vi');
+// Offer theo từng mức giá (VND/kg) — cùng nguồn với trang chủ. Không khai thời gian giao, phụ phí, đánh giá.
+const site = Astro.site!;
+const priceLd = {
+  '@type': 'Service',
+  name: pricing.title,
+  serviceType: 'Vận chuyển hàng hóa Trung Quốc – Việt Nam',
+  url: new URL(page.href, site).href,
+  brand: { '@id': new URL('/#organization', site).href },
+  areaServed: { '@type': 'Country', name: 'Việt Nam' },
+  offers: priceOffers(pricing.tiers),
+};
+---
+<LogisticsLayout page={page} showActions={false} jsonLd={[priceLd]}>
+  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline} hotlineDisplay={contact.hotlineDisplay} zaloUrl={contact.zaloUrl}
+    quoteHref={contact.formBackendReady ? '#form-lien-he' : null} />
+
+  <section class="section section-alt" aria-labelledby="factor-title">
+    <div class="container">
+      <h2 id="factor-title">Cước vận chuyển phụ thuộc vào đâu?</h2>
+      <div class="grid grid-4">{priceFactors.map((f) => <article class="card"><h3>{f.title}</h3><p>{f.text}</p></article>)}</div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="quote-title">
+    <div class="container quote-grid">
+      <VolumeCalculator />
+      <div>
+        <h2 id="quote-title" class="quote-title">Yêu cầu báo giá cho lô hàng</h2>
+        <ContactForm email={contact.email} backendReady={contact.formBackendReady} hotline={contact.hotline} lead={contact.lead} defaultNeed="bao-gia-van-chuyen" />
+      </div>
+    </div>
+  </section>
+</LogisticsLayout>
+<style>
+  .quote-grid { display: grid; gap: 32px; }
+  .quote-title { font-size: 26px; }
+</style>

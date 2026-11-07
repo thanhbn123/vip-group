@@ -1,0 +1,102 @@
+---
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import FaqList from '../../components/logistics/FaqList.astro';
+import { pageByKey } from '../../lib/logistics';
+import PickupCards from '../../components/logistics/PickupCards.astro';
+import { serviceLd } from '../../lib/schema';
+import { services, processSteps, faqs, provider } from '../../data/vi/logistics';
+
+const page = pageByKey('home');
+const site = Astro.site!;
+const ld = [serviceLd({
+  name: 'Logistics Trung Quốc – Việt Nam: vận chuyển, nhập khẩu, hải quan',
+  serviceType: 'Vận chuyển hàng hóa quốc tế Trung Quốc – Việt Nam',
+  description: page.description,
+  url: new URL(page.href, site),
+  areaServed: ['Bắc Ninh', 'Việt Nam'],
+})];
+const audiences = [
+  { title: 'Xưởng sản xuất, làng nghề', text: 'Nhập phụ kiện, vật tư, máy móc từ Trung Quốc theo lô, cần kiểm đếm và chứng từ rõ ràng.' },
+  { title: 'Doanh nghiệp khu công nghiệp', text: 'Cần nhập khẩu chính ngạch, khai báo hải quan và bộ chứng từ phù hợp cho kế toán.' },
+  { title: 'Chủ shop, kinh doanh online', text: 'Đặt hàng 1688 / Taobao / Pinduoduo, quản lý đơn bằng mã khách hàng riêng và theo dõi trực tuyến.' },
+];
+---
+<LogisticsLayout page={page} jsonLd={ld}>
+  <section class="section" aria-labelledby="svc-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker">Dịch vụ</span>
+          <h2 id="svc-title">Một đầu mối cho hành trình nhập hàng Trung Quốc</h2>
+        </div>
+        <p>Từ đặt hàng, nhận hàng tại Trung Quốc, vận chuyển về Việt Nam đến nhập khẩu và khai báo hải quan.</p>
+      </div>
+      <div class="grid grid-4">
+        {services.map((s, i) => (
+          <article class="card">
+            <span class="card-index">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{s.title}</h3>
+            <p>{s.text}</p>
+          </article>
+        ))}
+      </div>
+      <p><a class="text-link" href="/logistics/van-chuyen-trung-quoc-viet-nam/">Vận chuyển hàng Trung Quốc về Việt Nam →</a></p>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="kho-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker">4 kho Trung Quốc</span>
+          <h2 id="kho-title">Nhận hàng tại Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô</h2>
+        </div>
+        <a class="text-link" href="/logistics/kho-trung-quoc/">Xem địa chỉ 4 kho →</a>
+      </div>
+      <PickupCards />
+      <p class="muted hub-bn">Khách hàng Bắc Ninh, Từ Sơn, Đồng Kỵ: <a class="text-link" href="/logistics/van-chuyen-trung-quoc-bac-ninh/">vận chuyển về Bắc Ninh →</a></p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="aud-title">
+    <div class="container">
+      <span class="kicker">Khách hàng</span>
+      <h2 id="aud-title">Phù hợp với ai?</h2>
+      <div class="grid grid-3">
+        {audiences.map((a) => <article class="card"><h3>{a.title}</h3><p>{a.text}</p></article>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="proc-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker">Quy trình</span>
+          <h2 id="proc-title">Bốn bước bắt đầu gửi hàng</h2>
+        </div>
+        <a class="text-link" href="/logistics/quy-trinh-gui-hang/">Xem quy trình chi tiết →</a>
+      </div>
+      <ol class="steps">{processSteps.map((s) => <li><h3>{s.title}</h3><p>{s.text}</p></li>)}</ol>
+      <div class="hub-links">
+        <a class="btn btn-ghost" href={provider.registerUrl} rel="noopener" target="_blank" data-track="register_click" data-track-location="hub_process">Đăng ký mã khách hàng<span class="visually-hidden"> (mở tab mới)</span></a>
+        <a class="btn btn-ghost" href="/logistics/tra-cuu-van-don/">Tra cứu vận đơn</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="faq-title">
+    <div class="container split">
+      <div>
+        <span class="kicker">Hỏi đáp</span>
+        <h2 id="faq-title">Câu hỏi thường gặp</h2>
+        <a class="text-link" href="/logistics/cau-hoi-thuong-gap/">Xem tất cả câu hỏi →</a>
+      </div>
+      <FaqList items={faqs.filter((f) => !f.pending).slice(0, 4)} />
+    </div>
+  </section>
+</LogisticsLayout>
+<style>
+  .hub-bn { margin: 20px 0 0; }
+  .hub-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+</style>

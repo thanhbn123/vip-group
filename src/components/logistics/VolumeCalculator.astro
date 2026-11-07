@@ -1,0 +1,85 @@
+---
+/**
+ * Công cụ tính số khối, cân quy đổi và CƯỚC ƯỚC TÍNH theo chính sách owner 07/11/2026:
+ * bậc giá theo trọng lượng tính cước TỪNG KIỆN (max(cân thực, dài×rộng×cao÷6000)), không gộp lô.
+ * Logic dùng chung với test: src/lib/pricing.ts. Không làm tròn khối lượng (owner chưa quy định cách làm tròn).
+ */
+import { volumetricDivisor } from '../../data/vi/logistics';
+import { shown } from '../../lib/logistics';
+const { value: divisor, isSample } = shown(volumetricDivisor);
+---
+<div class="calc card" data-calc data-divisor={divisor ?? ''}>
+  <h2 class="calc-title">Tính số khối kiện hàng</h2>
+  <div class="calc-grid">
+    <div class="field"><label for="vc-l">Dài (cm)</label><input id="vc-l" type="number" min="0" step="1" inputmode="decimal" value="60" /></div>
+    <div class="field"><label for="vc-w">Rộng (cm)</label><input id="vc-w" type="number" min="0" step="1" inputmode="decimal" value="50" /></div>
+    <div class="field"><label for="vc-h">Cao (cm)</label><input id="vc-h" type="number" min="0" step="1" inputmode="decimal" value="40" /></div>
+    <div class="field"><label for="vc-n">Số kiện</label><input id="vc-n" type="number" min="1" step="1" inputmode="numeric" value="1" /></div>
+    <div class="field"><label for="vc-kg">Cân nặng 1 kiện (kg)</label><input id="vc-kg" type="number" min="0" step="0.1" inputmode="decimal" value="12" /></div>
+  </div>
+  <dl class="calc-out" aria-live="polite">
+    <div><dt>Tổng số khối</dt><dd data-out="m3">0,12 m³</dd></div>
+    <div><dt>Tổng cân nặng thực (mọi kiện)</dt><dd data-out="kg">12 kg</dd></div>
+    <div>
+      <dt>Tổng cân quy đổi (mọi kiện) {isSample && <span class="sample-tag">MẪU</span>}</dt>
+      <dd data-out="dim">{divisor ? '—' : 'Hệ số quy đổi được báo theo từng lô hàng'}</dd>
+    </div>
+  </dl>
+  {divisor && (
+    <dl class="calc-out calc-price" aria-live="polite">
+      <div><dt>Trọng lượng tính cước / kiện</dt><dd data-out="charge">—</dd></div>
+      <div><dt>Bậc giá áp dụng (theo kiện)</dt><dd data-out="tier">—</dd></div>
+      <div><dt>Cước ước tính</dt><dd data-out="cost">—</dd><dd class="sub" data-out="cost-per"></dd></div>
+    </dl>
+  )}
+  <p class="calc-note">
+    Ước tính cho các kiện giống nhau: mỗi kiện tra bậc giá theo trọng lượng tính cước của chính kiện đó (số lớn hơn giữa cân thực và cân quy đổi, hệ số {divisor ?? '—'}). Chưa gồm phụ phí và thuế (nếu có); cước chính thức theo báo giá.
+  </p>
+</div>
+<style>
+  .calc { display: grid; gap: 16px; }
+  .calc-title { font-size: 22px; margin: 0; }
+  .calc-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 760px) { .calc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .field { display: grid; gap: 6px; }
+  label { font-size: 13px; font-weight: 600; }
+  input { width: 100%; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: var(--bg); }
+  .calc-out { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; }
+  @media (max-width: 640px) { .calc-out { grid-template-columns: 1fr; } }
+  .calc-out div { padding: 14px 16px; border-radius: var(--radius-sm); background: var(--bg-alt); }
+  dt { font-size: 13px; color: var(--muted); }
+  dd { margin: 4px 0 0; font-weight: 800; font-size: 20px; color: var(--text); }
+  .calc-price dd { color: var(--brand-ink); }
+  .calc-out dd.sub { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .calc-note { margin: 0; font-size: 14px; color: var(--muted); }
+  .sample-tag { display: inline-block; padding: 1px 6px; border-radius: 6px; font-size: 11px; font-weight: 800; color: #fff; background: #6b4e00; }
+</style>
+<script>
+  import { estimate } from '../../lib/pricing';
+  import { pricing } from '../../data/vi/pricing';
+  const box = document.querySelector<HTMLElement>('[data-calc]');
+  if (box) {
+    const num = (id: string) => Math.max(0, Number((box.querySelector<HTMLInputElement>(`#${id}`)?.value ?? '0').replace(',', '.')) || 0);
+    const fmt = (n: number, d = 2) => n.toLocaleString('vi-VN', { maximumFractionDigits: d });
+    const divisor = Number(box.dataset.divisor) || 0;
+    const out = (k: string) => box.querySelector<HTMLElement>(`[data-out="${k}"]`);
+    const calc = () => {
+      const n = Math.max(1, Math.round(num('vc-n')));
+      const cm3 = num('vc-l') * num('vc-w') * num('vc-h') * n;
+      const m3 = cm3 / 1_000_000;
+      const kg = num('vc-kg') * n;
+      out('m3')!.textContent = `${fmt(m3, 3)} m³`;
+      out('kg')!.textContent = `${fmt(kg, 1)} kg`;
+      if (divisor) out('dim')!.textContent = `${fmt(cm3 / divisor, 1)} kg`;
+      if (divisor && out('charge')) {
+        const e = estimate(pricing.tiers, { lCm: num('vc-l'), wCm: num('vc-w'), hCm: num('vc-h'), kg: num('vc-kg'), count: n }, divisor);
+        out('charge')!.textContent = `${fmt(e.chargeablePerPackage, 3)} kg`;
+        out('tier')!.textContent = `${e.tier.price.toLocaleString('vi-VN')} đ/kg (${e.tier.label})`;
+        out('cost')!.textContent = `${Math.round(e.total).toLocaleString('vi-VN')} đ`;
+        out('cost-per')!.textContent = `${Math.round(e.perPackage).toLocaleString('vi-VN')} đ/kiện × ${e.count}`;
+      }
+    };
+    box.addEventListener('input', calc);
+    calc();
+  }
+</script>

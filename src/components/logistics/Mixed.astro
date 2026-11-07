@@ -1,0 +1,11 @@
+---
+/**
+ * Văn bản tiếng Việt có lẫn chữ Hán: bọc từng đoạn chữ Hán trong <span lang="zh-CN"> để trình đọc màn hình,
+ * công cụ dịch và máy tìm kiếm nhận đúng ngôn ngữ (WCAG 3.1.2 — ngôn ngữ của từng phần).
+ */
+interface Props { text: string }
+const { text } = Astro.props;
+// Chữ Hán (CJK) + dấu câu toàn khổ đi liền, kể cả chữ số/gạch nối đứng trước hoặc kẹp giữa (vd. 6号楼10-12库, 5号).
+const parts = text.split(/((?:[0-9\-]*[㐀-鿿（-；、。，])(?:[㐀-鿿（-；、。，0-9\-]*[㐀-鿿（-；、。，])?)/);
+---
+{parts.map((p, i) => (i % 2 ? <span lang="zh-CN">{p}</span> : p))}

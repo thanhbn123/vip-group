@@ -11,9 +11,16 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "build:demo": "VIPG_DEMO=1 astro build",
+    "preview:demo": "VIPG_DEMO=1 astro preview --port 4322",
     "check": "astro check",
     "pretest": "astro build",
-    "test": "node --test \"tests/*.test.mjs\""
+    "test": "node --test \"tests/*.test.mjs\"",
+    "preview:start": "bash scripts/preview.sh start",
+    "preview:stop": "bash scripts/preview.sh stop",
+    "preview:status": "bash scripts/preview.sh status",
+    "test:e2e": "node tests/e2e/logistics.e2e.mjs evidence/screenshots",
+    "test:e2e:v2": "node tests/e2e/warehouses.e2e.mjs evidence/v2"
   },
   "dependencies": {
     "astro": "7.3.5"

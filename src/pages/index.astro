@@ -1,4 +1,5 @@
 ---
+import { priceOffers } from '../lib/pricing';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SectorGrid from '../components/SectorGrid.astro';
 import MemberGrid from '../components/MemberGrid.astro';
@@ -7,6 +8,7 @@ import CtaBand from '../components/CtaBand.astro';
 import MemberNote from '../components/MemberNote.astro';
 import PriceTable from '../components/PriceTable.astro';
 import { getContent } from '../data';
+import { linkable } from '../lib/logistics';
 
 const { company, sectors, subsidiaries, news, careers, contact, pricing } = getContent('vi');
 const site = Astro.site!;
@@ -18,19 +20,7 @@ const priceLd = {
   url: new URL('/#bang-gia', site).href,
   brand: { '@id': new URL('/#organization', site).href },
   areaServed: { '@type': 'Country', name: 'Việt Nam' },
-  offers: pricing.tiers.map((t) => ({
-    '@type': 'Offer',
-    name: t.label,
-    priceCurrency: 'VND',
-    priceSpecification: {
-      '@type': 'UnitPriceSpecification',
-      price: t.price,
-      priceCurrency: 'VND',
-      unitCode: 'KGM',
-      unitText: 'kg',
-      eligibleQuantity: { '@type': 'QuantitativeValue', minValue: t.min, ...(t.max !== null ? { maxValue: t.max } : {}), unitCode: 'KGM' },
-    },
-  })),
+  offers: priceOffers(pricing.tiers),
 };
 const sloganParts = company.slogan.split(' - ').map((s) => s.trim());
 const sloganLast = sloganParts.pop();
@@ -82,7 +72,12 @@ const sloganLast = sloganParts.pop();
     </div>
   </section>
 
-  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline} />
+  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline} hotlineDisplay={contact.hotlineDisplay} zaloUrl={contact.zaloUrl}
+    quoteHref={contact.formBackendReady ? '/lien-he/?nhu-cau=bao-gia-van-chuyen#form-lien-he' : null} detailHref="/logistics/bang-gia/"
+    relatedLinks={[
+      { href: '/logistics/van-chuyen-trung-quoc-bac-ninh/', label: 'Vận chuyển hàng Trung Quốc về Bắc Ninh' },
+      { href: '/logistics/van-chuyen-tham-quyen-ve-viet-nam/', label: 'Vận chuyển Thâm Quyến về Việt Nam' },
+    ].filter((l) => linkable(l.href))} />
 
   <section class="section" aria-labelledby="members-title">
     <div class="container">

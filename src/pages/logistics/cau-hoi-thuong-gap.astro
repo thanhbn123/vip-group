@@ -1,0 +1,26 @@
+---
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import FaqList from '../../components/logistics/FaqList.astro';
+import { pageByKey } from '../../lib/logistics';
+import { faqs } from '../../data/vi/logistics';
+
+const page = pageByKey('faq');
+// FAQPage chỉ chứa câu trả lời ĐÃ có căn cứ — câu `pending` không đưa vào dữ liệu có cấu trúc.
+const faqLd = {
+  '@type': 'FAQPage',
+  mainEntity: faqs.filter((f) => !f.pending).map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+<LogisticsLayout page={page} jsonLd={[faqLd]}>
+  <section class="section" aria-labelledby="faq-all">
+    <div class="container narrow">
+      <h2 id="faq-all" class="visually-hidden">Danh sách câu hỏi</h2>
+      <FaqList items={faqs} />
+      <p class="muted faq-more">Không thấy câu hỏi của bạn? Gọi hoặc nhắn Zalo hotline, hoặc <a class="text-link" href="/logistics/bang-gia/#form-lien-he">gửi yêu cầu báo giá</a>.</p>
+    </div>
+  </section>
+</LogisticsLayout>
+<style>
+  .narrow { max-width: 860px; }
+  .faq-more { margin-top: 28px; }
+</style>

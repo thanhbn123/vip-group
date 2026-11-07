@@ -1,0 +1,747 @@
+{
+  "at": "2026-11-07T00:26:20.988Z",
+  "total": 148,
+  "failed": 0,
+  "results": [
+    {
+      "name": "[prod/desktop] /logistics/kho-trung-quoc/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/kho-trung-quoc/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/kho-trung-quoc/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/kho-trung-quoc/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-ha-mon-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-quang-chau-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-nghia-o-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/kho-trung-quoc/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/kho-trung-quoc/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/kho-trung-quoc/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/kho-trung-quoc/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/kho-trung-quoc/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-ha-mon-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-ha-mon-ve-viet-nam/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-quang-chau-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-quang-chau-ve-viet-nam/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-nghia-o-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-nghia-o-ve-viet-nam/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[demo/desktop] /logistics/kho-trung-quoc/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/kho-trung-quoc/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/kho-trung-quoc/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/kho-trung-quoc/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-ha-mon-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-quang-chau-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-nghia-o-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-trung-quoc/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-trung-quoc/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-trung-quoc/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-trung-quoc/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-trung-quoc/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-tham-quyen-ve-viet-nam/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-ha-mon-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-ha-mon-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-ha-mon-ve-viet-nam/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-quang-chau-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-quang-chau-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-quang-chau-ve-viet-nam/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-nghia-o-ve-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-nghia-o-ve-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-nghia-o-ve-viet-nam/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ không request ra ngoài",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ nút sao chép / thẻ kho cao ≥ 44px",
+      "ok": true,
+      "detail": "0 phần tử nhỏ"
+    },
+    {
+      "name": "URL cũ /logistics/kho-quang-chau/ → 404",
+      "ok": true,
+      "detail": "404"
+    },
+    {
+      "name": "URL cũ /logistics/kho-tham-quyen/ → 404",
+      "ok": true,
+      "detail": "404"
+    },
+    {
+      "name": "URL cũ /logistics/van-chuyen-tham-quyen-viet-nam/ → 404",
+      "ok": true,
+      "detail": "404"
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-tham-quyen-ve-viet-nam/: clipboard = địa chỉ nguyên văn",
+      "ok": true,
+      "detail": "深圳市宝安区福海街道海洋新城新钢物流园三期2栋"
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-tham-quyen-ve-viet-nam/: có thông báo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-tham-quyen-ve-viet-nam/: sự kiện copy_address (result=copied) không chứa địa chỉ",
+      "ok": true,
+      "detail": "[{\"event\":\"copy_address\",\"page_path\":\"/logistics/van-chuyen-tham-quyen-ve-viet-nam/\",\"route\":\"tham-quyen\",\"result\":\"copied\"}]"
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-ha-mon-ve-viet-nam/: clipboard = địa chỉ nguyên văn",
+      "ok": true,
+      "detail": "福建省厦门市海沧区囷瑶路嘉功物流2号库3号仓"
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-ha-mon-ve-viet-nam/: có thông báo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-ha-mon-ve-viet-nam/: sự kiện copy_address (result=copied) không chứa địa chỉ",
+      "ok": true,
+      "detail": "[{\"event\":\"copy_address\",\"page_path\":\"/logistics/van-chuyen-ha-mon-ve-viet-nam/\",\"route\":\"ha-mon\",\"result\":\"copied\"}]"
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-quang-chau-ve-viet-nam/: clipboard = địa chỉ nguyên văn",
+      "ok": true,
+      "detail": "广州市白云区钟落潭镇虎塘村凤岗路26号"
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-quang-chau-ve-viet-nam/: có thông báo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-quang-chau-ve-viet-nam/: sự kiện copy_address (result=copied) không chứa địa chỉ",
+      "ok": true,
+      "detail": "[{\"event\":\"copy_address\",\"page_path\":\"/logistics/van-chuyen-quang-chau-ve-viet-nam/\",\"route\":\"quang-chau\",\"result\":\"copied\"}]"
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-nghia-o-ve-viet-nam/: clipboard = địa chỉ nguyên văn",
+      "ok": true,
+      "detail": "义乌市北苑三期秋实路121号6号楼10-12库西门，靠5号货梯"
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-nghia-o-ve-viet-nam/: có thông báo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sao chép /logistics/van-chuyen-nghia-o-ve-viet-nam/: sự kiện copy_address (result=copied) không chứa địa chỉ",
+      "ok": true,
+      "detail": "[{\"event\":\"copy_address\",\"page_path\":\"/logistics/van-chuyen-nghia-o-ve-viet-nam/\",\"route\":\"nghia-o\",\"result\":\"copied\"}]"
+    },
+    {
+      "name": "mạng lưới: 4 nút sao chép",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mạng lưới: nút thứ 4 chép địa chỉ Nghĩa Ô",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "clipboard bị chặn: bôi đen địa chỉ để tự sao chép",
+      "ok": true,
+      "detail": "福建省厦门市海沧区囷瑶路嘉功物流2号库3号仓"
+    },
+    {
+      "name": "clipboard bị chặn: đo lường ghi result=selected (không tính là chép thành công)",
+      "ok": true,
+      "detail": "[{\"event\":\"copy_address\",\"page_path\":\"/logistics/van-chuyen-ha-mon-ve-viet-nam/\",\"route\":\"ha-mon\",\"result\":\"selected\"}]"
+    },
+    {
+      "name": "nút sao chép có tên kho (accessible name)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tắt JS: địa chỉ hiển thị",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tắt JS: nút sao chép ẩn",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

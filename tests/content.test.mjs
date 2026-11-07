@@ -19,6 +19,11 @@ function allHtml(dir = dist) {
 const text = (html) =>
   html.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ');
 
+// VIPG-WEB-021: "Bắc Ninh" là địa chỉ VIPORDER (đơn vị vận hành logistics) công bố tại viporder.com.vn —
+// chỉ được xuất hiện trong khu /logistics/. Trang tập đoàn vẫn cấm (địa chỉ VIP GROUP là Lạng Sơn).
+const LOGISTICS_ONLY = new Set(['Bắc Ninh']);
+const isLogistics = (file) => file.replace(dist, '').startsWith('/logistics/');
+
 const FORBIDDEN = [
   ['VIP TECHNOLOGY', 'tên công ty thành viên tự đặt'],
   ['VIP PROPERTY', 'tên công ty thành viên tự đặt'],
@@ -34,8 +39,13 @@ const FORBIDDEN = [
 
 test('không có chuỗi chưa có nguồn trong nội dung hiển thị', () => {
   for (const file of allHtml()) {
-    const t = text(readFileSync(file, 'utf8'));
+    const raw = readFileSync(file, 'utf8');
+    const t = text(raw);
+    // V1.1: trên trang tập đoàn, "Bắc Ninh" CHỈ được nằm trong chữ của link trỏ vào /logistics/ (tên dịch vụ, không phải địa chỉ VIP GROUP).
+    const tNoLogisticsLinks = text(raw.replace(/<a [^>]*href="\/logistics\/[^"]*"[^>]*>[^<]*<\/a>/g, ' '));
     for (const [needle, why] of FORBIDDEN) {
+      if (LOGISTICS_ONLY.has(needle) && isLogistics(file)) continue;
+      if (LOGISTICS_ONLY.has(needle)) { assert.ok(!tNoLogisticsLinks.includes(needle), `${file.replace(dist, '')}: "${needle}" — ${why}`); continue; }
       assert.ok(!t.includes(needle), `${file.replace(dist, '')}: "${needle}" — ${why}`);
     }
   }

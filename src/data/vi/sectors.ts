@@ -7,6 +7,7 @@ export const sectors: Sector[] = [
     title: 'Xuất nhập khẩu – Hải quan – Logistics',
     summary: 'Dịch vụ hải quan, giao nhận, vận tải và quản trị chuỗi cung ứng cho doanh nghiệp xuất nhập khẩu.',
     focus: ['Thủ tục hải quan', 'Xuất nhập khẩu', 'Vận tải & giao nhận'],
+    link: { href: '/logistics/', label: 'Dịch vụ vận chuyển Trung Quốc – Việt Nam' },
   },
   {
     id: 'technology',
