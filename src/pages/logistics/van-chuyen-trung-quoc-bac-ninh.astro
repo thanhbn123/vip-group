@@ -1,4 +1,5 @@
 ---
+import { getContent } from '../../data';
 import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
 import FaqList from '../../components/logistics/FaqList.astro';
 import Pending from '../../components/logistics/Pending.astro';
@@ -9,6 +10,7 @@ import { provider, processSteps, serviceArea } from '../../data/vi/logistics';
 import type { FaqItem } from '../../data/types';
 
 const page = pageByKey('bac-ninh');
+const { contact } = getContent('vi');
 const site = Astro.site!;
 const ld = [serviceLd({
   name: 'Vận chuyển hàng Trung Quốc về Bắc Ninh',
@@ -23,7 +25,7 @@ const needs = [
   { title: 'Cửa hàng, kinh doanh online', text: 'Hàng đặt từ 1688 / Taobao / Pinduoduo, nhiều đơn nhỏ cần quản lý bằng một mã khách hàng.' },
 ];
 const localFaq: FaqItem[] = [
-  { q: 'Khách hàng ở Từ Sơn, Đồng Kỵ liên hệ thế nào?', a: `${provider.name} có điểm giao dịch tại Bắc Ninh (địa chỉ sẽ cập nhật trên website). Gọi hoặc nhắn Zalo ${prettyPhone(provider.hotline)}; địa điểm nhận hàng (tại kho hoặc theo phương án giao hàng) được thống nhất khi báo giá.` },
+  { q: 'Khách hàng ở Từ Sơn, Đồng Kỵ liên hệ thế nào?', a: `${provider.name} phục vụ khách hàng Bắc Ninh, Từ Sơn, Đồng Kỵ qua hotline / Zalo; văn phòng hiện tại: ${contact.address}. Gọi hoặc nhắn Zalo ${prettyPhone(provider.hotline)}; địa điểm nhận hàng (tại kho hoặc theo phương án giao hàng) được thống nhất khi báo giá.` },
   { q: 'Doanh nghiệp ở Bắc Ninh có cần đến văn phòng để làm thủ tục không?', a: 'Có thể trao đổi thông tin hàng, báo giá và hồ sơ qua điện thoại, Zalo. Với hàng nhập khẩu chính ngạch, bộ chứng từ cụ thể sẽ được hướng dẫn theo từng mặt hàng.' },
   { q: 'Hàng về Bắc Ninh mất bao lâu?', a: 'Thời gian phụ thuộc kho xuất phát, loại hàng và thủ tục; thời gian cụ thể được báo theo từng lô hàng.', pending: true },
 ];
@@ -49,12 +51,12 @@ const localFaq: FaqItem[] = [
     <div class="container split">
       <div>
         <span class="kicker">Đầu mối tại Bắc Ninh</span>
-        <h2 id="office-title">Điểm giao dịch {provider.name} tại Bắc Ninh</h2>
+        <h2 id="office-title">Đầu mối {provider.name} cho khách hàng Bắc Ninh</h2>
         <p class="muted">Thuận tiện cho khách hàng khu vực Từ Sơn, Đồng Kỵ và các khu công nghiệp lân cận.</p>
       </div>
       <div>
         <dl class="info-table">
-          <div><dt>Địa chỉ</dt><dd><Pending fact={provider.officeAddress} /></dd></div>
+          <div><dt>Văn phòng</dt><dd><Pending fact={provider.officeAddress} /></dd></div>
           <div><dt>Hotline / Zalo</dt><dd><a class="text-link" href={telHref(provider.hotline)} data-track="call_click" data-track-location="bn_office">{prettyPhone(provider.hotline)}</a></dd></div>
           <div><dt>Nhận hàng</dt><dd>Tại kho hoặc theo phương án giao hàng đã thỏa thuận</dd></div>
           <div><dt>Khu vực tập trung</dt><dd>{serviceArea.focus.join(', ')}</dd></div>
@@ -73,7 +75,7 @@ const localFaq: FaqItem[] = [
       <div class="prose">
         <p>
           Xưởng đồ gỗ, nội thất thường nhập phụ kiện kim khí, bản lề, ray trượt, tay nắm, sơn và vật tư hoàn thiện từ Trung Quốc theo từng đợt sản xuất.
-          Có điểm giao dịch VIP GROUP ngay tại Bắc Ninh giúp chủ xưởng trao đổi trực tiếp về lô hàng, chứng từ và phương án nhận hàng.
+          Có đầu mối VIP GROUP phục vụ riêng khách Bắc Ninh giúp chủ xưởng trao đổi nhanh về lô hàng, chứng từ và phương án nhận hàng.
         </p>
         <ul class="check-list">
           <li>Đặt phụ kiện từ nhiều nhà cung cấp, quản lý chung bằng một mã khách hàng.</li>

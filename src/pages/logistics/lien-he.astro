@@ -20,7 +20,7 @@ const { contact } = getContent('vi');
         <div><dt>Hotline</dt><dd><a class="text-link" href={telHref(provider.hotline)} data-track="call_click" data-track-location="contact_page">{prettyPhone(provider.hotline)}</a></dd></div>
         <div><dt>Zalo</dt><dd><a class="text-link" href={provider.zaloUrl} rel="noopener" target="_blank" data-track="zalo_click" data-track-location="contact_page">{prettyPhone(provider.hotline)}<span class="visually-hidden"> (mở tab mới)</span></a></dd></div>
         <div><dt>Email</dt><dd><a class="text-link" href={`mailto:${contact.email}`} data-track="email_click" data-track-location="contact_page">{contact.email}</a></dd></div>
-        <div><dt>Điểm giao dịch tại Bắc Ninh</dt><dd><Pending fact={provider.officeAddress} /></dd></div>
+        <div><dt>Văn phòng</dt><dd><Pending fact={provider.officeAddress} /></dd></div>
       </dl>
     </div>
   </section>
@@ -28,7 +28,7 @@ const { contact } = getContent('vi');
     <div class="container split">
       <div>
         <h2 id="area-title">Khu vực phục vụ</h2>
-        <p class="muted">VIP GROUP có điểm giao dịch tại Bắc Ninh. Khu vực khác vui lòng liên hệ để xác nhận phương án nhận hàng.</p>
+        <p class="muted">Ưu tiên khách hàng Bắc Ninh – Từ Sơn – Đồng Kỵ. Khu vực khác vui lòng liên hệ để xác nhận phương án nhận hàng.</p>
       </div>
       <dl class="info-table">
         <div><dt>Khu vực tập trung</dt><dd>{serviceArea.focus.join(', ')}</dd></div>

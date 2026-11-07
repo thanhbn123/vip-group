@@ -161,7 +161,7 @@ export interface LogisticsProvider {
   taxId: string;
   hotline: string;
   zaloUrl: string;
-  /** Địa chỉ điểm giao dịch VIP GROUP tại Bắc Ninh — owner xác nhận có, CHỜ owner cung cấp địa chỉ. */
+  /** Văn phòng liên hệ dịch vụ logistics. Owner 07/11/2026: TẠM ghi văn phòng Lạng Sơn (địa chỉ Bắc Ninh sẽ cập nhật). */
   officeAddress: Fact;
   /** Đăng ký khách hàng: form của VIP GROUP (tạm thời — cổng khách hàng riêng làm sau). */
   registerHref: string;
