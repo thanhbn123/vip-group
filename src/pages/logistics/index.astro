@@ -79,7 +79,7 @@ const audiences = [
       </div>
       <ol class="steps">{processSteps.map((s) => <li><h3>{s.title}</h3><p>{s.text}</p></li>)}</ol>
       <div class="hub-links">
-        <a class="btn btn-ghost" href={provider.registerUrl} rel="noopener" target="_blank" data-track="register_click" data-track-location="hub_process">Đăng ký mã khách hàng<span class="visually-hidden"> (mở tab mới)</span></a>
+        <a class="btn btn-ghost" href={provider.registerHref} data-track="register_click" data-track-location="hub_process">Đăng ký khách hàng</a>
         <a class="btn btn-ghost" href="/logistics/tra-cuu-van-don/">Tra cứu vận đơn</a>
       </div>
     </div>

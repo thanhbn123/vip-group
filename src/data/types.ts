@@ -155,18 +155,16 @@ export interface Fact<T = string> {
 }
 
 export interface LogisticsProvider {
-  /** Đơn vị trực tiếp vận hành dịch vụ. */
+  /** Đơn vị cung cấp dịch vụ (owner 07/11/2026: CÔNG TY TNHH VIP GROUP — tách khỏi VIPORDER). */
   name: string;
   legalName: string;
-  url: string;
-  relation: string;
+  taxId: string;
   hotline: string;
   zaloUrl: string;
-  /** Địa chỉ văn phòng đơn vị vận hành công bố. */
+  /** Địa chỉ điểm giao dịch VIP GROUP tại Bắc Ninh — owner xác nhận có, CHỜ owner cung cấp địa chỉ. */
   officeAddress: Fact;
-  trackingUrl: string;
-  customerPortalUrl: string;
-  registerUrl: string;
+  /** Đăng ký khách hàng: form của VIP GROUP (tạm thời — cổng khách hàng riêng làm sau). */
+  registerHref: string;
 }
 
 /** Mã 4 điểm nhận hàng tại Trung Quốc (owner xác nhận 06/11/2026 — VIPG-WEB-026). */

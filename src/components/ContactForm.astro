@@ -144,6 +144,11 @@ const needs = [
       const params = new URLSearchParams(location.search);
       const preset = params.get('nhu-cau');
       if (preset) { const sel = $<HTMLSelectElement>('cf-need'); if ([...sel.options].some((o) => o.value === preset)) sel.value = preset; }
+      // Đăng ký khách hàng (tạm thời, trước khi có cổng khách hàng riêng): need giữ 'khac' (hợp đồng CRM V5), điền sẵn nội dung.
+      if (params.get('dang-ky') === '1') {
+        const msg = $<HTMLTextAreaElement>('cf-message');
+        if (!msg.value) msg.value = 'Đăng ký khách hàng VIP GROUP — đề nghị cấp mã khách hàng.';
+      }
       const ref = document.referrer ? new URL(document.referrer).host : '';
       const utm = {
         source: params.get('utm_source') ?? (ref && ref !== location.host ? ref : ''),

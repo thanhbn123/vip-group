@@ -101,7 +101,8 @@ test('schema Service/Offer: đúng 5 mức VND/kg, không khai thời gian giao 
 test('không ảnh hưởng nội dung trang chủ đang chạy: title, H1, các khối cũ, thứ tự', () => {
   assert.match(html, /<title>VIP GROUP \| Con người - Công nghệ - Cơ hội<\/title>/);
   assert.equal((html.match(/<h1[\s>]/g) ?? []).length, 1);
-  const order = ['hero-title', 'about-title', 'sectors-title', 'price-title', 'members-title', 'news-title', 'careers-title', 'cta-title'];
+  // Owner 07/11/2026: bỏ VIPORDER → không còn khối "Công ty thành viên" trên trang chủ.
+  const order = ['hero-title', 'about-title', 'sectors-title', 'price-title', 'news-title', 'careers-title', 'cta-title'];
   const pos = order.map((id) => html.indexOf(`id="${id}"`));
   assert.ok(pos.every((p) => p > 0), `thiếu khối: ${order.filter((_, i) => pos[i] < 0)}`);
   assert.deepEqual([...pos].sort((a, b) => a - b), pos, 'thứ tự khối trang chủ thay đổi ngoài dự kiến');
@@ -110,7 +111,7 @@ test('không ảnh hưởng nội dung trang chủ đang chạy: title, H1, các
   // Thay đổi có chủ đích khác: link "Chính sách bảo mật" ở chân trang (VIPG-WEB-023).
   // Thay đổi có chủ đích ngoài bảng giá: link "Chính sách bảo mật" chân trang (023); mục menu/chân trang "Logistics"
   // và link "Dịch vụ vận chuyển Trung Quốc – Việt Nam →" trên thẻ lĩnh vực (021).
-  const strip = (h) => text(h.replace(/<section class="section price-section"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '')
+  const strip = (h) => text(h.replace(/<section class="section price-section"[\s\S]*?<\/section>/, '').replace(/<section class="section" aria-labelledby="members-title"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '')
     .replace(/Chính sách bảo mật · /, '').replace(/0961 102 655/g, '0961102655').replace(/ Xem thêm: Vận chuyển hàng Trung Quốc về Bắc Ninh · Vận chuyển Thâm Quyến về Việt Nam /, ' ').replace(/ Logistics /g, ' ').replace(/ Dịch vụ vận chuyển Trung Quốc – Việt Nam → /, ' ');
   // Thay đổi có chủ đích duy nhất ngoài bảng giá: owner đổi Hotline/Zalo 0968961962 → 0961102655 (06/11/2026).
   const liveNewPhone = live.replace(/0968961962/g, '0961102655').replace(/\+84968961962/g, '+84961102655');

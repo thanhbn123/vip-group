@@ -32,7 +32,7 @@ const guides = articles.map((a) => ({ ...a, href: `/logistics/kien-thuc/${a.slug
       <h2 id="steps-title">Từ đăng ký đến nhận hàng</h2>
       <ol class="steps">{processSteps.map((s) => <li><h3>{s.title}</h3><p>{s.text}</p></li>)}</ol>
       <div class="qt-links">
-        <a class="btn btn-primary" href={provider.registerUrl} rel="noopener" target="_blank" data-track="register_click" data-track-location="process">Đăng ký mã khách hàng<span class="visually-hidden"> (mở tab mới)</span></a>
+        <a class="btn btn-primary" href={provider.registerHref} data-track="register_click" data-track-location="process">Đăng ký khách hàng</a>
         <a class="btn btn-ghost" href="/logistics/tra-cuu-van-don/">Tra cứu vận đơn</a>
       </div>
     </div>

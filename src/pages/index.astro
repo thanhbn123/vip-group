@@ -9,6 +9,7 @@ import MemberNote from '../components/MemberNote.astro';
 import PriceTable from '../components/PriceTable.astro';
 import { getContent } from '../data';
 import { heroBanner } from '../data/vi/hero';
+const heroSrcset = heroBanner ? heroBanner.widths.map((w) => `${heroBanner.base}-${w}.webp ${w}w`).join(', ') : '';
 import { linkable } from '../lib/logistics';
 
 const { company, sectors, subsidiaries, news, careers, contact, pricing } = getContent('vi');
@@ -30,7 +31,7 @@ const sloganLast = sloganParts.pop();
   <section class:list={['hero', { 'hero--banner': heroBanner }]} aria-labelledby="hero-title">
     {heroBanner && (
       <picture class="hero-photo">
-        <source type="image/webp" srcset={heroBanner.widths.map((w) => `${heroBanner.base}-${w}.webp ${w}w`).join(', ')}
+        <source type="image/webp" srcset={heroSrcset}
           sizes="(max-width: 900px) 100vw, 62vw" />
         <img src={`${heroBanner.base}-${heroBanner.widths[0]}.jpg`} alt={heroBanner.alt} width={heroBanner.width} height={heroBanner.height} fetchpriority="high" decoding="async" />
       </picture>
@@ -95,6 +96,7 @@ const sloganLast = sloganParts.pop();
       { href: '/logistics/van-chuyen-tham-quyen-ve-viet-nam/', label: 'Vận chuyển Thâm Quyến về Việt Nam' },
     ].filter((l) => linkable(l.href))} />
 
+{subsidiaries.length > 0 && (
   <section class="section" aria-labelledby="members-title">
     <div class="container">
       <div class="section-head">
@@ -108,6 +110,7 @@ const sloganLast = sloganParts.pop();
       <MemberNote />
     </div>
   </section>
+  )}
 
   <section class="section section-alt" aria-labelledby="news-title">
     <div class="container">

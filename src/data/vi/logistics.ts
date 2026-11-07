@@ -1,11 +1,12 @@
 import { contact } from './contact';
+import { company } from './company';
 import type { Article, FaqItem, LogisticsPage, LogisticsProvider, PickupId, PickupPoint, Fact } from '../types';
 
 /**
  * KHU LOGISTICS — VIPG-WEB-021.
  *
  * QUY TẮC NGUỒN (bắt buộc):
- * - Mọi dữ kiện về dịch vụ lấy từ nội dung VIPORDER đang công bố tại https://viporder.com.vn
+ * - Dữ kiện dịch vụ: owner xác nhận (VIP GROUP cung cấp — directive 07/11/2026, tách khỏi VIPORDER)
  *   (đọc ngày 06/11/2026) hoặc từ dữ liệu owner đã chốt trong repo này.
  * - Chưa có nguồn → `value: null` (OWNER INPUT PENDING). Giao diện hiện "Đang cập nhật" + nút liên hệ.
  * - `sample` là dữ liệu MẪU chỉ hiện khi build `VIPG_DEMO=1`, luôn kèm nhãn MẪU. KHÔNG phải sự thật.
@@ -14,27 +15,22 @@ import type { Article, FaqItem, LogisticsPage, LogisticsProvider, PickupId, Pick
 
 const HOTLINE = contact.hotlineDisplay!;
 
-const SRC_VIPORDER = 'https://viporder.com.vn (nội dung công khai, đọc 06/11/2026)';
+// Owner directive 07/11/2026: CÔNG TY TNHH VIP GROUP trực tiếp cung cấp dịch vụ logistics, TÁCH khỏi VIP GROUP (không link, không nhắc tên).
+const SRC_OWNER_PROVIDER = 'Owner directive 07/11/2026 — VIP GROUP cung cấp dịch vụ logistics';
 
 export const provider: LogisticsProvider = {
-  name: 'VIPORDER',
-  legalName: 'CÔNG TY TNHH XUẤT NHẬP KHẨU LOGISTICS VIP ORDER',
-  url: 'https://viporder.com.vn',
-  // Owner chốt 24/10/2026 (src/data/vi/subsidiaries.ts).
-  relation: 'Cùng chủ sở hữu với VIP GROUP',
-    // Dùng cấu hình hotline/Zalo tập trung của VIP GROUP (src/data/vi/contact.ts) — không khai số riêng ở đây.
+  name: company.name,
+  legalName: company.legalName!,
+  taxId: company.taxId!,
+  // Hotline/Zalo tập trung của VIP GROUP (src/data/vi/contact.ts).
   hotline: contact.hotline!,
   zaloUrl: contact.zaloUrl!,
-  officeAddress: {
-    value: 'Số 62 Khu đô thị Nam Hồng, Đồng Nguyên, Bắc Ninh',
-    source: SRC_VIPORDER,
-  },
-  trackingUrl: 'https://viporder.com.vn/#tracking',
-  customerPortalUrl: 'https://khachhang.viporder.com.vn/login',
-  registerUrl: 'https://viporder.com.vn/#register',
+  // Owner: VIP GROUP có địa chỉ tại Bắc Ninh — CHƯA nhận được địa chỉ → hiển thị "liên hệ hotline".
+  officeAddress: { value: null, source: null },
+  registerHref: '/lien-he/?nhu-cau=khac&dang-ky=1#form-lien-he',
 };
 
-/** Dịch vụ VIPORDER đang công bố (nguồn: SRC_VIPORDER). */
+/** Dịch vụ VIP GROUP cung cấp (nguồn: SRC_OWNER_PROVIDER). */
 export const services = [
   {
     title: 'Vận chuyển Trung Quốc – Việt Nam',
@@ -54,11 +50,11 @@ export const services = [
   },
 ];
 
-/** Quy trình 4 bước VIPORDER công bố (nguồn: SRC_VIPORDER). */
+/** Quy trình 4 bước (nguồn: SRC_OWNER_PROVIDER). */
 export const processSteps = [
-  { title: 'Đăng ký mã khách hàng', text: 'Đăng ký thông tin trên viporder.com.vn để nhận mã khách hàng riêng.' },
+  { title: 'Đăng ký khách hàng', text: `Đăng ký với VIP GROUP qua form trên website hoặc Zalo ${HOTLINE} để nhận mã khách hàng riêng.` },
   { title: 'Gửi hàng', text: 'Dùng mã khách hàng khi gửi hàng hoặc đặt hàng từ Trung Quốc.' },
-  { title: 'Theo dõi', text: 'Tra cứu mã vận đơn / mã bao hoặc đăng nhập hệ thống khách hàng để xem tình trạng.' },
+  { title: 'Theo dõi', text: `Gửi mã vận đơn qua Zalo / hotline ${HOTLINE}, nhân viên VIP GROUP báo tình trạng lô hàng.` },
   { title: 'Nhận hàng', text: 'Nhận hàng tại kho hoặc theo phương án giao hàng đã thỏa thuận.' },
 ];
 
@@ -154,7 +150,7 @@ const pickupBase: PickupBase[] = [
     photos: { value: null, source: null },
     extraFaq: {
       q: 'Đặt hàng 1688, Taobao có giao về kho Quảng Châu được không?',
-      a: 'Được. Khi đặt hàng, điền địa chỉ kho Quảng Châu làm địa chỉ nhận và ghi mã khách hàng theo hướng dẫn nhận được khi đăng ký. VIPORDER cũng hỗ trợ đặt hàng 1688 / Taobao / Pinduoduo nếu bạn cần.',
+      a: 'Được. Khi đặt hàng, điền địa chỉ kho Quảng Châu làm địa chỉ nhận và ghi mã khách hàng theo hướng dẫn nhận được khi đăng ký. VIP GROUP cũng hỗ trợ đặt hàng 1688 / Taobao / Pinduoduo nếu bạn cần.',
     },
   },
   {
@@ -195,7 +191,7 @@ function pickupFaq(p: PickupBase): FaqItem[] {
     },
     {
       q: `Gửi hàng từ ${p.city} về Việt Nam như thế nào?`,
-      a: `Đăng ký mã khách hàng trên viporder.com.vn, gửi địa chỉ kho ${p.city} cho nhà cung cấp và yêu cầu ghi mã khách hàng trên từng kiện. Sau khi hàng nhập kho, theo dõi bằng mã vận đơn / mã bao và nhận hàng tại Việt Nam theo phương án đã thỏa thuận.`,
+      a: `Đăng ký khách hàng với VIP GROUP (form trên website hoặc Zalo ${HOTLINE}), gửi địa chỉ kho ${p.city} cho nhà cung cấp và yêu cầu ghi mã khách hàng trên từng kiện. Sau khi hàng nhập kho, theo dõi bằng mã vận đơn / mã bao và nhận hàng tại Việt Nam theo phương án đã thỏa thuận.`,
     },
     {
       q: `Cước vận chuyển từ ${p.city} về Việt Nam tính thế nào?`,
@@ -235,7 +231,7 @@ export const pickupPoints: PickupPoint[] = pickupBase.map(({ extraFaq: _e, extra
 
 export const pickupById = (id: PickupId) => pickupPoints.find((p) => p.id === id)!;
 
-/** Hệ số quy đổi cân nặng thể tích (cm³ / kg) mà VIPORDER áp dụng — chưa được owner cung cấp. */
+/** Hệ số quy đổi cân nặng thể tích (cm³ / kg) mà VIP GROUP áp dụng — chưa được owner cung cấp. */
 // Owner xác nhận 06/11/2026: có quy đổi thể tích, hệ số 6000; tính theo số lớn hơn giữa cân thực và cân quy đổi.
 export const volumetricDivisor: Fact<number> = { value: 6000, source: 'Owner xác nhận 06/11/2026 (phiên Controller 8d)' };
 
@@ -261,24 +257,20 @@ export const serviceArea = {
 
 export const faqs: FaqItem[] = [
   {
-    q: 'VIP GROUP và VIPORDER có quan hệ thế nào?',
-    a: 'VIPORDER (CÔNG TY TNHH XUẤT NHẬP KHẨU LOGISTICS VIP ORDER) là công ty cùng chủ sở hữu với VIP GROUP, trực tiếp vận hành dịch vụ vận chuyển, nhập khẩu và hải quan Trung Quốc – Việt Nam.',
-  },
-  {
     q: 'Muốn gửi hàng từ Trung Quốc về thì bắt đầu từ đâu?',
-    a: `Đăng ký mã khách hàng trên viporder.com.vn, sau đó dùng mã này khi gửi hàng hoặc đặt hàng. Nếu chưa rõ nên gửi về kho nào, gọi hoặc nhắn Zalo ${HOTLINE} để được hướng dẫn.`,
+    a: `Đăng ký khách hàng với VIP GROUP qua form trên website hoặc Zalo ${HOTLINE} để nhận mã khách hàng, sau đó dùng mã này khi gửi hàng hoặc đặt hàng. Nếu chưa rõ nên gửi về kho nào, nhân viên sẽ hướng dẫn.`,
   },
   {
     q: 'Tra cứu tình trạng hàng ở đâu?',
-    a: 'Tra cứu theo mã vận đơn hoặc mã bao tại mục Tra cứu vận đơn trên viporder.com.vn, không cần đăng nhập. Khách hàng hiện tại có thể đăng nhập khachhang.viporder.com.vn để xem đơn và kiện hàng.',
+    a: `Gửi mã vận đơn (hoặc mã kiện) và mã khách hàng qua Zalo / hotline ${HOTLINE}; nhân viên VIP GROUP tra cứu và báo tình trạng lô hàng.`,
   },
   {
     q: 'Có hỗ trợ đặt hàng 1688, Taobao, Pinduoduo không?',
-    a: 'Có. VIPORDER hỗ trợ khách tìm nguồn và đặt hàng từ các nền tảng 1688, Taobao, Pinduoduo, sau đó vận chuyển về Việt Nam.',
+    a: 'Có. VIP GROUP hỗ trợ khách tìm nguồn và đặt hàng từ các nền tảng 1688, Taobao, Pinduoduo, sau đó vận chuyển về Việt Nam.',
   },
   {
     q: 'Doanh nghiệp cần nhập khẩu chính ngạch thì làm thế nào?',
-    a: 'VIPORDER hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp. Hồ sơ cụ thể phụ thuộc mặt hàng — vui lòng gửi thông tin hàng để được tư vấn.',
+    a: 'VIP GROUP hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp. Hồ sơ cụ thể phụ thuộc mặt hàng — vui lòng gửi thông tin hàng để được tư vấn.',
   },
   {
     // VIPG-WEB-026: owner xác nhận 4 điểm nhận hàng 06/11/2026 → câu này có căn cứ.
@@ -300,7 +292,7 @@ export const faqs: FaqItem[] = [
   },
   {
     q: 'Nhận hàng tại Việt Nam như thế nào?',
-    a: 'Khách nhận hàng tại kho hoặc theo phương án giao hàng đã thỏa thuận khi báo giá. Văn phòng VIPORDER công bố tại Số 62 Khu đô thị Nam Hồng, Đồng Nguyên, Bắc Ninh.',
+    a: `Khách nhận hàng tại kho hoặc theo phương án giao hàng đã thỏa thuận khi báo giá. Gọi hoặc nhắn Zalo ${HOTLINE} để thống nhất địa điểm nhận.`,
   },
   {
     q: 'Hàng bị thiếu, hỏng khi vận chuyển thì xử lý ra sao?',
@@ -322,9 +314,9 @@ export const pages: LogisticsPage[] = [
     nav: 'Tổng quan',
     title: 'Logistics Trung – Việt: vận chuyển, nhập khẩu, hải quan',
     description:
-      'Logistics VIP GROUP: nhận hàng tại Trung Quốc, vận chuyển về Việt Nam, nhập khẩu chính ngạch, khai báo hải quan, đặt hàng 1688. Do VIPORDER vận hành.',
+      'Logistics VIP GROUP: nhận hàng tại 4 kho Trung Quốc, vận chuyển về Việt Nam, nhập khẩu chính ngạch, khai báo hải quan, đặt hàng 1688.',
     h1: 'Logistics Trung Quốc – Việt Nam',
-    lead: 'Nhận hàng tại Trung Quốc, vận chuyển về Việt Nam, hỗ trợ nhập khẩu chính ngạch và khai báo hải quan — văn phòng đơn vị vận hành đặt tại Bắc Ninh.',
+    lead: 'Nhận hàng tại Trung Quốc, vận chuyển về Việt Nam, hỗ trợ nhập khẩu chính ngạch và khai báo hải quan — VIP GROUP có điểm giao dịch tại Bắc Ninh.',
     status: 'ready',
     keyword: 'logistics Trung Việt VIP GROUP (thương hiệu + tổng quan)',
   },
@@ -334,7 +326,7 @@ export const pages: LogisticsPage[] = [
     nav: 'Về Bắc Ninh',
     title: 'Vận chuyển hàng Trung Quốc về Bắc Ninh, Từ Sơn',
     description:
-      `Vận chuyển hàng Trung Quốc về Bắc Ninh, Từ Sơn, Đồng Kỵ và khu công nghiệp. Văn phòng VIPORDER tại Đồng Nguyên, Bắc Ninh. Gọi/Zalo ${HOTLINE}.`,
+      `Vận chuyển hàng Trung Quốc về Bắc Ninh, Từ Sơn, Đồng Kỵ và khu công nghiệp: bảng giá theo kg, 4 kho Trung Quốc. Gọi/Zalo ${HOTLINE}.`,
     h1: 'Vận chuyển hàng Trung Quốc về Bắc Ninh',
     lead: 'Dành cho xưởng sản xuất, doanh nghiệp trong khu công nghiệp và chủ shop tại Bắc Ninh, Từ Sơn, Đồng Kỵ cần nhập hàng Trung Quốc thường xuyên.',
     status: 'ready',
@@ -425,7 +417,7 @@ export const pages: LogisticsPage[] = [
     nav: 'Quy trình',
     title: 'Quy trình gửi hàng từ Trung Quốc về Việt Nam',
     description:
-      'Bốn bước gửi hàng Trung Quốc về Việt Nam cùng VIPORDER: đăng ký mã khách hàng, gửi hàng, theo dõi vận đơn và nhận hàng. Kèm lưu ý đóng gói.',
+      'Bốn bước gửi hàng Trung Quốc về Việt Nam cùng VIP GROUP: đăng ký khách hàng, gửi hàng, theo dõi vận đơn và nhận hàng. Kèm lưu ý đóng gói.',
     h1: 'Quy trình gửi hàng từ Trung Quốc về Việt Nam',
     lead: 'Bốn bước từ lúc đăng ký mã khách hàng tới lúc nhận hàng, kèm những lưu ý giúp lô hàng đi nhanh và đúng.',
     status: 'ready',
@@ -448,11 +440,11 @@ export const pages: LogisticsPage[] = [
     key: 'tra-cuu',
     href: '/logistics/tra-cuu-van-don/',
     nav: 'Tra cứu vận đơn',
-    title: 'Tra cứu vận đơn hàng Trung Quốc – VIPORDER',
+    title: 'Tra cứu vận đơn hàng Trung Quốc về Việt Nam',
     description:
-      'Tra cứu hành trình hàng Trung Quốc về Việt Nam theo mã vận đơn hoặc mã bao trên hệ thống VIPORDER, không cần đăng nhập.',
+      'Tra cứu tình trạng hàng Trung Quốc về Việt Nam: gửi mã vận đơn hoặc mã kiện qua Zalo / hotline, nhân viên VIP GROUP báo lại.',
     h1: 'Tra cứu vận đơn',
-    lead: 'Tra cứu được thực hiện trên hệ thống chính thức của VIPORDER — đơn vị trực tiếp vận hành dịch vụ.',
+    lead: 'Gửi mã vận đơn và mã khách hàng cho VIP GROUP qua Zalo hoặc hotline — nhân viên tra cứu và báo tình trạng lô hàng.',
     status: 'ready',
     keyword: 'tra cứu vận đơn hàng Trung Quốc',
   },
@@ -472,11 +464,11 @@ export const pages: LogisticsPage[] = [
     key: 'lien-he',
     href: '/logistics/lien-he/',
     nav: 'Liên hệ',
-    title: 'Liên hệ Logistics – văn phòng Bắc Ninh, Hotline/Zalo',
+    title: 'Liên hệ Logistics – điểm giao dịch Bắc Ninh, Hotline/Zalo',
     description:
-      `Liên hệ dịch vụ vận chuyển Trung Quốc – Việt Nam: Hotline/Zalo ${HOTLINE}, văn phòng VIPORDER tại Đồng Nguyên, Bắc Ninh. Khu vực phục vụ.`,
+      `Liên hệ dịch vụ vận chuyển Trung Quốc – Việt Nam của VIP GROUP: Hotline/Zalo ${HOTLINE}, form yêu cầu báo giá, khu vực phục vụ Bắc Ninh.`,
     h1: 'Liên hệ và khu vực phục vụ',
-    lead: 'Gọi điện, nhắn Zalo hoặc gửi yêu cầu báo giá — đội ngũ VIPORDER sẽ liên hệ lại.',
+    lead: 'Gọi điện, nhắn Zalo hoặc gửi yêu cầu báo giá — đội ngũ VIP GROUP sẽ liên hệ lại.',
     status: 'ready',
     keyword: 'liên hệ vận chuyển Trung Quốc Bắc Ninh',
   },
@@ -525,7 +517,7 @@ export const articles: Article[] = [
         heading: 'Cân nặng quy đổi',
         paragraphs: [
           'Cân nặng quy đổi (kg) = dài × rộng × cao (cm) ÷ hệ số quy đổi. Hệ số này do từng đơn vị vận chuyển quy định và có thể khác nhau theo tuyến, loại hình vận chuyển.',
-          'Hệ số quy đổi VIPORDER áp dụng sẽ được ghi rõ trong báo giá cho từng lô hàng.',
+          'Hệ số quy đổi VIP GROUP áp dụng sẽ được ghi rõ trong báo giá cho từng lô hàng.',
         ],
       },
       {
@@ -559,7 +551,7 @@ export const articles: Article[] = [
         heading: 'Các bước',
         paragraphs: ['Quy trình chung:'],
         list: [
-          'Đăng ký mã khách hàng VIPORDER trên viporder.com.vn.',
+          `Đăng ký khách hàng với VIP GROUP qua form trên website hoặc Zalo ${HOTLINE}.`,
           'Liên hệ hotline / Zalo để nhận địa chỉ kho nhận hàng và mẫu ghi thông tin người nhận.',
           'Khi đặt hàng, điền địa chỉ kho và ghi mã khách hàng theo đúng mẫu được hướng dẫn.',
           'Lưu lại mã vận đơn nội địa Trung Quốc của nhà cung cấp để đối chiếu và tra cứu.',
@@ -605,7 +597,7 @@ export const articles: Article[] = [
     related: ['/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/bang-gia/'],
   },
   {
-    // NHÁP — cần owner/chuyên viên hải quan VIPORDER duyệt và bổ sung kinh nghiệm thực tế (E-E-A-T)
+    // NHÁP — cần owner/chuyên viên hải quan VIP GROUP duyệt và bổ sung kinh nghiệm thực tế (E-E-A-T)
     // trước khi xuất bản. Chỉ nêu quy tắc chung, không trích số hiệu văn bản chưa đối chiếu.
     slug: 'c-o-form-e-va-ma-hs-hang-tham-quyen',
     title: 'C/O Form E và mã HS khi nhập hàng từ Thâm Quyến, Quảng Đông',
@@ -654,9 +646,9 @@ export const articles: Article[] = [
         ],
       },
       {
-        heading: 'VIPORDER hỗ trợ gì?',
+        heading: 'VIP GROUP hỗ trợ gì?',
         paragraphs: [
-          'VIPORDER hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp. Gửi thông tin mặt hàng, catalogue và hóa đơn dự kiến để được tư vấn mã HS, C/O và chi phí trước khi đặt hàng.',
+          'VIP GROUP hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp. Gửi thông tin mặt hàng, catalogue và hóa đơn dự kiến để được tư vấn mã HS, C/O và chi phí trước khi đặt hàng.',
         ],
       },
     ],
@@ -748,9 +740,9 @@ export const articles: Article[] = [
         ],
       },
       {
-        heading: 'VIPORDER hỗ trợ gì?',
+        heading: 'VIP GROUP hỗ trợ gì?',
         paragraphs: [
-          'VIPORDER hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp theo mặt hàng. Gửi thông tin hàng hóa để được tư vấn hình thức phù hợp trước khi đặt hàng.',
+          'VIP GROUP hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp theo mặt hàng. Gửi thông tin hàng hóa để được tư vấn hình thức phù hợp trước khi đặt hàng.',
         ],
       },
     ],
@@ -847,7 +839,7 @@ export const articles: Article[] = [
       {
         heading: 'Trao đổi trước khi đặt hàng',
         paragraphs: [
-          'Gửi danh sách mặt hàng, ảnh và thông số cho VIPORDER qua hotline / Zalo trước khi chốt đơn với nhà cung cấp để được tư vấn hình thức vận chuyển và thủ tục.',
+          'Gửi danh sách mặt hàng, ảnh và thông số cho VIP GROUP qua hotline / Zalo trước khi chốt đơn với nhà cung cấp để được tư vấn hình thức vận chuyển và thủ tục.',
         ],
       },
     ],

@@ -2,7 +2,7 @@
 /**
  * Khung chung khu Logistics (VIPG-WEB-021).
  * Giữ nguyên Header/Footer thương hiệu VIP GROUP; thêm menu phụ, breadcrumb, CTA liên hệ,
- * thanh liên hệ nhanh trên mobile và ghi chú đơn vị vận hành (VIPORDER).
+ * thanh liên hệ nhanh trên mobile và ghi chú đơn vị cung cấp dịch vụ (CÔNG TY TNHH VIP GROUP).
  */
 import BaseLayout from './BaseLayout.astro';
 import ContactActions from '../components/logistics/ContactActions.astro';
@@ -10,6 +10,8 @@ import StickyBar from '../components/logistics/StickyBar.astro';
 import { DEMO } from '../lib/mode';
 import { isIndexable, navPages } from '../lib/logistics';
 import { provider } from '../data/vi/logistics';
+import { getContent } from '../data';
+const { contact } = getContent('vi');
 import type { LogisticsPage } from '../data/types';
 
 interface Crumb { name: string; href: string }
@@ -77,15 +79,12 @@ const current = Astro.url.pathname;
   <section class="section lg-provider" aria-labelledby="provider-title">
     <div class="container provider-box">
       <div>
-        <h2 id="provider-title" class="provider-title">Đơn vị vận hành dịch vụ</h2>
+        <h2 id="provider-title" class="provider-title">Đơn vị cung cấp dịch vụ</h2>
         <p>
-          Dịch vụ logistics trên trang này do <strong>{provider.name}</strong> — {provider.legalName} — trực tiếp vận hành.{' '}
-          {provider.name} là công ty {provider.relation.charAt(0).toLowerCase() + provider.relation.slice(1)}.
+          Dịch vụ logistics trên trang này do <strong>{provider.legalName}</strong> (mã số doanh nghiệp {provider.taxId}) cung cấp.
+          Liên hệ: Hotline / Zalo {contact.hotlineDisplay}.
         </p>
       </div>
-      <a class="text-link" href={provider.url} rel="noopener" target="_blank" data-track="provider_site_click" data-track-location="provider_box">
-        Website {provider.name}<span class="visually-hidden"> (mở tab mới)</span> →
-      </a>
     </div>
   </section>
 

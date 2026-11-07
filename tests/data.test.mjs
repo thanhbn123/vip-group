@@ -17,16 +17,16 @@ test('đủ sáu nhóm dữ liệu', () => {
 
 test('công ty thành viên placeholder không có tên pháp lý hay website', () => {
   const blocks = src('subsidiaries.ts').split(/\n  \{/).slice(1);
-  assert.ok(blocks.length >= 1);
+  // Owner directive 07/11/2026: tách khỏi VIPORDER — hiện không công bố công ty thành viên nào.
+  assert.equal(blocks.length, 0);
   for (const b of blocks) {
     if (/status: 'placeholder'/.test(b)) {
       assert.match(b, /legalName: null/, 'placeholder không được có legalName');
       assert.match(b, /url: null/, 'placeholder không được có url');
     }
   }
-  assert.match(src('subsidiaries.ts'), /name: 'VIPORDER'[\s\S]*?status: 'active'/);
-  // Owner chốt 24/10/2026: VIPORDER và VIP GROUP là hai công ty CÙNG CHỦ SỞ HỮU, không phải mẹ – con.
-  assert.match(src('subsidiaries.ts'), /relation: 'Cùng chủ sở hữu với VIP GROUP'/);
+  assert.match(src('subsidiaries.ts'), /export const subsidiaries: Subsidiary\[\] = \[\];/);
+  assert.doesNotMatch(src('subsidiaries.ts'), /name: 'VIPORDER'|viporder\.com\.vn/);
 });
 
 test('liên hệ: đúng dữ liệu giấy ĐKDN + owner chốt 24/10/2026, form chưa có backend', () => {
