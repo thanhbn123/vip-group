@@ -188,3 +188,19 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
    - duyệt song song thì các mã khác nhau;
    - VG999, VG01001, VG000001 bị từ chối;
    - đăng nhập bằng `vg1001` được.
+
+## 13. Bỏ bước xác minh (owner 07/11/2026: "bỏ bước xác minh đó chỉ lưu thông tin khách hàng gửi là được" → chọn "Bỏ cả hai")
+
+1. **Không còn xác minh email.** Khách đăng ký xong, tài khoản vào ngay trạng thái `cho_duyet` và VIP ID gửi signup sang CRM. Email là thông tin liên hệ, không bắt buộc.
+2. **Không còn gọi xác minh SĐT.** Bước duyệt của nhân viên là cổng duy nhất. Khi duyệt, VIP ID ghi `phone_verified_at` = thời điểm duyệt, với `method = 'duyet_crm'`.
+3. **Khôi phục mật khẩu do nhân viên hỗ trợ:**
+   - Khách liên hệ hotline/Zalo **0961 102 655**.
+   - Nhân viên xác nhận danh tính, rồi bấm "Tạo link đặt lại" trong CRM. CRM gọi VIP ID qua `POST /api/internal/khach/tao-link-dat-lai` (HMAC).
+   - Link dùng một lần, hạn 30 phút. Nhân viên gửi cho khách qua Zalo; link không được lưu trong DB hay log.
+   - Email reset chỉ bật lại khi có kênh gửi thật (`COWORK_KHACH_EMAIL_ENABLED=1`).
+4. **Rủi ro owner chấp nhận:** người khác có thể đăng ký bằng SĐT của khách thật. Biện pháp giảm thiểu:
+   - SĐT unique, nên tài khoản thứ hai cùng SĐT không được tạo;
+   - cờ `phone_conflict` hiện trên màn duyệt;
+   - nhân viên tự cân nhắc trước khi duyệt;
+   - đăng ký bị từ chối thì SĐT được giải phóng.
+5. **Không cần email thật để lên production.** Điểm chặn A8 được gỡ khi `COWORK_KHACH_EMAIL_ENABLED=0`.
