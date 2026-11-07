@@ -8,7 +8,7 @@ const CHROMIUM = process.env.CHROMIUM || '/Users/viporder/Library/Caches/ms-play
 export async function launchBrowser() {
   const pw = await import(pathToFileURL(PLAYWRIGHT).href);
   const chromium = pw.chromium || pw.default?.chromium;
-  return chromium.launch({ executablePath: CHROMIUM, headless: true, args: ['--host-resolver-rules=MAP khach.localhost 127.0.0.1'] });
+  return chromium.launch({ executablePath: CHROMIUM, headless: true, args: ['--host-resolver-rules=MAP *.localhost 127.0.0.1, MAP localhost 127.0.0.1'] });
 }
 
 export const MOBILE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'vi-VN' };

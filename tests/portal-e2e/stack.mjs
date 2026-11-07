@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import net from 'node:net';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { raw } from './http.mjs';
 
@@ -42,20 +43,37 @@ export function stackConfig(env = process.env) {
   // §15: TOPO=multi — dangky.localhost (đăng ký) · dangnhap.localhost (đăng nhập/tài khoản + API nội bộ) · khachhang.localhost (CRM /portal)
   //      TOPO=single — một host khach.localhost (cấu hình cũ; mặc định ở real mode tới khi CRM có §15)
   const TOPO = (env.TOPO || (MODE === 'real' ? 'single' : 'multi')).toLowerCase();
+  // HOST_SUFFIX: mặc định 'vipgroup.localhost' ⇒ ba host CÙNG một site (như *.vipgroup.com.vn ở production). Với 'localhost'
+  // trần, trình duyệt coi mỗi *.localhost là một site riêng ⇒ cookie SameSite=Strict (vg_portal) bị bỏ ở chuỗi chuyển hướng
+  // dangnhap → khachhang (xem báo cáo). Dùng HOST_SUFFIX=localhost để tái hiện.
+  const SUF = (env.HOST_SUFFIX || 'vipgroup.localhost').toLowerCase();
   const H = TOPO === 'multi'
-    ? { dangky: `dangky.localhost:${PROXY_PORT}`, dangnhap: `dangnhap.localhost:${PROXY_PORT}`, portal: `khachhang.localhost:${PROXY_PORT}` }
+    ? { dangky: `dangky.${SUF}:${PROXY_PORT}`, dangnhap: `dangnhap.${SUF}:${PROXY_PORT}`, portal: `khachhang.${SUF}:${PROXY_PORT}` }
     : { dangky: `khach.localhost:${PROXY_PORT}`, dangnhap: `khach.localhost:${PROXY_PORT}`, portal: `khach.localhost:${PROXY_PORT}` };
   return {
     TOPO, H,
     MODE, VIPID_REPO, PY, PROXY_PORT, VIPID_PORT, CRM_PORT, START, runDir, dataDir, dbPath, CRM_REPO, CRM_DB,
     CRM_DATABASE_URL: `postgres:///${CRM_DB}`,
     KHACH_HOST: H.dangnhap, // host mặc định cho trang /tai-khoan/* (single: khach.localhost)
-    KHACH_HOST_DIRECT: TOPO === 'multi' ? `dangnhap.localhost:${VIPID_PORT}` : `khach.localhost:${VIPID_PORT}`, // gọi thẳng VIP ID (API nội bộ)
+    KHACH_HOST_DIRECT: TOPO === 'multi' ? `dangnhap.${SUF}:${VIPID_PORT}` : `khach.localhost:${VIPID_PORT}`,
+    HOST_SUFFIX: SUF, // gọi thẳng VIP ID (API nội bộ)
     STAFF_HOST: env.VIPID_STAFF_HOST || '127.0.0.1:8899', // chỉ là giá trị header Host; KHÔNG nghe cổng 8899
     secretFile: env.VIPID_PORTAL_SECRET_FILE || path.join(dataDir, 'portal_secret.key'),
     mockLog: runDir ? path.join(runDir, 'mock-crm.log') : null,
   };
 }
+
+/** Env bổ sung lúc chạy (bật pilot, …) — áp cho server VIP ID/CRM khởi động sau đó và cho CLI VIP ID. */
+export const runtime = { vipidExtra: {}, crmExtra: {} };
+
+/** Bí mật COWORK → CRM (cowork-launch/1): một tệp 0600, VIP ID đọc tệp (COWORK_CRM_LAUNCH_SECRET_FILE), CRM nhận giá trị (COWORK_SHARED_SECRET). */
+export function coworkSecretFile(cfg) { return path.join(cfg.dataDir, 'crm_launch_secret.key'); }
+export function ensureCoworkSecret(cfg) {
+  const f = coworkSecretFile(cfg);
+  if (!fs.existsSync(f)) { fs.mkdirSync(path.dirname(f), { recursive: true, mode: 0o700 }); fs.writeFileSync(f, crypto.randomBytes(36).toString('base64url'), { mode: 0o600 }); }
+  return fs.readFileSync(f, 'utf8').trim();
+}
+const readOr = (f) => { try { return fs.readFileSync(f, 'utf8').trim(); } catch { return ''; } };
 
 /** Env cho mọi tiến trình Python của VIP ID (server + CLI helper). */
 export function vipidEnv(cfg, extra = {}) {
@@ -72,7 +90,7 @@ export function vipidEnv(cfg, extra = {}) {
     COWORK_KHACH_ENABLED: '1',
     ...(cfg.TOPO === 'multi' ? {
       COWORK_KHACH_HOSTS: '',
-      COWORK_KHACH_HOST_DANGKY: 'dangky.localhost', COWORK_KHACH_HOST_DANGNHAP: 'dangnhap.localhost', // không cổng ⇒ khớp mọi cổng (proxy 8890 + gọi thẳng 8898)
+      COWORK_KHACH_HOST_DANGKY: `dangky.${cfg.HOST_SUFFIX}`, COWORK_KHACH_HOST_DANGNHAP: `dangnhap.${cfg.HOST_SUFFIX}`, // không cổng ⇒ khớp mọi cổng (proxy 8890 + gọi thẳng 8898)
       COWORK_KHACH_DANGKY_URL: `http://${cfg.H.dangky}`, COWORK_KHACH_DANGNHAP_URL: `http://${cfg.H.dangnhap}`,
       COWORK_KHACH_TIEP_CHO_PHEP: `http://${cfg.H.portal}/portal`,
     } : { COWORK_KHACH_HOSTS: `${cfg.KHACH_HOST},${cfg.KHACH_HOST_DIRECT}` }),
@@ -86,6 +104,11 @@ export function vipidEnv(cfg, extra = {}) {
     CRM_PORTAL_TIMEOUT: '2',
     PYTHONDONTWRITEBYTECODE: '1',
     PYTHONUNBUFFERED: '1',
+    // COWORK → CRM nội bộ (§15.6): CRM staff host = 127.0.0.1:$CRM_PORT
+    COWORK_CRM_PUBLIC_URL: `http://127.0.0.1:${cfg.CRM_PORT}`,
+    COWORK_CRM_LAUNCH_SECRET_FILE: coworkSecretFile(cfg),
+    COWORK_KHACH_PILOT: '0',
+    ...runtime.vipidExtra,
     ...extra,
   };
 }
@@ -99,7 +122,14 @@ export function crmEnv(cfg, extra = {}) {
     DATABASE_URL: cfg.CRM_DATABASE_URL,
     PORTAL_ENABLED: '1', PORTAL_HOST: cfg.H.portal, PORTAL_PUBLIC_URL: `http://${cfg.H.portal}`,
     // §15: Host CRM gửi khi gọi thẳng VIP ID (API nội bộ chỉ ở host dangnhap); CRM cũ dùng PORTAL_HOST
-    ...(cfg.TOPO === 'multi' ? { VIPID_PORTAL_HOST: cfg.KHACH_HOST_DIRECT } : {}),
+    ...(cfg.TOPO === 'multi' ? {
+      VIPID_PORTAL_HOST: cfg.KHACH_HOST_DIRECT,
+      PORTAL_LOGIN_URL: `http://${cfg.H.dangnhap}/tai-khoan/dang-nhap`,
+    } : {}),
+    VIPID_PUBLIC_URL: `http://${cfg.H.dangnhap}`,
+    COWORK_SHARED_SECRET: readOr(coworkSecretFile(cfg)),
+    ...(cfg.runDir ? { PORTAL_OFF_FILE: path.join(cfg.runDir, 'portal.off') } : {}),
+    ...runtime.crmExtra,
     VIPID_PORTAL_URL: `http://127.0.0.1:${cfg.VIPID_PORT}`, VIPID_PORTAL_SECRET_FILE: cfg.secretFile,
     ...(st ? { STORAGE_DIR: path.join(st, 'docs'), BACKUP_DIR: path.join(st, 'backups') } : {}),
     ...extra,
@@ -177,6 +207,7 @@ export class Stack {
     // Tạo bí mật portal (0600) trước để CRM giả đọc cùng tệp — đúng như khach-dev.sh
     const r = spawnSync(c.PY, ['-c', 'from cowork import khach; khach.portal_secret()'], { cwd: c.VIPID_REPO, env: vipidEnv(c), encoding: 'utf8' });
     if (r.status !== 0) throw new Error('Không tạo được portal secret: ' + r.stderr);
+    ensureCoworkSecret(c);
     if (c.MODE === 'real') { this.setupCrmDb(); await this.startCrm(); } else await this.startMockCrm();
     await this.startVipid();
     this.procs.proxy = this.spawnLogged('proxy', process.execPath, [path.join(HERE, 'proxy.mjs')], {

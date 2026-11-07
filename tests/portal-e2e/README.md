@@ -14,7 +14,7 @@ node tests/portal-e2e/run.mjs [thư-mục-ảnh]            # mặc định /tmp
 MODE=real node tests/portal-e2e/run.mjs [thư-mục-ảnh]
 ```
 
-Bộ test tự bật và tự tắt cả stack (`START=1`, mặc định): VIP ID `:8898`, CRM giả `:8897` hoặc CRM thật `:5195`, proxy `khach.localhost:8890`. Proxy giống Caddy production: `/tai-khoan*` → VIP ID, `/portal*` → CRM, mọi đường khác → 404, Host lạ → 421. Không dùng các cổng 4321/4322/4351/8899. Cổng `127.0.0.1:8899` chỉ xuất hiện dưới dạng giá trị header Host của realm nhân viên VIP ID, bộ test không nghe trên cổng đó.
+Bộ test tự bật và tự tắt cả stack (`START=1`, mặc định): VIP ID `:8898`, CRM giả `:8897` hoặc CRM thật `:5195`, proxy `:8890`. Proxy giống Caddy production. Với `TOPO=multi`, `dangky.*` và `dangnhap.*` → VIP ID; `khachhang.*` → CRM cho `/portal*`, `/` → 302 `/portal/`. Với `TOPO=single`, `khach.localhost`: `/tai-khoan*` → VIP ID, `/portal*` → CRM. Ở cả hai: mọi đường khác → 404, `/api/internal/*` → 404, Host lạ → 421. Proxy ghi đè `X-Real-IP` và không thêm `X-Forwarded-For` / `Forwarded` / `Via`. Không dùng các cổng 4321/4322/4351/8899. Cổng `127.0.0.1:8899` chỉ xuất hiện dưới dạng giá trị header Host của realm nhân viên VIP ID, bộ test không nghe trên cổng đó.
 
 Kết quả: bảng `PASS / FAIL / PENDING / XFAIL` trên stdout, `results.json` và ảnh 390px trong thư mục ảnh. Mã thoát khác 0 khi có ít nhất một `FAIL`.
 
@@ -37,6 +37,7 @@ Mỗi lượt in SHA đang chạy của VIP ID và CRM (`+dirty` nếu working t
 | `STRICT_BROWSER=1` | tắt | tắt vá tạm Origin (xem FLOW-00) |
 | `KEEP=1` | tắt | giữ thư mục tạm và DB CRM để điều tra |
 | `VERBOSE=1` | tắt | in từng điều kiện đã đạt |
+| `TOPO` | `multi` (mock) / `single` (real) | §15: `multi` = `dangky.localhost` (đăng ký) · `dangnhap.localhost` (đăng nhập, tài khoản, API nội bộ) · `khachhang.localhost` (CRM `/portal`); `single` = một host `khach.localhost` (CRM chưa có §15) |
 | `CODE_RULE` | `v2` | `v2`: VG1001, VG1002… (`^VG[1-9]\d{3,8}$`); `v1`: VG000001 |
 | `CRM_SKIP_VERIFY_PHONE=1` | tắt | bỏ gọi `verify-phone` trước approve/link (khi CRM bỏ bước này) |
 | `CRM_RESET_LINK_ROUTE` | chưa đặt | route nhân viên CRM cấp link đặt lại, vd `/api/portal/customers/:id/reset-link` (`:id` = customers.id, body `{reason}`); chưa đặt thì gọi thẳng VIP ID `tao-link-dat-lai` bằng HMAC và FLOW-11b là PENDING |

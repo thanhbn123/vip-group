@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
-import { stackConfig, Stack, vipidCli, sqlRead, crmSql } from './stack.mjs';
+import { stackConfig, Stack, vipidCli, sqlRead, crmSql, runtime, coworkSecretFile } from './stack.mjs';
 import { raw, absorb, cookieHeader, formField } from './http.mjs';
 import { KhachClient, hostFor, PW_STRONG, outbox, account, syncRows, internalPost, decodeLaunch, portalSecret, signV11, synth } from './vipid.mjs';
 import { MockCrm, RealCrm, waitFor } from './crm.mjs';
@@ -176,6 +176,7 @@ async function main() {
   const K1 = mk('K1', 1, 'Nguyễn Văn Tổng Hợp');
   K1.pw = PW_STRONG;
   let seedCache = null;
+  const pget = (host, p, headers = {}) => raw({ port: cfg.PROXY_PORT, path: p, hostHeader: host, headers });
   let ctxB = null;
 
   // ════════════ LUỒNG ĐẦY ĐỦ ════════════
@@ -788,16 +789,20 @@ async function main() {
     const pw = 'Nhan-Vien-E2E-2026!x';
     const cr = vipidCli(cfg, ['create-owner', '--id', `e2e-owner-${RUN}`, '--name', 'E2E Owner'], { E2E_OWNER_PW: pw, COWORK_OWNER_PASSWORD: pw });
     if (cr.code !== 0) throw new Error(`create-owner lỗi: ${cr.err || cr.out}`);
+    staffJar = await staffLogin(`e2e-owner-${RUN}`, pw);
+    return staffJar;
+  }
+  /** Đăng nhập COWORK (realm nhân viên VIP ID, Host 127.0.0.1:8899) → jar cookie (cowork_session). */
+  async function staffLogin(userId, pw) {
     const jar = {};
     const g = await raw({ port: cfg.VIPID_PORT, path: '/dang-nhap', hostHeader: cfg.STAFF_HOST });
     absorb(jar, g.setCookies);
     const csrf = formField(g.body, '_csrf') || jar.cowork_csrf;
     const p = await raw({ port: cfg.VIPID_PORT, method: 'POST', path: '/dang-nhap', hostHeader: cfg.STAFF_HOST,
       headers: { cookie: cookieHeader(jar), 'content-type': 'application/x-www-form-urlencoded', origin: `http://${cfg.STAFF_HOST}` },
-      body: new URLSearchParams({ _csrf: csrf, userId: `e2e-owner-${RUN}`, matKhau: pw, next: '/' }).toString() });
+      body: new URLSearchParams({ _csrf: csrf, userId, matKhau: pw, next: '/' }).toString() });
     absorb(jar, p.setCookies);
-    if (!jar.cowork_session) throw new Error(`không đăng nhập được nhân viên: ${p.status} ${p.headers.location || ''}`);
-    staffJar = jar;
+    if (!jar.cowork_session) throw new Error(`không đăng nhập được nhân viên ${userId}: ${p.status} ${p.headers.location || ''}`);
     return jar;
   }
 
@@ -1088,7 +1093,16 @@ async function main() {
     let idx = '';
     try { idx = fs.readFileSync(`${cfg.CRM_REPO}/web-portal/index.html`, 'utf8'); } catch { /* không có repo CRM */ }
     const form = /<form[^>]*id="logout-form"[^>]*>/.exec(idx)?.[0] || '';
-    t.ok(/method="get"/i.test(form) && /action="\/tai-khoan\/dang-xuat"/.test(form), `web-portal: form đăng xuất là GET /tai-khoan/dang-xuat (${form.slice(0, 80)})`);
+    let appJs = '';
+    try { appJs = fs.readFileSync(`${cfg.CRM_REPO}/web-portal/app.js`, 'utf8'); } catch { /* không có */ }
+    const viaConfig = /logout_url/.test(appJs) && /location\.assign\(CFG\.logout\)/.test(appJs);
+    t.ok(!/method="post"/i.test(form) && ((/method="get"/i.test(form) && /action="\/tai-khoan\/dang-xuat"/.test(form)) || viaConfig),
+      `web-portal: đăng xuất không POST thẳng sang VIP ID — ${viaConfig ? 'chuyển tới logout_url của /portal/api/config' : 'form GET /tai-khoan/dang-xuat'} (${form.slice(0, 60)})`);
+    if (MODE === 'real') {
+      const cf = JSON.parse((await pget(cfg.H.portal, '/portal/api/config')).body);
+      t.eq(cf.logout_url, `${B.dangnhap}/tai-khoan/dang-xuat`, '/portal/api/config logout_url → trang xác nhận đăng xuất VIP ID');
+      t.eq(cf.login_url, `${B.dangnhap}/tai-khoan/dang-nhap`, '/portal/api/config login_url');
+    }
     const c = new KhachClient(cfg);
     const lr = await c.login(K1.phone, K1.pw);
     t.ok(lr.status === 303 && /\/portal\/auth\/launch/.test(lr.headers.location || ''), 'K1 đăng nhập (có phiên VIP ID)');
@@ -1295,7 +1309,6 @@ async function main() {
   // ─── §15: nhiều host (dangky / dangnhap / khachhang) ───
   const multi = cfg.TOPO === 'multi';
   const needMulti = (t) => { if (!multi) t.pending('TOPO=single (CRM chưa có §15) — chạy TOPO=multi khi CRM hỗ trợ'); };
-  const pget = (host, p, headers = {}) => raw({ port: cfg.PROXY_PORT, path: p, hostHeader: host, headers });
 
   await check('HOST-01', '§15 tách host: dangky chỉ đăng ký, dangnhap không có đăng ký, khachhang chỉ /portal; /api/internal/* 404 mọi host; host lạ 421', 'both', async (t) => {
     needMulti(t);
@@ -1346,7 +1359,7 @@ async function main() {
       await loginBrowser(pg, K1.phoneLocal, K1.pw);
       const ck = await ctx.cookies();
       const byName = (n) => ck.filter((x) => x.name === n).map((x) => x.domain);
-      t.ok(byName('vg_khach').every((d) => d === 'dangnhap.localhost') && byName('vg_khach').length === 1, `vg_khach domain = ${byName('vg_khach').join(',')}`);
+      t.ok(byName('vg_khach').every((d) => d === cfg.H.dangnhap.split(':')[0]) && byName('vg_khach').length === 1, `vg_khach domain = ${byName('vg_khach').join(',')}`);
       t.ok(ck.every((x) => !x.domain.startsWith('.')), 'không cookie nào là domain cookie (".localhost")');
       t.eq((await ctx.cookies(B.dangky)).filter((x) => x.name === 'vg_khach').length, 0, 'dangky không nhận vg_khach');
       t.eq((await ctx.cookies(`${B.portal}/portal/`)).filter((x) => x.name.startsWith('vg_khach')).length, 0, 'khachhang không nhận cookie VIP ID');
@@ -1365,7 +1378,7 @@ async function main() {
     t.ok(new URL(vc.headers.location).searchParams.get('tiep') === '/portal/tra-cuu', 'vao-cong?tiep=… cũng mang tiep');
     const bad = ['https://evil.example/portal', `http://${cfg.H.portal}.evil.example/portal`, `http://evil@${cfg.H.portal}/portal`, '//evil.example/portal',
       `http://${cfg.H.portal}/portal/../tai-khoan/dang-nhap`, `http://${cfg.H.portal}/portalx`, `http://${cfg.H.portal}/portal/%2e%2e/x`, `http://${cfg.H.portal}/portal//evil.example`,
-      'javascript:alert(1)', `http://khachhang.localhost:${cfg.PROXY_PORT + 1}/portal`, `http://${cfg.H.dangnhap}/tai-khoan/ho-so`, `https://${cfg.H.portal}/portal`,
+      'javascript:alert(1)', `http://${cfg.H.portal.split(':')[0]}:${cfg.PROXY_PORT + 1}/portal`, `http://${cfg.H.dangnhap}/tai-khoan/ho-so`, `https://${cfg.H.portal}/portal`,
       `http://${cfg.H.portal}/portal/\\evil`, `http://${cfg.H.portal}/portal/%5cevil`, '/portal/kien-hang'];
     for (const b of bad) {
       const cx = new KhachClient(cfg);
@@ -1376,7 +1389,13 @@ async function main() {
         `tiep="${b}" bị bỏ qua (launch không có tiep, form không giữ)`);
     }
     if (MODE === 'real') {
-      t.pending('real: kiểm trình duyệt tới đúng /portal/kien-hang sau launch — chờ CRM §15 (launch đọc tiep)');
+      const c2 = new KhachClient(cfg);
+      const l2 = await c2.login(K1.phone, K1.pw, { tiep: `${B.portal}/portal/` });
+      const la = await c2.req('GET', l2.headers.location);
+      t.ok(la.status === 303 && /^(\/portal\/|http:\/\/[^/]+\/portal\/)/.test(la.headers.location || ''), `launch với tiep → ${la.status} ${la.headers.location}`);
+      const lb = await c.req('GET', lr.headers.location);
+      t.note(`tiep=/portal/kien-hang: CRM launch chuyển tới ${lb.headers.location} (${/kien-hang/.test(lb.headers.location || '') ? 'dùng tiep' : 'bỏ qua tiep, về /portal/'})`);
+      t.ok(lb.status === 303 && /\/portal\//.test(lb.headers.location || '') && !/evil/.test(lb.headers.location || ''), 'launch luôn ở trong /portal/ trên host cổng');
     }
   });
 
@@ -1405,9 +1424,163 @@ async function main() {
     const ok = await internalPost(cfg, '/api/internal/khach/thu-hoi', { subject: D.subject, reason: 'khong-header' });
     t.eq(ok.status, 200, `đối chứng: không header proxy, Host ${cfg.KHACH_HOST_DIRECT} → 200`);
     if (multi) {
-      const dk = await internalPost(cfg, '/api/internal/khach/thu-hoi', { subject: D.subject, reason: 'host-dangky' }, { hostHeader: `dangky.localhost:${cfg.VIPID_PORT}` });
+      const dk = await internalPost(cfg, '/api/internal/khach/thu-hoi', { subject: D.subject, reason: 'host-dangky' }, { hostHeader: `${cfg.H.dangky.split(':')[0]}:${cfg.VIPID_PORT}` });
       t.eq(dk.status, 404, 'API nội bộ trên host dangky → 404 (chỉ ở dangnhap)');
     }
+  });
+
+  // ─── Công tắc khẩn ───
+  await check('KILL-01', 'Công tắc bảo trì VIP ID (tệp khach_bao_tri.flag): mọi host khách 503 ngay, không cần khởi động lại; xoá tệp → hoạt động lại', 'both', async (t) => {
+    needsStart(t);
+    const flag = path.join(cfg.dataDir, 'khach_bao_tri.flag');
+    const live = MODE === 'real' ? await portalClient(K1) : null;
+    fs.writeFileSync(flag, 'e2e');
+    try {
+      for (const [h, p] of [[cfg.H.dangky, '/tai-khoan/dang-ky'], [cfg.H.dangnhap, '/tai-khoan/dang-nhap'], [cfg.H.dangnhap, '/tai-khoan/vao-cong']]) {
+        const r = await pget(h, p);
+        t.ok(r.status === 503 && /bảo trì/i.test(r.body) && !/Traceback/.test(r.body), `${h}${p} → ${r.status} trang bảo trì`);
+      }
+      const lg = await new KhachClient(cfg).login(K1.phone, K1.pw).catch(() => ({ status: 0 }));
+      t.ok(lg.status === 503, `đăng nhập khi bảo trì → ${lg.status}`);
+      t.eq((await raw({ port: cfg.VIPID_PORT, path: '/dang-nhap', hostHeader: cfg.STAFF_HOST })).status, 200, 'realm nhân viên (COWORK) không bị ảnh hưởng');
+      if (live) t.eq((await papi(live, '/portal/api/me')).status, 200, 'phiên cổng CRM đang mở vẫn đọc được (CRM độc lập)');
+    } finally { fs.rmSync(flag, { force: true }); }
+    t.eq((await pget(cfg.H.dangnhap, '/tai-khoan/dang-nhap')).status, 200, 'xoá tệp → dangnhap 200');
+    t.ok((await new KhachClient(cfg).login(K1.phone, K1.pw)).status === 303, 'đăng nhập lại được');
+  });
+
+  await check('KILL-02', 'Công tắc tắt cổng CRM (PORTAL_OFF_FILE): /portal* và /api/internal/portal/* 503 trong ≤2 s; CRM nhân viên không bị ảnh hưởng; xoá tệp → hoạt động lại', 'real', async (t) => {
+    needsStart(t);
+    const off = path.join(cfg.runDir, 'portal.off');
+    const live = await portalClient(K1);
+    fs.writeFileSync(off, 'e2e');
+    try {
+      await new Promise((r) => setTimeout(r, 2500));
+      t.eq((await papi(live, '/portal/api/me')).status, 503, 'phiên đang mở: /portal/api/me → 503');
+      t.eq((await pget(cfg.H.portal, '/portal/')).status, 503, '/portal/ → 503');
+      const sig = await raw({ port: cfg.CRM_PORT, method: 'POST', path: '/api/internal/portal/signups', hostHeader: `127.0.0.1:${cfg.CRM_PORT}`, headers: { 'content-type': 'application/json' }, body: '{}' });
+      t.eq(sig.status, 503, 'VIP ID → CRM /api/internal/portal/signups → 503');
+      const lg = await new KhachClient(cfg).login(K1.phone, K1.pw);
+      const loc = new URL(lg.headers.location);
+      t.eq((await pget(cfg.H.portal, loc.pathname + loc.search)).status, 503, 'launch → 503');
+      t.eq((await crm.api('GET', '/api/me', undefined, { token: await crm.login() })).status, 200, 'CRM nhân viên /api/me vẫn 200');
+      const nu = mk('OFF', 90, 'Khách Lúc Tắt Cổng');
+      const rg = await new KhachClient(cfg).register({ name: nu.name, phone: nu.phoneLocal, email: '' });
+      t.ok(rg.status === 303, 'VIP ID vẫn nhận đăng ký (signup xếp hàng)');
+      nu.subject = account(cfg, 'phone_e164=?', [nu.phone])[0].subject;
+    } finally { fs.rmSync(off, { force: true }); }
+    await new Promise((r) => setTimeout(r, 2500));
+    t.eq((await papi(live, '/portal/api/me')).status, 200, 'xoá tệp → phiên cổng hoạt động lại');
+    const d = vipidCli(cfg, ['khach-dong-bo', '--tat-ca']);
+    t.ok(await waitFor(async () => !!(await crm.findSignup(P.OFF.subject)), 20_000), `signup lúc tắt cổng được gửi khi bật lại (${d.out.trim()})`);
+  });
+
+  // ─── Pilot (danh sách cho phép ở CẢ HAI phía) ───
+  await check('PILOT-01', 'Pilot: SĐT trong danh sách dùng được; ngoài danh sách → trang pilot / PILOT_NOT_ALLOWED; rút khỏi danh sách (VIP ID khach-pilot remove / tệp CRM) → phiên cổng kết thúc', 'real', async (t) => {
+    needsStart(t);
+    const K2 = P.K2; const K3 = P.K3;
+    t.ok(K2 && K3 && K1.code, 'có K1, K2, K3 đã duyệt');
+    const vipFile = path.join(cfg.dataDir, 'khach_pilot.txt');
+    const crmFile = path.join(cfg.runDir, 'portal_pilot.txt');
+    fs.writeFileSync(crmFile, `# E2E pilot CRM\n${K1.code}\n`);
+    runtime.vipidExtra = { COWORK_KHACH_PILOT: '1', COWORK_KHACH_PILOT_FILE: vipFile };
+    runtime.crmExtra = { PORTAL_PILOT_FILE: crmFile };
+    for (const ph of [K1.phone, K3.phone]) {
+      const r = vipidCli(cfg, ['khach-pilot', 'add', ph]);
+      t.ok(r.code === 0, `khach-pilot add ${ph.slice(0, 6)}… (${r.out.trim()})`);
+    }
+    await stack.stopVipid(); await stack.stopCrm();
+    try {
+      await stack.startCrm(); await stack.startVipid();
+      const c1 = await portalClient(K1);
+      t.eq((await papi(c1, '/portal/api/me')).status, 200, 'K1 (có ở cả hai danh sách) → vào cổng');
+      const l2 = await new KhachClient(cfg).login(K2.phone, K2.pw || PW_STRONG);
+      t.ok(l2.status === 403 && /chạy thử/i.test(l2.body) && !/portal\/auth\/launch/.test(l2.headers.location || ''), `K2 (ngoài danh sách VIP ID) → ${l2.status} trang pilot`);
+      const nu = synth(RUN, 91);
+      const rg = await new KhachClient(cfg).register({ name: 'Ngoài Pilot', phone: nu.phoneLocal, email: '' });
+      t.ok(rg.status === 403 && account(cfg, 'phone_e164=?', [nu.phone]).length === 0, `đăng ký SĐT ngoài pilot → ${rg.status}, không tạo tài khoản`);
+      const l3 = await new KhachClient(cfg).login(K3.phone, PW_STRONG);
+      const u3 = new URL(l3.headers.location || 'http://x/');
+      const la3 = await pget(cfg.H.portal, u3.pathname + u3.search);
+      const aud = crmSql(cfg, `SELECT count(*) FROM audit_log WHERE action LIKE 'portal.launch%' AND outcome='denied' AND coalesce(reason,'') LIKE '%PILOT_NOT_ALLOWED%'`)[0];
+      t.ok(l3.status === 303 && la3.status === 401 && !(la3.setCookies || []).some((x) => x.startsWith('vg_portal=')) && Number(aud) >= 1,
+        `K3 (có ở VIP ID, không có ở CRM) → login ${l3.status}, launch ${la3.status}, không cấp phiên, audit PILOT_NOT_ALLOWED=${aud}`);
+      // Rút phía CRM: bỏ K1 khỏi tệp CRM → phiên đang mở bị cắt (đọc lại ≤5 s)
+      fs.writeFileSync(crmFile, '# rỗng\n');
+      t.ok(await waitFor(async () => (await papi(c1, '/portal/api/me')).status === 401, 12_000), 'CRM: bỏ K1 khỏi tệp pilot → phiên cổng đang mở bị cắt');
+      fs.writeFileSync(crmFile, `${K1.code}\n`);
+      await new Promise((r) => setTimeout(r, 5500));
+      const c1b = await portalClient(K1);
+      t.eq((await papi(c1b, '/portal/api/me')).status, 200, 'thêm lại → K1 vào cổng được');
+      // Rút phía VIP ID: khach-pilot remove → VIP ID không cho dùng phiên + thu-hồi phiên cổng ở CRM (reason rut_pilot)
+      const rm = vipidCli(cfg, ['khach-pilot', 'remove', K1.phone]);
+      t.ok(rm.code === 0, `khach-pilot remove (${rm.out.trim()})`);
+      t.ok(!(await c1b.hasSession()), 'VIP ID: phiên khách không còn dùng được (vao-cong không launch)');
+      const cut = await waitFor(async () => (await papi(c1b, '/portal/api/me')).status === 401, 20_000);
+      const rows = sqlRead(cfg, "SELECT idem_key, done_at, last_error, body FROM crm_sync_pending WHERE subject=? AND kind='thu_hoi' ORDER BY id DESC LIMIT 1", [K1.subject]);
+      const rr = rows[0] || {};
+      t.note(`thu-hoi gần nhất: ${String(rr.body).slice(0, 90)} · done=${!!rr.done_at} · lỗi=${rr.last_error || '-'}`);
+      if (!cut && rr.last_error) throw new Error(`CRM từ chối thu-hoi khi rút pilot: ${rr.last_error}`);
+      t.ok(cut, 'CRM nhận thu-hoi (rut_pilot) → phiên cổng của K1 kết thúc');
+      t.ok(/rut_pilot/.test(String(rr.body)) && rr.done_at, 'thu-hoi reason=rut_pilot gửi thành công');
+    } finally {
+      vipidCli(cfg, ['khach-pilot', 'add', K1.phone]);
+      runtime.vipidExtra = {}; runtime.crmExtra = {};
+      await stack.stopVipid(); await stack.stopCrm();
+      await stack.startCrm(); await stack.startVipid();
+    }
+    t.eq((await papi(await portalClient(K1), '/portal/api/me')).status, 200, 'tắt pilot → K1 dùng bình thường');
+  });
+
+  // ─── COWORK → CRM nội bộ (SSO nhân viên, §15.6) ───
+  await check('SSO-01', 'COWORK → CRM: nhân viên đăng nhập COWORK, POST /crm/mo → vào CRM nhân viên (phiên vip_session); token dùng một lần; đối tác và khách bị từ chối', 'real', async (t) => {
+    needsStart(t);
+    const sj = await staffSession(t);
+    const ownerId = `e2e-owner-${RUN}`;
+    const vip = await crm.login();
+    const mk1 = await crm.api('POST', '/api/crm/users', { username: `cowork-${RUN}`, display_name: 'E2E COWORK Owner', role: 'vip_admin', tenant_code: 'VIP', vip_subject: `cowork:${ownerId}`, reason: 'E2E ánh xạ COWORK' }, { token: vip });
+    t.ok(mk1.status === 201, `CRM: tạo user nhân viên ánh xạ vip_subject=cowork:${ownerId} (${mk1.status} ${mk1.json?.error?.code || ''})`);
+    const st = (p, o = {}) => raw({ port: cfg.VIPID_PORT, path: p, hostHeader: cfg.STAFF_HOST, method: o.method || 'GET', headers: { cookie: cookieHeader(o.jar || sj), ...(o.form ? { 'content-type': 'application/x-www-form-urlencoded', origin: `http://${cfg.STAFF_HOST}` } : {}) }, body: o.form ? new URLSearchParams(o.form).toString() : undefined });
+    const pg = await st('/crm');
+    t.ok(pg.status === 200 && !/chưa được cấu hình/i.test(pg.body), `COWORK /crm → ${pg.status} (cấu hình đủ)`);
+    const csrf = formField(pg.body, '_csrf');
+    t.ok(csrf, 'trang /crm có form _csrf');
+    t.eq((await st('/crm/mo', { method: 'POST', form: { _csrf: 'sai' } })).status, 403, 'POST /crm/mo sai CSRF → 403');
+    const mo = await st('/crm/mo', { method: 'POST', form: { _csrf: csrf } });
+    const loc = new URL(mo.headers.location || 'http://x/');
+    t.ok(mo.status === 303 && loc.host === `127.0.0.1:${cfg.CRM_PORT}` && loc.pathname === '/api/auth/cowork/launch' && /no-store/.test(mo.headers['cache-control'] || ''), `POST /crm/mo → 303 ${loc.origin}${loc.pathname} (no-store)`);
+    const la = await raw({ port: cfg.CRM_PORT, path: loc.pathname + loc.search, hostHeader: loc.host });
+    const sess = (la.setCookies || []).find((x) => x.startsWith('vip_session='));
+    t.ok(la.status === 302 && la.headers.location === '/' && sess, `CRM launch → ${la.status} ${la.headers.location}, cấp vip_session`);
+    const cookie = sess.split(';')[0];
+    const me = await raw({ port: cfg.CRM_PORT, path: '/api/me', hostHeader: loc.host, headers: { cookie } });
+    t.ok(me.status === 200 && JSON.stringify(JSON.parse(me.body)).includes(`cowork-${RUN}`), `CRM /api/me → ${me.status} đúng user ánh xạ`);
+    const ui = await raw({ port: cfg.CRM_PORT, path: '/', hostHeader: loc.host, headers: { cookie } });
+    t.ok(ui.status === 200 && /<html/i.test(ui.body), 'giao diện CRM nhân viên (/) → 200');
+    const rp = await raw({ port: cfg.CRM_PORT, path: loc.pathname + loc.search, hostHeader: loc.host });
+    t.ok(rp.status === 401 || rp.status === 403, `phát lại token COWORK → ${rp.status}`);
+    t.eq((await raw({ port: cfg.CRM_PORT, path: loc.pathname + loc.search, hostHeader: cfg.H.portal })).status, 404, 'launch COWORK trên host cổng khách → 404');
+    // Đối tác: role partner (cấp 20) — không có crm.use, luôn bị từ chối
+    const ppw = 'Doi-Tac-E2E-2026!p';
+    const cu = vipidCli(cfg, ['create-user', '--id', `e2e-partner-${RUN}`, '--role', 'partner', '--partner-org', 'e2e-doi-tac', '--name', 'E2E Partner'], { COWORK_USER_PASSWORD: ppw });
+    t.ok(cu.code === 0, `COWORK: tạo đối tác (${(cu.out + cu.err).trim().slice(0, 80)})`);
+    const pj = await staffLogin(`e2e-partner-${RUN}`, ppw);
+    const ppg = await st('/crm', { jar: pj });
+    t.ok(ppg.status === 403, `đối tác GET /crm → ${ppg.status}`);
+    const pmo = await st('/crm/mo', { jar: pj, method: 'POST', form: { _csrf: formField(ppg.body, '_csrf') || formField((await st('/', { jar: pj })).body, '_csrf') || 'x' } });
+    t.ok(pmo.status === 403 && !/cowork\/launch/.test(pmo.headers.location || ''), `đối tác POST /crm/mo → ${pmo.status}, không phát token`);
+    // Khách: phiên khách không mở được COWORK; token COWORK giả mạo với sub khách bị CRM chặn (C0)
+    const kc = new KhachClient(cfg); await kc.login(K1.phone, K1.pw);
+    const kcr = await raw({ port: cfg.VIPID_PORT, path: '/crm', hostHeader: cfg.STAFF_HOST, headers: { cookie: cookieHeader(kc.jar) } });
+    t.ok(kcr.status === 303 && /dang-nhap/.test(kcr.headers.location || ''), `cookie khách trên COWORK /crm → ${kcr.status} đăng nhập`);
+    const sec = fs.readFileSync(coworkSecretFile(cfg), 'utf8').trim();
+    const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+    const now = Math.floor(Date.now() / 1000);
+    const forge = (sub) => { const h = b64({ alg: 'HS256', typ: 'JWT' }); const pl = b64({ ver: 1, aud: 'vip-crm', sub, tenant_code: 'VIP', iat: now, exp: now + 30, nonce: crypto.randomUUID() }); return `${h}.${pl}.${crypto.createHmac('sha256', sec).update(`${h}.${pl}`).digest('base64url')}`; };
+    const fk = await raw({ port: cfg.CRM_PORT, path: `/api/auth/cowork/launch?token=${forge(K1.subject)}`, hostHeader: `127.0.0.1:${cfg.CRM_PORT}` });
+    t.ok(fk.status === 403 && /CUSTOMER_ON_STAFF_PATH/.test(fk.body), `token COWORK (ký đúng) với sub khách ${K1.subject.slice(0, 12)}… → ${fk.status} CUSTOMER_ON_STAFF_PATH`);
+    const fu = await raw({ port: cfg.CRM_PORT, path: `/api/auth/cowork/launch?token=${forge('cowork:khong-ton-tai')}`, hostHeader: `127.0.0.1:${cfg.CRM_PORT}` });
+    t.ok(fu.status >= 401 && fu.status <= 403 && !(fu.setCookies || []).length, `token COWORK sub chưa ánh xạ → ${fu.status}, không cấp phiên`);
   });
 
   await check('SEC-09', 'Trình duyệt 390px: mọi trang khách không tràn ngang, không console error, không vi phạm CSP', 'both', async (t) => {
