@@ -17,7 +17,7 @@ Phiên website (vip-group-com-vn) **không ghi vào repo CRM hay VIP ID**. Tài 
 | Kho trong WMS | Chỉ có **SZ (Thâm Quyến) và GZ (Quảng Châu)** | `perm.js` |
 | Thu lead website | `/api/lead` → Google Sheet + CRM (`need`, HMAC) | PR #36–#44 |
 
-**Kết luận:** phần lõi (tài khoản khách, phân quyền, kiện hàng theo khách) đã có trong CRM. P1 chủ yếu cần thêm **đăng ký tự phục vụ**, **giao diện cổng khách** và **API tra cứu theo khách**. Ước tính giảm từ 2–4 tuần xuống còn khoảng **1,5–2,5 tuần**.
+**Kết luận:** phần lõi (tài khoản khách, phân quyền, kiện hàng theo khách) đã có trong CRM. P1 chủ yếu cần thêm **đăng ký tự phục vụ**, **giao diện cổng khách** và **tra cứu theo mã vận đơn**. Phiên CRM review ngày 07/11 ước tính **2,5–3,5 tuần** (xem mục 7).
 
 ## 2. Kiến trúc đề xuất
 
@@ -85,3 +85,50 @@ Chỉ xác nhận nhân viên duyệt khách qua CRM bằng tài khoản VIP ID 
 - **Q-P3. Quy tắc mã khách:** ví dụ `VG` + 5 số (VG00123)? ________
 - **Q-P4. Kênh gửi link đặt mật khẩu:** ☐ Zalo ☐ SMS ☐ email
 - **Q-P5. Tên miền:** `khachhang.vipgroup.com.vn` (staging: `khachhang-staging.vipgroup.com.vn`) ☐ đồng ý
+
+## 7. Phiên CRM review (07/11/2026, chỉ đọc, chưa code)
+
+**Đã có sẵn**
+- API khách `GET /api/inventory/my/parcels`: chỉ trả kiện có `customer_id` của khách đang đăng nhập và `owner_status='verified'`, kèm hành trình, chuyến xe và bằng chứng giao hàng (POD).
+- Ticket của khách cũng đã lọc theo khách.
+- → Việc C3 chỉ còn là thêm tìm theo mã vận đơn trong phạm vi đó.
+
+**Còn thiếu so với đặc tả**
+| Hạng mục | Hiện trạng |
+|---|---|
+| Hàng chờ duyệt đăng ký | Cần bảng `portal_signups` riêng; chỉ tạo khách + tài khoản khi nhân viên duyệt |
+| Đặt lại mật khẩu | Chưa có token dùng một lần; chưa có kênh gửi SMS/email/Zalo cho khách |
+| Thông báo khi có đăng ký mới | CRM **không** gửi Zalo khi có lead; kênh đó đang nằm phía website/Sheet |
+| Tách khách và nhân viên theo Host | Host `khachhang.*` chỉ mở cổng và API khách, từ chối tài khoản không phải khách; host nhân viên từ chối tài khoản khách. Chưa có cơ chế này |
+| Kho Hạ Môn, Nghĩa Ô | Bị khoá cứng: `warehouses.code CHECK IN ('SZ','GZ')`. Muốn thêm phải viết migration, sửa phân quyền, ánh xạ WMS và có dữ liệu thật. **Chưa có kế hoạch** |
+| Định danh đăng nhập | Khuyến nghị username = **mã khách** (SĐT có thể đổi hoặc trùng; SĐT chỉ dùng để tra) |
+| Mật khẩu | Chính sách production yêu cầu ≥ 12 ký tự và áp cho mọi tài khoản; owner cân nhắc trải nghiệm của khách |
+| Khách vốn là của đại lý | Khách tự đăng ký thuộc tenant VIP. Nếu thực ra là khách của đại lý, chuyển tenant là nghiệp vụ có audit (owner chốt quy tắc) |
+
+**Ước tính từng việc**
+| Việc | Thời gian |
+|---|---|
+| C1: cổng, tách Host, CSRF, giới hạn tần suất | 3–4 ngày |
+| C2: đăng ký chờ duyệt, màn duyệt, sinh mã | 2–3 ngày |
+| C3: tìm theo mã vận đơn, test chống xem chéo | 1–2 ngày |
+| C4: thông báo đăng ký mới | ~1 ngày |
+| Đặt lại mật khẩu | 2–3 ngày |
+| C5: thêm 2 kho | 2–4 ngày, cần dữ liệu thật |
+| C6: Caddy staging | thao tác root, owner duyệt |
+| **Tổng** | **≈ 2,5–3,5 tuần**; nếu chọn VIP ID realm khách thì cộng thêm 1–2 tuần |
+
+**Ràng buộc vận hành:** CRM production vẫn NO-GO PUBLIC (chưa HTTPS, chưa có admin thứ hai, chưa có kênh cảnh báo). Cổng staging **chỉ dùng dữ liệu giả**.
+
+**Test chống xem chéo bắt buộc**
+- (a) Kiện đang chờ xác minh hoặc bị gỡ chủ phải biến mất khỏi cổng ngay.
+- (b) Tra mã vận đơn của khách khác trả 404 giống hệt "không có".
+- (c) Khoá khách hoặc tài khoản thì chặn ngay phiên đang mở.
+- (d) Tài liệu và POD chỉ mở được qua kiện của chính khách.
+- (e) Khách tự đăng ký trùng SĐT không được tự nhận hồ sơ khách có sẵn của đại lý.
+- (f) Từ chối chéo nhân viên/khách theo host.
+- (g) Giới hạn tần suất tra cứu theo IP; hiện chỉ đăng nhập có giới hạn.
+
+**Owner chốt thêm**
+- **Q-P6. Đăng nhập bằng:** ☐ mã khách *(khuyến nghị)* ☐ SĐT
+- **Q-P7. Mật khẩu khách:** ☐ giữ ≥ 12 ký tự ☐ nới riêng cho khách
+- **Q-P8. Hạ Môn, Nghĩa Ô đã có WMS hoặc nguồn dữ liệu kho chưa?** ________
