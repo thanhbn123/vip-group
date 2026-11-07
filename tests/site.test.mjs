@@ -10,6 +10,13 @@ const dist = join(root, 'dist');
 const SITE = 'https://www.vipgroup.com.vn';
 
 const PAGES = ['/', '/gioi-thieu/', '/linh-vuc-hoat-dong/', '/cong-ty-thanh-vien/', '/tin-tuc/', '/tuyen-dung/', '/lien-he/'];
+// Trang ngoài menu nhưng vào sitemap (VIPG-WEB-023).
+const SITEMAP_EXTRA = ['/chinh-sach-bao-mat/'];
+// Trang Logistics trạng thái `ready` (VIPG-WEB-021) — cũng phải nằm trong sitemap. Trang `pending` thì không.
+const LOGISTICS_READY = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/',
+  '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/', '/logistics/bang-gia/',
+  '/logistics/kho-trung-quoc/', '/logistics/van-chuyen-tham-quyen-ve-viet-nam/', '/logistics/van-chuyen-ha-mon-ve-viet-nam/',
+  '/logistics/van-chuyen-quang-chau-ve-viet-nam/', '/logistics/van-chuyen-nghia-o-ve-viet-nam/'];
 
 const fileFor = (path) => join(dist, path, 'index.html');
 const read = (path) => readFileSync(fileFor(path), 'utf8');
@@ -106,10 +113,10 @@ test('ảnh đều có alt', () => {
   }
 });
 
-test('sitemap.xml liệt kê đủ 7 trang, robots.txt trỏ sitemap', () => {
+test('sitemap.xml liệt kê đủ 7 trang tập đoàn + các trang Logistics ready, robots.txt trỏ sitemap', () => {
   const sitemap = readFileSync(join(dist, 'sitemap.xml'), 'utf8');
-  for (const path of PAGES) assert.ok(sitemap.includes(`<loc>${SITE}${path}</loc>`), `sitemap thiếu ${path}`);
-  assert.equal((sitemap.match(/<loc>/g) ?? []).length, PAGES.length);
+  for (const path of [...PAGES, ...SITEMAP_EXTRA, ...LOGISTICS_READY]) assert.ok(sitemap.includes(`<loc>${SITE}${path}</loc>`), `sitemap thiếu ${path}`);
+  assert.equal((sitemap.match(/<loc>/g) ?? []).length, PAGES.length + SITEMAP_EXTRA.length + LOGISTICS_READY.length);
   const robots = readFileSync(join(dist, 'robots.txt'), 'utf8');
   assert.match(robots, /Sitemap: https:\/\/www\.vipgroup\.com\.vn\/sitemap\.xml/);
 });
@@ -126,14 +133,17 @@ test('favicon, logo và ảnh Open Graph tồn tại', () => {
   }
 });
 
-test('form liên hệ không giả vờ gửi dữ liệu', () => {
+test('form liên hệ: gửi thật qua /api/lead (Turnstile), có nhãn cho mọi ô, có đồng ý xử lý dữ liệu', () => {
   const html = read('/lien-he/');
   const form = attr(html, /(<form [^>]*data-contact-form[^>]*>)/);
   assert.ok(form, 'có form liên hệ');
-  assert.doesNotMatch(form, /\saction=/, 'form chưa có backend thì không được có action');
-  assert.match(html, /chưa gửi được dữ liệu/, 'phải báo rõ form chưa gửi được');
-  for (const id of ['cf-name', 'cf-phone', 'cf-email', 'cf-message']) {
-    assert.match(html, new RegExp(`<label for="${id}"`), `thiếu label cho ${id}`);
+  assert.doesNotMatch(form, /\saction=/, 'gửi bằng fetch, không submit form');
+  assert.match(form, /data-backend-ready="true"/);
+  assert.match(form, /data-endpoint="\/api\/lead"/);
+  assert.match(html, /class="cf-turnstile" data-sitekey="0x/);
+  assert.match(html, /<input id="cf-consent" type="checkbox" required/);
+  for (const id of ['cf-name', 'cf-phone', 'cf-email', 'cf-need', 'cf-weight', 'cf-message', 'cf-consent']) {
+    assert.match(html, new RegExp(`<label[^>]*for="${id}"`), `thiếu label cho ${id}`);
   }
 });
 

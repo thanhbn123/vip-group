@@ -1,0 +1,62 @@
+---
+/**
+ * Tra cứu vận đơn — TẠM THỜI qua Zalo / hotline VIP GROUP (owner 07/11/2026: tách khỏi hệ thống VIPORDER).
+ * Khi có cổng khách hàng riêng của VIP GROUP (phương án P1 — CRM V5 + VIP ID), thay bằng tra cứu trực tuyến.
+ */
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import { pageByKey, telHref, prettyPhone } from '../../lib/logistics';
+import { provider } from '../../data/vi/logistics';
+import { getContent } from '../../data';
+const { contact } = getContent('vi');
+const portal = contact.portal;
+
+const page = pageByKey('tra-cuu');
+const phone = prettyPhone(provider.hotline);
+---
+<LogisticsLayout page={page} showActions={false}>
+  <section class="section" aria-labelledby="track-title">
+    <div class="container split">
+      <div>
+        <span class="kicker">Tra cứu</span>
+        <h2 id="track-title">Gửi mã vận đơn cho VIP GROUP</h2>
+        <p class="muted">Nhân viên VIP GROUP tra cứu và báo lại tình trạng lô hàng. Website không lưu và không hiển thị lại mã vận đơn của bạn.</p>
+      </div>
+      <div class="grid track-cards">
+        {portal && (
+          <article class="card" data-portal>
+            <h3>Tra cứu trực tuyến</h3>
+            <p>Khách hàng đã có tài khoản VIP GROUP đăng nhập bằng số điện thoại để xem danh sách kiện và trạng thái vận chuyển.</p>
+            <a class="btn btn-primary" href={portal.loginUrl} data-track="portal_login_click" data-track-location="tracking_page">Đăng nhập cổng khách hàng</a>
+            <a class="text-link portal-reg" href={portal.registerUrl} data-track="portal_register_click" data-track-location="tracking_page">Chưa có tài khoản? Đăng ký</a>
+          </article>
+        )}
+        <article class="card">
+          <h3>Nhắn Zalo (nhanh nhất)</h3>
+          <p>Gửi <strong>mã vận đơn</strong> (hoặc mã kiện) kèm <strong>mã khách hàng</strong> và tên người đặt hàng.</p>
+          <a class="btn btn-primary" href={provider.zaloUrl} rel="noopener" target="_blank" data-track="zalo_click" data-track-location="tracking_page">Nhắn Zalo {phone}<span class="visually-hidden"> (mở tab mới)</span></a>
+        </article>
+        <article class="card">
+          <h3>Gọi hotline</h3>
+          <p>Đọc mã vận đơn cho nhân viên trong giờ làm việc.</p>
+          <a class="btn btn-ghost" href={telHref(provider.hotline)} data-track="call_click" data-track-location="tracking_page">Gọi {phone}</a>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section class="section section-alt" aria-labelledby="code-title">
+    <div class="container split">
+      <div><h2 id="code-title">Chuẩn bị gì khi tra cứu?</h2></div>
+      <ul class="check-list">
+        <li>Mã vận đơn nội địa Trung Quốc nhà cung cấp gửi cho bạn — chép đúng, không có khoảng trắng thừa.</li>
+        <li>Mã khách hàng VIP GROUP (nếu chưa có: <a class="text-link" href={provider.registerHref}>đăng ký khách hàng</a>).</li>
+        <li>Kho nhận tại Trung Quốc (Thâm Quyến, Hạ Môn, Quảng Châu hay Nghĩa Ô) và ngày nhà cung cấp gửi hàng.</li>
+        <li>Hàng mới gửi có thể chưa được kho quét nhận — nhân viên sẽ báo khi hàng nhập kho.</li>
+      </ul>
+    </div>
+  </section>
+</LogisticsLayout>
+<style>
+  .track-cards { grid-template-columns: 1fr; }
+  .track-cards .btn { margin-top: 4px; }
+  .portal-reg { display: inline-block; margin-top: 12px; }
+</style>

@@ -28,14 +28,14 @@ const year = new Date().getFullYear();
       <p class="footer-title">Liên hệ</p>
       <ul>
         <li><a href={`mailto:${contact.email}`}>{contact.email}</a></li>
-        <li>Hotline: {contact.hotline ? <a href={`tel:${contact.hotline.replace(/\s/g, '')}`}>{contact.hotline}</a> : ui.updating}</li>
+        <li>Hotline: {contact.hotline ? <a href={`tel:${contact.hotline.replace(/\s/g, '')}`} data-track="call_click" data-track-location="footer">{contact.hotlineDisplay ?? contact.hotline}</a> : ui.updating}</li>
         <li>Địa chỉ: {contact.address ?? ui.updating}</li>
       </ul>
     </div>
   </div>
   <div class="container footer-bottom">
     <span>© {year} {company.legalName ?? company.name}</span>
-    <span>{contact.domain}</span>
+    <span><a href={contact.lead.privacyHref}>Chính sách bảo mật</a> · {contact.domain}</span>
   </div>
 </footer>
 

@@ -15,8 +15,8 @@ const t = text(section);
 const EXPECTED = [
   ['0–5 kg', '20.000'],
   ['Trên 5 đến dưới 100 kg', '16.000'],
-  ['100 đến dưới 500 kg', '15.000'],
-  ['500–1.000 kg', '14.000'],
+  ['Từ 100 đến dưới 500 kg', '15.000'],
+  ['Từ 500 đến 1.000 kg', '14.000'],
   ['Trên 1.000 kg', '12.000'],
 ];
 
@@ -52,9 +52,12 @@ test('các mức khối lượng nối liền, không hở, không chồng (dữ
 });
 
 test('song ngữ Việt – Trung: tiêu đề, cột, từng mức; chữ Trung gắn lang="zh-CN"', () => {
-  assert.match(section, /<h2 id="price-title"[^>]*>\s*Bảng giá vận chuyển Trung Quốc – Việt Nam/);
-  assert.match(section, /<span class="title-zh"[^>]*lang="zh-CN"[^>]*>中国—越南货物运输价格表<\/span>/);
-  for (const zh of ['重量', '单价', '0–5 公斤', '超过 5 公斤，不足 100 公斤', '100 公斤至不足 500 公斤', '500–1,000 公斤', '超过 1,000 公斤']) {
+  // Tiêu đề theo chỉ thị owner V1.2 (G10).
+  assert.match(section, /<h2 id="price-title"[^>]*>\s*VIP GROUP – BẢNG GIÁ VẬN CHUYỂN/);
+  assert.match(section, /<span class="title-zh"[^>]*lang="zh-CN"[^>]*>VIP GROUP 运输价格表<\/span>/);
+  assert.match(text(section), /Trung Quốc – Việt Nam \/ 中国 – 越南/);
+  assert.match(section, /<a [^>]*href="tel:0961102655"[^>]*>Gọi tư vấn: 0961 102 655<\/a>/, 'G10: nút Gọi tư vấn hoạt động trên điện thoại');
+  for (const zh of ['重量', '单价', '0–5 公斤', '超过 5 公斤，不足 100 公斤', '100 公斤至不足 500 公斤', '500–1,000 公斤（含 1,000）', '超过 1,000 公斤']) {
     assert.ok(new RegExp(`lang="zh-CN"[^>]*>[^<]*${zh}`).test(section), `thiếu chữ Trung có lang: ${zh}`);
   }
   assert.ok(!/[一-鿿]/.test(section.replace(/<span[^>]*lang="zh-CN"[^>]*>[^<]*<\/span>/g, '')), 'mọi chữ Hán phải nằm trong phần tử lang="zh-CN"');
@@ -98,13 +101,18 @@ test('schema Service/Offer: đúng 5 mức VND/kg, không khai thời gian giao 
 test('không ảnh hưởng nội dung trang chủ đang chạy: title, H1, các khối cũ, thứ tự', () => {
   assert.match(html, /<title>VIP GROUP \| Con người - Công nghệ - Cơ hội<\/title>/);
   assert.equal((html.match(/<h1[\s>]/g) ?? []).length, 1);
-  const order = ['hero-title', 'about-title', 'sectors-title', 'price-title', 'members-title', 'news-title', 'careers-title', 'cta-title'];
+  // Owner 07/11/2026: bỏ VIPORDER → không còn khối "Công ty thành viên" trên trang chủ.
+  const order = ['hero-title', 'about-title', 'sectors-title', 'price-title', 'news-title', 'careers-title', 'cta-title'];
   const pos = order.map((id) => html.indexOf(`id="${id}"`));
   assert.ok(pos.every((p) => p > 0), `thiếu khối: ${order.filter((_, i) => pos[i] < 0)}`);
   assert.deepEqual([...pos].sort((a, b) => a - b), pos, 'thứ tự khối trang chủ thay đổi ngoài dự kiến');
   // Bản sao lưu trang chủ production trước thay đổi.
   const live = readFileSync(join(root, 'docs/backup/live-home-2026-11-06.html'), 'utf8');
-  const strip = (h) => text(h.replace(/<section class="section price-section"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '');
+  // Thay đổi có chủ đích khác: link "Chính sách bảo mật" ở chân trang (VIPG-WEB-023).
+  // Thay đổi có chủ đích ngoài bảng giá: link "Chính sách bảo mật" chân trang (023); mục menu/chân trang "Logistics"
+  // và link "Dịch vụ vận chuyển Trung Quốc – Việt Nam →" trên thẻ lĩnh vực (021).
+  const strip = (h) => text(h.replace(/<section class="section price-section"[\s\S]*?<\/section>/, '').replace(/<section class="section" aria-labelledby="members-title"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '')
+    .replace(/Chính sách bảo mật · /, '').replace(/0961 102 655/g, '0961102655').replace(/ Xem thêm: Vận chuyển hàng Trung Quốc về Bắc Ninh · Vận chuyển Thâm Quyến về Việt Nam /, ' ').replace(/ Logistics /g, ' ').replace(/ Dịch vụ vận chuyển Trung Quốc – Việt Nam → /, ' ');
   // Thay đổi có chủ đích duy nhất ngoài bảng giá: owner đổi Hotline/Zalo 0968961962 → 0961102655 (06/11/2026).
   const liveNewPhone = live.replace(/0968961962/g, '0961102655').replace(/\+84968961962/g, '+84961102655');
   assert.equal(strip(html), strip(liveNewPhone), 'ngoài khối bảng giá + số điện thoại mới, nội dung chữ trang chủ phải giống hệt bản production');

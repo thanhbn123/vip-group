@@ -19,6 +19,11 @@ function allHtml(dir = dist) {
 const text = (html) =>
   html.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ');
 
+// VIPG-WEB-021: "Bắc Ninh" là địa chỉ VIPORDER (đơn vị vận hành logistics) công bố tại viporder.com.vn —
+// chỉ được xuất hiện trong khu /logistics/. Trang tập đoàn vẫn cấm (địa chỉ VIP GROUP là Lạng Sơn).
+const LOGISTICS_ONLY = new Set(['Bắc Ninh']);
+const isLogistics = (file) => file.replace(dist, '').startsWith('/logistics/');
+
 const FORBIDDEN = [
   ['VIP TECHNOLOGY', 'tên công ty thành viên tự đặt'],
   ['VIP PROPERTY', 'tên công ty thành viên tự đặt'],
@@ -34,8 +39,13 @@ const FORBIDDEN = [
 
 test('không có chuỗi chưa có nguồn trong nội dung hiển thị', () => {
   for (const file of allHtml()) {
-    const t = text(readFileSync(file, 'utf8'));
+    const raw = readFileSync(file, 'utf8');
+    const t = text(raw);
+    // V1.1: trên trang tập đoàn, "Bắc Ninh" CHỈ được nằm trong chữ của link trỏ vào /logistics/ (tên dịch vụ, không phải địa chỉ VIP GROUP).
+    const tNoLogisticsLinks = text(raw.replace(/<a [^>]*href="\/logistics\/[^"]*"[^>]*>[^<]*<\/a>/g, ' '));
     for (const [needle, why] of FORBIDDEN) {
+      if (LOGISTICS_ONLY.has(needle) && isLogistics(file)) continue;
+      if (LOGISTICS_ONLY.has(needle)) { assert.ok(!tNoLogisticsLinks.includes(needle), `${file.replace(dist, '')}: "${needle}" — ${why}`); continue; }
       assert.ok(!t.includes(needle), `${file.replace(dist, '')}: "${needle}" — ${why}`);
     }
   }
@@ -65,14 +75,34 @@ test('dữ liệu pháp nhân hiển thị trên site (không còn "Đang cập 
   }
 });
 
-test('VIPG-WEB-013: trang chủ + công ty thành viên không còn thẻ "Đang hoàn thiện", có ghi chú nguồn ĐKDN', () => {
-  for (const f of ['index.html', 'cong-ty-thanh-vien/index.html']) {
+test('công ty thành viên (owner 07/11/2026 tách VIPORDER): trang thành viên có ghi chú ĐKDN; trang chủ không còn khối thành viên', () => {
+  assert.ok(!readFileSync(join(dist, 'index.html'), 'utf8').includes('id="members-title"'), 'trang chủ không hiện khối Công ty thành viên khi chưa có thành viên');
+  for (const f of ['cong-ty-thanh-vien/index.html']) {
     const t = text(readFileSync(join(dist, f), 'utf8'));
     assert.ok(!t.includes('Đang hoàn thiện'), `${f}: còn thẻ giữ chỗ`);
     assert.ok(!t.includes('Công ty thành viên khối'), `${f}: còn nhãn giữ chỗ`);
     assert.ok(t.includes('chưa có công ty thành viên riêng'), `${f}: thiếu ghi chú`);
-    assert.ok(t.includes('ngành nghề đăng ký của CÔNG TY TNHH VIP GROUP'), `${f}: ghi chú thiếu nguồn`);
+    assert.ok(t.includes('CÔNG TY TNHH VIP GROUP trực tiếp thực hiện theo ngành nghề đăng ký'), `${f}: ghi chú thiếu nguồn`);
   }
   const tuyen = readFileSync(join(dist, 'tuyen-dung/index.html'), 'utf8');
   assert.ok(tuyen.includes('mailto:viporder@vipgroup.com.vn'), 'tuyển dụng phải gửi về email chính thức');
+});
+
+test('owner 07/11/2026: website TÁCH khỏi VIPORDER — không link viporder.com.vn, không nhắc tên VIPORDER / VIP ORDER (trừ email đã chốt)', () => {
+  for (const file of allHtml()) {
+    const html = readFileSync(file, 'utf8').replace(/viporder@vipgroup\.com\.vn/g, 'EMAIL');
+    assert.doesNotMatch(html, /viporder\.com\.vn|khachhang\.viporder/i, `${file.replace(dist, '')}: còn link VIPORDER`);
+    assert.doesNotMatch(html, /VIPORDER|VIP ORDER|XUẤT NHẬP KHẨU LOGISTICS VIP/i, `${file.replace(dist, '')}: còn tên VIPORDER`);
+    assert.doesNotMatch(text(html), /Số 62 Khu đô thị Nam Hồng|Đồng Nguyên/, `${file.replace(dist, '')}: còn địa chỉ văn phòng VIPORDER`);
+  }
+});
+
+// Cổng khách hàng P1: website KHÔNG hiện nút đăng nhập/đăng ký khi contact.portal = null (Production NO-GO).
+test('cổng khách hàng tắt: không có link khachhang./tai-khoan trong bản build', () => {
+  const src = readFileSync(new URL('../src/data/vi/contact.ts', import.meta.url), 'utf8');
+  assert.match(src, /^\s*portal: null,/m, 'contact.portal phải là null cho tới khi owner phê duyệt');
+  for (const f of allHtml()) {
+    const html = readFileSync(f, 'utf8');
+    assert.ok(!/khachhang\.vipgroup\.com\.vn|\/tai-khoan\/|data-portal/.test(html), `${f} lộ link cổng khách hàng`);
+  }
 });

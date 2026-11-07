@@ -18,6 +18,7 @@ const ui = {
       { key: 'about', label: 'Giới thiệu', href: '/gioi-thieu/' },
       { key: 'sectors', label: 'Lĩnh vực hoạt động', href: '/linh-vuc-hoat-dong/' },
       { key: 'members', label: 'Công ty thành viên', href: '/cong-ty-thanh-vien/' },
+      { key: 'logistics', label: 'Logistics', href: '/logistics/' },
       { key: 'news', label: 'Tin tức', href: '/tin-tuc/' },
       { key: 'careers', label: 'Tuyển dụng', href: '/tuyen-dung/' },
       { key: 'contact', label: 'Liên hệ', href: '/lien-he/' },

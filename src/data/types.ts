@@ -31,6 +31,8 @@ export interface Sector {
   title: string;
   summary: string;
   focus: string[];
+  /** Trang chi tiết của lĩnh vực (nếu có). */
+  link?: { href: string; label: string };
 }
 
 export interface Subsidiary {
@@ -75,12 +77,23 @@ export interface CareersInfo {
 export interface ContactInfo {
   email: string;
   hotline: string | null;
+  /** Hiển thị dạng nhóm số (vd. 0xxx xxx xxx). */
+  hotlineDisplay: string | null;
+  /** Zalo (owner xác nhận cùng số hotline 06/11/2026). */
+  zaloUrl: string | null;
   address: string | null;
   /** Địa chỉ tách trường cho schema.org PostalAddress. */
   addressParts: { street: string; ward: string; region: string; country: string } | null;
   domain: string;
-  /** Form liên hệ đã có máy chủ nhận dữ liệu chưa. v1: false. */
+  /** Form liên hệ đã có máy chủ nhận dữ liệu chưa. v1: false. Tính từ `lead.turnstileSiteKey` (xem contact.ts). */
   formBackendReady: boolean;
+  /** Thu lead (VIPG-WEB-023): endpoint cùng tên miền + mã site Turnstile công khai (null = chưa cài). */
+  lead: { endpoint: string; turnstileSiteKey: string | null; privacyHref: string };
+  /**
+   * Cổng khách hàng (P1 — VIP ID + CRM). null = chưa bật: website KHÔNG hiện nút đăng nhập/đăng ký.
+   * Chỉ đặt URL khi owner phê duyệt phát hành cổng (docs/cong-khach-hang/KIEN_TRUC_P1.md §6).
+   */
+  portal: { loginUrl: string; registerUrl: string } | null;
 }
 
 export interface SiteContent {
@@ -112,13 +125,137 @@ export interface ShippingPricing {
   title: string;
   titleZh: string;
   route: string;
+  routeZh: string;
   unit: string;
   unitZh: string;
   note: string;
   noteZh: string;
   tiers: PriceTier[];
+  /** Cách áp mức giá (owner chốt 07/11/2026): theo trọng lượng tính cước từng kiện. */
+  basis: string;
+  basisZh: string;
   /** Nguồn — owner chốt. */
   source: string;
   /** Ngày hiệu lực hiển thị (ISO). */
   updated: string;
+}
+
+/* ───────────── Khu Logistics (VIPG-WEB-021) ───────────── */
+
+/**
+ * Trạng thái xuất bản của một trang logistics.
+ * - `ready`: mọi thông tin trên trang đã có nguồn → được lập chỉ mục, vào sitemap.
+ * - `pending`: trang dùng được nhưng còn trường chờ owner xác nhận → noindex, không vào sitemap.
+ * - `draft`: bài nháp chờ duyệt → KHÔNG build ở production (chỉ build ở chế độ DEMO).
+ */
+export type PublishStatus = 'ready' | 'pending' | 'draft';
+
+/** Một dữ kiện có nguồn. `value: null` = OWNER INPUT PENDING; `sample` chỉ hiện ở chế độ DEMO. */
+export interface Fact<T = string> {
+  value: T | null;
+  /** Nguồn kiểm chứng khi `value` khác null (URL công khai, giấy tờ, ngày owner chốt). */
+  source: string | null;
+  /** Dữ liệu MẪU để dựng giao diện — không bao giờ xuất hiện ở bản build production. */
+  sample?: T;
+}
+
+export interface LogisticsProvider {
+  /** Đơn vị cung cấp dịch vụ (owner 07/11/2026: CÔNG TY TNHH VIP GROUP — tách khỏi VIPORDER). */
+  name: string;
+  legalName: string;
+  taxId: string;
+  hotline: string;
+  zaloUrl: string;
+  /** Văn phòng liên hệ dịch vụ logistics. Owner 07/11/2026: TẠM ghi văn phòng Lạng Sơn (địa chỉ Bắc Ninh sẽ cập nhật). */
+  officeAddress: Fact;
+  /** Đăng ký khách hàng: form của VIP GROUP (tạm thời — cổng khách hàng riêng làm sau). */
+  registerHref: string;
+}
+
+/** Mã 4 điểm nhận hàng tại Trung Quốc (owner xác nhận 06/11/2026 — VIPG-WEB-026). */
+export type PickupId = 'tham-quyen' | 'ha-mon' | 'quang-chau' | 'nghia-o';
+
+/**
+ * Điểm (kho) nhận hàng tại Trung Quốc. KHÔNG mô tả quyền sở hữu kho — chỉ là nơi VIP GROUP nhận hàng của khách.
+ * Trường mô tả thành phố/nguồn hàng (`context`, `goods`) là kiến thức địa lý – thương mại chung, không phải cam kết dịch vụ.
+ */
+export interface PickupPoint {
+  id: PickupId;
+  city: string;
+  cityZh: string;
+  cityEn: string;
+  province: string;
+  provinceZh: string;
+  /** Quận/khu theo địa chỉ (tiếng Việt, phiên âm Hán Việt). */
+  district: string;
+  /** Địa chỉ tiếng Trung NGUYÊN VĂN owner cung cấp — không sửa, không rút gọn. */
+  addressZh: Fact;
+  /** Bối cảnh thành phố / nguồn hàng (tiếng Việt + tiếng Trung). */
+  context: string;
+  contextZh: string;
+  goods: string[];
+  goodsZh: string[];
+  /** Lưu ý giao tới kho — diễn giải từ chính địa chỉ owner cung cấp (không thêm dữ kiện ngoài địa chỉ). */
+  deliveryNotes: string[];
+  deliveryNotesZh: string[];
+  /** Chưa có nguồn → production hiện "báo theo lô" / ẩn. */
+  receivingHours: Fact;
+  transitTime: Fact;
+  /** Bảng giá chung (pricing.ts) có áp dụng cho hàng nhận tại điểm này không — owner chưa xác nhận từng kho. */
+  priceApplies: Fact;
+  /** Ảnh kho thật (đường dẫn trong /public) — chưa có. */
+  photos: Fact<string[]>;
+  /** Câu hỏi riêng của tuyến (tiếng Việt). */
+  faq: FaqItem[];
+  /** Câu hỏi tiếng Trung cho nhà cung cấp / khách nói tiếng Trung. */
+  faqZh: { q: string; a: string }[];
+}
+
+export interface FaqItem {
+  q: string;
+  a: string;
+  /** Câu trả lời cần owner xác nhận trước khi coi là cam kết dịch vụ. */
+  pending?: boolean;
+}
+
+export interface PriceRow {
+  route: string;
+  unit: string;
+  price: string;
+  transit: string;
+}
+
+export interface ArticleSection {
+  heading: string;
+  paragraphs: string[];
+  list?: string[];
+}
+
+export interface Article {
+  slug: string;
+  title: string;
+  description: string;
+  keyword: string;
+  status: PublishStatus;
+  updated: string;
+  sections: ArticleSection[];
+  related: string[];
+}
+
+export interface LogisticsPage {
+  key: string;
+  href: string;
+  /** Nhãn ngắn cho menu phụ. */
+  nav: string;
+  /** Phần trước ` | VIP GROUP` trong <title>. */
+  title: string;
+  description: string;
+  h1: string;
+  lead: string;
+  status: PublishStatus;
+  /** Ẩn khỏi menu phụ (trang tuyến từng kho — đã có trang mạng lưới trong menu). */
+  hideInNav?: boolean;
+  /** Lý do trang chưa `ready` — liệt kê trường OWNER INPUT PENDING. */
+  pendingReason?: string;
+  keyword: string;
 }

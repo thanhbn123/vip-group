@@ -1,0 +1,64 @@
+---
+/**
+ * Địa chỉ kho tiếng Trung + nút sao chép (VIPG-WEB-026).
+ * - Địa chỉ hiển thị NGUYÊN VĂN (lang="zh-CN"), chọn/bôi đen được kể cả khi tắt JavaScript.
+ * - Nút sao chép chỉ hiện khi có JS (lớp `js` trên <html>); thông báo kết quả qua vùng aria-live.
+ * - Sự kiện đo lường `copy_address` chỉ đẩy khi đã chép/bôi đen xong, mang mã kho + kết quả — không mang địa chỉ hay dữ liệu cá nhân.
+ */
+interface Props { id: string; city: string; cityZh: string; address: string }
+const { id, city, cityZh, address } = Astro.props;
+---
+<div class="addr-box" data-copy-box>
+  <p class="addr-label">Địa chỉ kho {city} · <span lang="zh-CN">{cityZh}仓地址</span></p>
+  <p class="addr" lang="zh-CN" data-copy-text translate="no">{address}</p>
+  <div class="addr-actions">
+    <button type="button" class="btn btn-primary copy-btn" data-copy-btn data-route={id}>
+      Sao chép địa chỉ<span class="visually-hidden"> kho {city}</span> <span lang="zh-CN">复制地址</span>
+    </button>
+    <span class="copy-status" role="status" aria-live="polite" data-copy-status></span>
+  </div>
+  <p class="addr-note">Tên người nhận, số điện thoại khi giao và mã khách hàng ghi trên kiện được cung cấp riêng sau khi đăng ký — không đăng công khai. <span lang="zh-CN">收货人、联系电话及客户编号（唛头）注册后单独提供，网站不公开。</span></p>
+</div>
+<script>
+  for (const box of document.querySelectorAll<HTMLElement>('[data-copy-box]')) {
+    const btn = box.querySelector<HTMLButtonElement>('[data-copy-btn]');
+    const src = box.querySelector<HTMLElement>('[data-copy-text]');
+    const status = box.querySelector<HTMLElement>('[data-copy-status]');
+    if (!btn || !src || !status) continue;
+    let timer = 0;
+    const say = (msg: string) => {
+      window.clearTimeout(timer);
+      status.textContent = msg;
+      timer = window.setTimeout(() => { status.textContent = ''; }, 4000);
+    };
+    // Đo lường qua TrackEvents (sự kiện vipg:track) — chỉ mã kho + kết quả.
+    const track = (result: string) => document.dispatchEvent(new CustomEvent('vipg:track', { detail: { event: 'copy_address', data: { route: btn.dataset.route ?? '', result } } }));
+    // Dự phòng khi Clipboard API không có (http, trình duyệt cũ): bôi đen để khách tự sao chép.
+    const selectText = () => {
+      const r = document.createRange(); r.selectNodeContents(src);
+      const sel = window.getSelection(); sel?.removeAllRanges(); sel?.addRange(r);
+    };
+    btn.addEventListener('click', async () => {
+      const text = (src.textContent ?? '').trim();
+      try {
+        await navigator.clipboard.writeText(text);
+        say('Đã sao chép địa chỉ · 已复制');
+        track('copied');
+      } catch {
+        selectText();
+        say('Đã bôi đen địa chỉ — nhấn giữ hoặc Ctrl+C để sao chép · 已选中地址，请长按或按 Ctrl+C 复制');
+        track('selected');
+      }
+    });
+  }
+</script>
+<style>
+  .addr-box { border: 2px solid var(--brand); border-radius: var(--radius); padding: 20px 22px; background: var(--bg); }
+  .addr-label { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--brand-ink); }
+  .addr { margin: 0 0 14px; font-size: 20px; line-height: 1.6; font-weight: 700; color: var(--text); overflow-wrap: anywhere; user-select: all; }
+  .addr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .copy-btn { min-height: 44px; }
+  :global(html:not(.js)) .copy-btn { display: none; }
+  .copy-status { font-size: 14px; font-weight: 600; color: var(--brand-ink); }
+  .addr-note { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+</style>

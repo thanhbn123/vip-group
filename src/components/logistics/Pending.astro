@@ -1,0 +1,20 @@
+---
+/**
+ * Hiển thị một dữ kiện: đã xác minh → giá trị; DEMO + có mẫu → giá trị + nhãn MẪU; còn lại → "Đang cập nhật".
+ */
+import type { Fact } from '../../data/types';
+import { shown } from '../../lib/logistics';
+interface Props { fact: Fact<string>; fallback?: string }
+const { fact, fallback = 'Đang cập nhật — liên hệ hotline / Zalo để được cung cấp' } = Astro.props;
+const { value, isSample } = shown(fact);
+---
+{value === null
+  ? <span class="pending-value" data-owner-input-pending>{fallback}</span>
+  : isSample
+    ? <span class="sample-value"><span class="sample-tag">MẪU</span> {value}</span>
+    : <span>{value}</span>}
+<style>
+  .pending-value { color: var(--muted); font-weight: 500; font-style: italic; }
+  .sample-value { color: var(--text-2); }
+  .sample-tag { display: inline-block; padding: 1px 6px; border-radius: 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; color: #fff; background: #6b4e00; font-style: normal; }
+</style>

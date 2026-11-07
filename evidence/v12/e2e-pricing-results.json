@@ -1,0 +1,192 @@
+{
+  "at": "2026-11-06T15:01:06.905Z",
+  "total": 37,
+  "failed": 0,
+  "res": [
+    {
+      "n": "[desktop] HTTP 200",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[desktop] không lỗi console/CSP",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[desktop] không tràn ngang trang",
+      "ok": true,
+      "d": "0px"
+    },
+    {
+      "n": "[desktop] 5 dòng giá hiển thị",
+      "ok": true,
+      "d": "0–5 kg 0–5 公斤 20.000đ/kg | Trên 5 đến dưới 100 kg 超过 5 公斤，不足 100 公斤 16.000đ/kg | Từ 100 đến dưới 500 kg 100 公斤至不足 500 公斤 15.000đ/kg | Từ 500 đến 1.000 kg 500–1,000 公斤 14.000đ/kg | Trên 1.000 kg 超过 1,000 公斤 12.000đ/kg"
+    },
+    {
+      "n": "[desktop] bảng không tràn khung thẻ, giá không bị cắt",
+      "ok": true,
+      "d": "dư 0px"
+    },
+    {
+      "n": "[desktop] cỡ chữ nhỏ nhất trong khối ≥ 14px",
+      "ok": true,
+      "d": "14px"
+    },
+    {
+      "n": "[desktop] giá nổi bật ≥ 22px",
+      "ok": true,
+      "d": "26px"
+    },
+    {
+      "n": "[desktop] chữ Trung hiển thị",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[desktop] nút liên hệ cao ≥ 44px",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[tablet] HTTP 200",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[tablet] không lỗi console/CSP",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[tablet] không tràn ngang trang",
+      "ok": true,
+      "d": "0px"
+    },
+    {
+      "n": "[tablet] 5 dòng giá hiển thị",
+      "ok": true,
+      "d": "0–5 kg 0–5 公斤 20.000đ/kg | Trên 5 đến dưới 100 kg 超过 5 公斤，不足 100 公斤 16.000đ/kg | Từ 100 đến dưới 500 kg 100 公斤至不足 500 公斤 15.000đ/kg | Từ 500 đến 1.000 kg 500–1,000 公斤 14.000đ/kg | Trên 1.000 kg 超过 1,000 公斤 12.000đ/kg"
+    },
+    {
+      "n": "[tablet] bảng không tràn khung thẻ, giá không bị cắt",
+      "ok": true,
+      "d": "dư 0px"
+    },
+    {
+      "n": "[tablet] cỡ chữ nhỏ nhất trong khối ≥ 14px",
+      "ok": true,
+      "d": "14px"
+    },
+    {
+      "n": "[tablet] giá nổi bật ≥ 22px",
+      "ok": true,
+      "d": "26px"
+    },
+    {
+      "n": "[tablet] chữ Trung hiển thị",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[tablet] nút liên hệ cao ≥ 44px",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile] HTTP 200",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile] không lỗi console/CSP",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile] không tràn ngang trang",
+      "ok": true,
+      "d": "0px"
+    },
+    {
+      "n": "[mobile] 5 dòng giá hiển thị",
+      "ok": true,
+      "d": "0–5 kg 0–5 公斤 20.000đ/kg | Trên 5 đến dưới 100 kg 超过 5 公斤，不足 100 公斤 16.000đ/kg | Từ 100 đến dưới 500 kg 100 公斤至不足 500 公斤 15.000đ/kg | Từ 500 đến 1.000 kg 500–1,000 公斤 14.000đ/kg | Trên 1.000 kg 超过 1,000 公斤 12.000đ/kg"
+    },
+    {
+      "n": "[mobile] bảng không tràn khung thẻ, giá không bị cắt",
+      "ok": true,
+      "d": "dư 0px"
+    },
+    {
+      "n": "[mobile] cỡ chữ nhỏ nhất trong khối ≥ 14px",
+      "ok": true,
+      "d": "14px"
+    },
+    {
+      "n": "[mobile] giá nổi bật ≥ 22px",
+      "ok": true,
+      "d": "22px"
+    },
+    {
+      "n": "[mobile] chữ Trung hiển thị",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile] nút liên hệ cao ≥ 44px",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile-sm] HTTP 200",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile-sm] không lỗi console/CSP",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile-sm] không tràn ngang trang",
+      "ok": true,
+      "d": "0px"
+    },
+    {
+      "n": "[mobile-sm] 5 dòng giá hiển thị",
+      "ok": true,
+      "d": "0–5 kg 0–5 公斤 20.000đ/kg | Trên 5 đến dưới 100 kg 超过 5 公斤，不足 100 公斤 16.000đ/kg | Từ 100 đến dưới 500 kg 100 公斤至不足 500 公斤 15.000đ/kg | Từ 500 đến 1.000 kg 500–1,000 公斤 14.000đ/kg | Trên 1.000 kg 超过 1,000 公斤 12.000đ/kg"
+    },
+    {
+      "n": "[mobile-sm] bảng không tràn khung thẻ, giá không bị cắt",
+      "ok": true,
+      "d": "dư 0px"
+    },
+    {
+      "n": "[mobile-sm] cỡ chữ nhỏ nhất trong khối ≥ 14px",
+      "ok": true,
+      "d": "14px"
+    },
+    {
+      "n": "[mobile-sm] giá nổi bật ≥ 22px",
+      "ok": true,
+      "d": "22px"
+    },
+    {
+      "n": "[mobile-sm] chữ Trung hiển thị",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "[mobile-sm] nút liên hệ cao ≥ 44px",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "neo /#bang-gia cuộn tới bảng giá",
+      "ok": true,
+      "d": ""
+    }
+  ]
+}

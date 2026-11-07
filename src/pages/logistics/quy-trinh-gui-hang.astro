@@ -1,0 +1,68 @@
+---
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import { pageByKey, linkable } from '../../lib/logistics';
+import { processSteps, provider, articles } from '../../data/vi/logistics';
+
+const page = pageByKey('quy-trinh');
+const howTo = {
+  '@type': 'HowTo',
+  name: page.h1,
+  description: page.description,
+  step: processSteps.map((s, i) => ({ '@type': 'HowToStep', position: i + 1, name: s.title, text: s.text })),
+};
+const prepare = [
+  'Tên hàng, công dụng, chất liệu và ảnh sản phẩm',
+  'Số lượng, số kiện, kích thước và cân nặng ước tính',
+  'Mã vận đơn nội địa Trung Quốc của nhà cung cấp',
+  'Hóa đơn / hợp đồng mua hàng nếu cần nhập khẩu chính ngạch',
+  'Địa chỉ và người nhận hàng tại Việt Nam',
+];
+const tips = [
+  'Ghi mã khách hàng rõ ràng trên mọi kiện hàng.',
+  'Hàng dễ vỡ, giá trị cao: trao đổi trước về đóng gỗ, gia cố.',
+  'Hàng cần giấy phép hoặc kiểm tra chuyên ngành: hỏi trước khi đặt hàng.',
+  'Giữ liên lạc với nhà cung cấp để cập nhật mã vận đơn khi họ đổi đơn vị chuyển phát.',
+];
+const guides = articles.map((a) => ({ ...a, href: `/logistics/kien-thuc/${a.slug}/` })).filter((a) => linkable(a.href));
+---
+<LogisticsLayout page={page} jsonLd={[howTo]}>
+  <section class="section" aria-labelledby="steps-title">
+    <div class="container">
+      <span class="kicker">4 bước</span>
+      <h2 id="steps-title">Từ đăng ký đến nhận hàng</h2>
+      <ol class="steps">{processSteps.map((s) => <li><h3>{s.title}</h3><p>{s.text}</p></li>)}</ol>
+      <div class="qt-links">
+        <a class="btn btn-primary" href={provider.registerHref} data-track="register_click" data-track-location="process">Đăng ký khách hàng</a>
+        <a class="btn btn-ghost" href="/logistics/tra-cuu-van-don/">Tra cứu vận đơn</a>
+      </div>
+    </div>
+  </section>
+  <section class="section section-alt" aria-labelledby="prep-title">
+    <div class="container split">
+      <div>
+        <h2 id="prep-title">Chuẩn bị thông tin trước khi gửi</h2>
+        <p class="muted">Thông tin càng đầy đủ, báo giá và thủ tục càng nhanh, hạn chế phát sinh khi hàng đã về kho.</p>
+      </div>
+      <ul class="check-list">{prepare.map((x) => <li>{x}</li>)}</ul>
+    </div>
+  </section>
+  <section class="section" aria-labelledby="tips-title">
+    <div class="container split">
+      <div><h2 id="tips-title">Lưu ý để lô hàng đi suôn sẻ</h2></div>
+      <div>
+        <ul class="check-list">{tips.map((x) => <li>{x}</li>)}</ul>
+        {guides.length > 0 && (
+          <>
+            <h3 class="guide-title">Hướng dẫn liên quan</h3>
+            <ul class="guide-list">{guides.map((g) => <li><a class="text-link" href={g.href}>{g.title}</a></li>)}</ul>
+          </>
+        )}
+      </div>
+    </div>
+  </section>
+</LogisticsLayout>
+<style>
+  .qt-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+  .guide-title { margin-top: 32px; font-size: 18px; }
+  .guide-list { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+</style>

@@ -1,0 +1,952 @@
+{
+  "at": "2026-11-06T06:18:51.692Z",
+  "total": 189,
+  "failed": 0,
+  "results": [
+    {
+      "name": "[prod/desktop] /logistics/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-trung-quoc-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-trung-quoc-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/van-chuyen-trung-quoc-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/quy-trinh-gui-hang/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/quy-trinh-gui-hang/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/quy-trinh-gui-hang/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/bang-gia/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/bang-gia/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/bang-gia/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/tra-cuu-van-don/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/tra-cuu-van-don/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/tra-cuu-van-don/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/cau-hoi-thuong-gap/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/cau-hoi-thuong-gap/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/cau-hoi-thuong-gap/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] /logistics/lien-he/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] /logistics/lien-he/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] /logistics/lien-he/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/desktop] / HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/desktop] / không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/desktop] / không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-viet-nam/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/van-chuyen-trung-quoc-viet-nam/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/quy-trinh-gui-hang/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/quy-trinh-gui-hang/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/quy-trinh-gui-hang/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/quy-trinh-gui-hang/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/quy-trinh-gui-hang/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/bang-gia/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/bang-gia/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/bang-gia/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/bang-gia/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/bang-gia/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/tra-cuu-van-don/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/tra-cuu-van-don/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/tra-cuu-van-don/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/tra-cuu-van-don/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/tra-cuu-van-don/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/cau-hoi-thuong-gap/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/cau-hoi-thuong-gap/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/cau-hoi-thuong-gap/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/cau-hoi-thuong-gap/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/cau-hoi-thuong-gap/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[prod/mobile] /logistics/lien-he/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] /logistics/lien-he/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/lien-he/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[prod/mobile] /logistics/lien-he/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] /logistics/lien-he/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[prod/mobile] / HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[prod/mobile] / không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[prod/mobile] / không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-trung-quoc-bac-ninh/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-trung-quoc-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-trung-quoc-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/van-chuyen-trung-quoc-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/quy-trinh-gui-hang/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/quy-trinh-gui-hang/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/quy-trinh-gui-hang/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/bang-gia/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/bang-gia/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/bang-gia/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/tra-cuu-van-don/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/tra-cuu-van-don/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/tra-cuu-van-don/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/cau-hoi-thuong-gap/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/cau-hoi-thuong-gap/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/cau-hoi-thuong-gap/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/lien-he/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/lien-he/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/lien-he/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] / HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] / không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] / không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/kho-quang-chau/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/kho-quang-chau/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/kho-quang-chau/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/kho-tham-quyen/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/kho-tham-quyen/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/kho-tham-quyen/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/kien-thuc/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/kien-thuc/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/kien-thuc/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/desktop] /logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/desktop] /logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/desktop] /logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-bac-ninh/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-viet-nam/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-viet-nam/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-viet-nam/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-viet-nam/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/van-chuyen-trung-quoc-viet-nam/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/quy-trinh-gui-hang/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/quy-trinh-gui-hang/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/quy-trinh-gui-hang/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/quy-trinh-gui-hang/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/quy-trinh-gui-hang/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/bang-gia/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/bang-gia/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/bang-gia/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/bang-gia/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/bang-gia/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/tra-cuu-van-don/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/tra-cuu-van-don/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/tra-cuu-van-don/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/tra-cuu-van-don/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/tra-cuu-van-don/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/cau-hoi-thuong-gap/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/cau-hoi-thuong-gap/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/cau-hoi-thuong-gap/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/cau-hoi-thuong-gap/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/cau-hoi-thuong-gap/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/lien-he/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/lien-he/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/lien-he/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/lien-he/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/lien-he/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] / HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] / không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] / không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-quang-chau/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-quang-chau/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-quang-chau/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-quang-chau/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-quang-chau/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-tham-quyen/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-tham-quyen/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-tham-quyen/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-tham-quyen/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/kho-tham-quyen/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kien-thuc/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kien-thuc/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/kien-thuc/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kien-thuc/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/kien-thuc/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/ HTTP 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/ không lỗi console / CSP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/ không tràn ngang",
+      "ok": true,
+      "detail": "dư 0px"
+    },
+    {
+      "name": "[demo/mobile] /logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/ thanh liên hệ nhanh hiện",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[demo/mobile] /logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/ vùng chạm nút ≥ 44px",
+      "ok": true,
+      "detail": "0 nút nhỏ"
+    },
+    {
+      "name": "calc: 60×50×40 × 3 kiện = 0,36 m³",
+      "ok": true,
+      "detail": "0,36 m³"
+    },
+    {
+      "name": "calc: cân nặng thực 12 kg × 3 = 36 kg",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "calc production: không tự dùng hệ số quy đổi chưa xác minh",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "form: thiếu trường bắt buộc → báo lỗi",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "form: ô lỗi được đánh dấu aria-invalid",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "form: chưa hợp lệ thì không hiện kết quả",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "form: tạo nội dung yêu cầu đúng",
+      "ok": true,
+      "detail": "YÊU CẦU BÁO GIÁ VẬN CHUYỂN (từ vipgroup.com.vn) / Họ tên: Nguyễn Văn Thử / SĐT/Zalo: 0900000000 / Nơi gửi tại Trung Quốc: Quảng Châu"
+    },
+    {
+      "name": "form: trang KHÔNG điều hướng / không gửi dữ liệu",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "form: mailto tới email chính thức, có nội dung",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "đo lường: có quote_form_start, route_select, quote_generate",
+      "ok": true,
+      "detail": "quote_form_start,route_select,quote_generate"
+    },
+    {
+      "name": "đo lường: sự kiện không chứa họ tên / SĐT",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "đo lường: quote_generate mang tuyến kho",
+      "ok": true,
+      "detail": "{\"event\":\"quote_generate\",\"page_path\":\"/logistics/bang-gia/\",\"route\":\"quang-chau\",\"service\":\"Vận chuyển Trung – Việt\"}"
+    },
+    {
+      "name": "đo lường: call_click + zalo_click",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "không có request ra domain ngoài (không tracking bên thứ ba)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tắt JS: nút gửi báo giá disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tắt JS: menu chính vẫn hiện link Logistics",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "bàn phím: mũi tên chuyển radio trong nhóm",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

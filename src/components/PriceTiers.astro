@@ -1,0 +1,26 @@
+---
+/** Bảng 5 bậc giá gọn (vi/zh) cho trang tuyến — cùng nguồn pricing.ts với trang chủ và bảng giá chi tiết. */
+import type { ShippingPricing } from '../data';
+interface Props { pricing: ShippingPricing }
+const { pricing } = Astro.props;
+const fmt = (n: number) => n.toLocaleString('vi-VN');
+---
+<table class="tiers">
+  <caption class="visually-hidden">{pricing.title} — {pricing.unit}, theo trọng lượng tính cước từng kiện</caption>
+  <thead><tr><th scope="col">Trọng lượng / kiện <span lang="zh-CN">每件计费重量</span></th><th scope="col" class="num">Đơn giá <span lang="zh-CN">单价</span></th></tr></thead>
+  <tbody>
+    {pricing.tiers.map((t) => (
+      <tr><th scope="row">{t.label} <span class="zh" lang="zh-CN">{t.labelZh}</span></th><td class="num"><strong>{fmt(t.price)}</strong> đ/kg</td></tr>
+    ))}
+  </tbody>
+</table>
+<p class="tiers-note">{pricing.basis} <span lang="zh-CN">{pricing.basisZh}</span> {pricing.note}</p>
+<style>
+  .tiers { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 15px; }
+  .tiers th, .tiers td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; font-weight: 500; }
+  .tiers thead th { background: var(--bg-alt); font-weight: 700; font-size: 14px; }
+  .tiers .num { text-align: right; white-space: nowrap; }
+  .tiers strong { color: var(--brand-ink); font-size: 17px; }
+  .tiers .zh { display: block; font-size: 13px; color: var(--muted); }
+  .tiers-note { font-size: 14px; color: var(--text-2); }
+</style>

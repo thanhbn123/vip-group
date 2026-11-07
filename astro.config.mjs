@@ -6,9 +6,19 @@ import { defineConfig } from 'astro/config';
 // vào Cloudflare Pages khi DNS không nằm ở Cloudflare. Xem docs/DNS_MIGRATION.md.
 export const SITE_URL = 'https://www.vipgroup.com.vn';
 
+// Chế độ DEMO (VIPG-WEB-021): `VIPG_DEMO=1 npm run build` → hiện dữ liệu MẪU có nhãn để nghiệm thu
+// giao diện, MỌI trang noindex. Build mặc định (production) không bao giờ hiện dữ liệu mẫu.
+const DEMO = /** @type {any} */ (globalThis).process?.env?.VIPG_DEMO === '1';
+// Mã site Cloudflare Turnstile (công khai) ghi đè khi build thử: VIPG_TURNSTILE_SITE_KEY=… npm run build.
+// Bình thường lấy từ src/data/vi/contact.ts (lead.turnstileSiteKey).
+const TURNSTILE_OVERRIDE = /** @type {any} */ (globalThis).process?.env?.VIPG_TURNSTILE_SITE_KEY ?? '';
+
 export default defineConfig({
   site: SITE_URL,
+  vite: { define: { __VIPG_DEMO__: JSON.stringify(DEMO), __VIPG_TURNSTILE_OVERRIDE__: JSON.stringify(TURNSTILE_OVERRIDE) } },
   output: 'static',
+  // DEMO ra thư mục riêng → không bao giờ lẫn vào dist/ phát hành. VIPG_OUTDIR cho bản build thử (tests/lead.test.mjs).
+  outDir: /** @type {any} */ (globalThis).process?.env?.VIPG_OUTDIR || (DEMO ? './dist-demo' : './dist'),
   trailingSlash: 'always',
   // CSS nhỏ (~8 KB) — nhúng thẳng vào trang để không chặn hiển thị.
   build: { format: 'directory', inlineStylesheets: 'always' },
@@ -24,10 +34,13 @@ export default defineConfig({
         "font-src 'self'",
         "connect-src 'self'",
         "object-src 'none'",
+        // Cloudflare Turnstile (chống spam form lead) chạy trong iframe của challenges.cloudflare.com.
+        "frame-src https://challenges.cloudflare.com",
         "base-uri 'self'",
         "form-action 'none'",
       ],
       scriptDirective: {
+        resources: ["'self'", 'https://challenges.cloudflare.com'],
         hashes: ['sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo='],
       },
     },

@@ -86,3 +86,25 @@ p { margin: 0 0 16px; }
 .prose { max-width: 760px; color: var(--text-2); font-size: 17px; }
 .split { display: grid; grid-template-columns: .9fr 1.1fr; gap: 48px; align-items: start; }
 @media (max-width: 860px) { .split { grid-template-columns: 1fr; gap: 24px; } }
+
+/* ── Khu Logistics (VIPG-WEB-021) ── */
+.steps { counter-reset: step; list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 960px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .steps { grid-template-columns: 1fr; } }
+.steps li { counter-increment: step; border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; background: var(--bg); }
+.steps li::before { content: counter(step, decimal-leading-zero); display: block; font-weight: 800; color: var(--brand); letter-spacing: .12em; font-size: 14px; margin-bottom: 8px; }
+.steps h3 { font-size: 18px; margin-bottom: 8px; }
+.steps p { margin: 0; color: var(--muted); }
+.info-table { margin: 0; display: grid; gap: 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--bg); }
+.info-table > div { display: grid; grid-template-columns: minmax(140px, .45fr) 1fr; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.info-table > div:last-child { border-bottom: 0; }
+@media (max-width: 560px) { .info-table > div { grid-template-columns: 1fr; gap: 4px; } }
+.info-table dt { font-size: 14px; color: var(--muted); font-weight: 600; }
+.info-table dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.check-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.check-list li { position: relative; padding-left: 28px; color: var(--text-2); }
+.check-list li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--brand); font-weight: 800; }
+.card-link { display: block; transition: border-color .15s ease, transform .15s ease; }
+.card-link:hover { border-color: var(--brand); transform: translateY(-2px); }
+.card-link .more { color: var(--brand-ink); font-weight: 700; margin: 16px 0 0; }
+.source-note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }

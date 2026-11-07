@@ -1,0 +1,194 @@
+---
+/**
+ * Trang tuyến từng kho: /logistics/van-chuyen-<kho>-ve-viet-nam/ (VIPG-WEB-026).
+ * Route động có kiểm trạng thái: trang `draft` không được sinh ở production.
+ * Nội dung riêng mỗi kho: địa chỉ nguyên văn + nút sao chép, bối cảnh nguồn hàng, FAQ riêng, phần tiếng Trung cho nhà cung cấp.
+ */
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import FaqList from '../../components/logistics/FaqList.astro';
+import Pending from '../../components/logistics/Pending.astro';
+import CopyAddress from '../../components/logistics/CopyAddress.astro';
+import PickupCards from '../../components/logistics/PickupCards.astro';
+import Mixed from '../../components/logistics/Mixed.astro';
+import { pageByKey, isBuilt, shown, telHref, prettyPhone, linkable } from '../../lib/logistics';
+import { serviceLd } from '../../lib/schema';
+import { priceOffers } from '../../lib/pricing';
+import PriceTiers from '../../components/PriceTiers.astro';
+import { getContent } from '../../data';
+import { pickupPlaceLd, pickupAnswer, pickupAnswerZh, pickupSteps, pickupStepsZh } from '../../lib/pickup';
+import { pickupPoints, provider } from '../../data/vi/logistics';
+import type { PickupPoint } from '../../data/types';
+
+export function getStaticPaths() {
+  return pickupPoints
+    .filter((p) => isBuilt(pageByKey(p.id).status))
+    .map((p) => ({ params: { tuyen: pageByKey(p.id).href.split('/')[2] }, props: { point: p } }));
+}
+const { point: p } = Astro.props as { point: PickupPoint };
+const page = pageByKey(p.id);
+const site = Astro.site!;
+const url = new URL(page.href, site).href;
+const address = shown(p.addressZh).value ?? '';
+const photos = shown(p.photos).value ?? [];
+// Chỉ dựa vào giá trị ĐÃ xác minh: dữ liệu mẫu (DEMO) không được làm trang khẳng định "áp dụng bảng giá" (verifier V2 P1-2).
+const priceConfirmed = shown(p.priceApplies);
+const priceOk = priceConfirmed.isSample ? null : priceConfirmed.value;
+const { pricing } = getContent('vi');
+const pretty = prettyPhone(provider.hotline);
+const updated = '2026-11-06';
+
+const faqLd = {
+  '@type': 'FAQPage',
+  mainEntity: p.faq.filter((f) => !f.pending).map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+const ld = [
+  {
+    ...serviceLd({
+      name: `Vận chuyển hàng từ ${p.city} về Việt Nam`,
+      serviceType: 'Nhận hàng tại Trung Quốc và vận chuyển về Việt Nam',
+      description: page.description,
+      url: new URL(page.href, site),
+      areaServed: ['Việt Nam'],
+    }),
+    availableLanguage: ['vi', 'zh-CN'],
+    // Bảng giá chung áp dụng cho kho này (owner 07/11/2026) → khai Offer theo từng bậc / kiện.
+    ...(priceOk ? { offers: priceOffers(pricing.tiers) } : {}),
+  },
+  pickupPlaceLd(p, url),
+  { '@type': 'WebPage', '@id': `${url}#webpage`, url, name: page.h1, inLanguage: 'vi', dateModified: updated, about: { '@id': `${url}#kho-${p.id}` } },
+  faqLd,
+];
+---
+<LogisticsLayout page={page} extraCrumbs={[{ name: 'Kho Trung Quốc', href: '/logistics/kho-trung-quoc/' }]} jsonLd={ld}>
+  <section class="section rt-answer" aria-labelledby="rt-sum">
+    <div class="container">
+      <div class="answer-box">
+        <h2 id="rt-sum" class="answer-title">Tóm tắt nhanh</h2>
+        <p class="answer"><Mixed text={pickupAnswer(p)} /></p>
+        <p class="answer-zh" lang="zh-CN">{pickupAnswerZh(p)}</p>
+        <p class="updated">Cập nhật: <time datetime={updated}>06/11/2026</time> · Đơn vị vận hành: {provider.name} ({provider.legalName})</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="rt-addr">
+    <div class="container split">
+      <div>
+        <span class="kicker">Địa chỉ kho · <span lang="zh-CN">仓库地址</span></span>
+        <h2 id="rt-addr">Địa chỉ kho nhận hàng {p.city} (<span lang="zh-CN">{p.cityZh}</span>)</h2>
+        <CopyAddress id={p.id} city={p.city} cityZh={p.cityZh} address={address} />
+        {photos.length > 0 && (
+          <div class="rt-photos">{photos.map((src, i) => <img src={src} alt={`Kho nhận hàng ${p.city} — ảnh ${i + 1}`} loading="lazy" width="640" height="420" />)}</div>
+        )}
+      </div>
+      <dl class="info-table">
+        <div><dt>Tỉnh / thành</dt><dd>{p.city}, {p.province} (<span lang="zh-CN">{p.provinceZh}{p.cityZh}</span>)</dd></div>
+        <div><dt>Khu vực</dt><dd>{p.district.charAt(0).toUpperCase() + p.district.slice(1)}</dd></div>
+        <div><dt>Giờ nhận hàng</dt><dd><Pending fact={p.receivingHours} fallback="Xác nhận khi đăng ký" /></dd></div>
+        <div><dt>Thời gian về Việt Nam</dt><dd><Pending fact={p.transitTime} fallback="Báo theo từng lô hàng" /></dd></div>
+        <div><dt>Người nhận, mã khách hàng</dt><dd>Cung cấp riêng sau khi đăng ký</dd></div>
+        <div><dt>Hotline / Zalo</dt><dd><a class="text-link" href={telHref(provider.hotline)} data-track="call_click" data-track-location="route_info" data-track-route={p.id}>{pretty}</a></dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="rt-how">
+    <div class="container">
+      <span class="kicker">Hướng dẫn</span>
+      <h2 id="rt-how">Cách gửi hàng tới kho {p.city}</h2>
+      <ol class="rt-steps">{pickupSteps(p).map((s) => <li><h3>{s.title}</h3><p>{s.text}</p></li>)}</ol>
+      <a class="btn btn-primary" href={provider.registerHref} data-track="register_click" data-track-location="route_steps" data-track-route={p.id}>Đăng ký khách hàng</a>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="rt-fit">
+    <div class="container split">
+      <div>
+        <h2 id="rt-fit">Kho {p.city} phù hợp với hàng gì?</h2>
+        <p><Mixed text={p.context} /></p>
+        <ul class="check-list">{p.goods.map((g) => <li>{g}</li>)}</ul>
+      </div>
+      <div>
+        <h2 id="rt-notes">Lưu ý khi giao hàng tới kho {p.city}</h2>
+        <ul class="check-list">{p.deliveryNotes.map((n) => <li><Mixed text={n} /></li>)}</ul>
+        <h3 class="rt-price-h">Cách tính cước</h3>
+        <p>Cước tính theo kg trên khối lượng tính cước (số lớn hơn giữa cân thực và cân quy đổi = dài × rộng × cao cm ÷ 6000).
+          {priceOk
+            ? <> Áp dụng <a class="text-link" href="/logistics/bang-gia/">bảng giá vận chuyển Trung Quốc – Việt Nam</a> (chung cho 4 kho):</>
+            : <> Đơn giá cho hàng nhận tại kho {p.city} được xác nhận khi báo giá — <a class="text-link" href="/logistics/bang-gia/#form-lien-he" data-track="quote_cta_click" data-track-location="route_price" data-track-route={p.id}>gửi yêu cầu báo giá</a>.</>}
+        </p>
+        {priceOk && <PriceTiers pricing={pricing} />}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt zh-block" lang="zh-CN" aria-labelledby="rt-zh">
+    <div class="container split">
+      <div>
+        <span class="kicker">中文说明</span>
+        <h2 id="rt-zh">{p.cityZh}仓发货须知</h2>
+        <p>{p.contextZh}</p>
+        <p class="zh-addr"><strong>仓库地址：</strong>{address}</p>
+        <ol class="zh-steps">{pickupStepsZh.map((s) => <li>{s}</li>)}</ol>
+        <p class="zh-goods"><strong>常见货物：</strong>{p.goodsZh.join('；')}</p>
+        <p><strong>送货注意：</strong>{p.deliveryNotesZh.join(' ')}</p>
+      </div>
+      <dl class="zh-faq">
+        {p.faqZh.map((f) => <div><dt>{f.q}</dt><dd>{f.a}</dd></div>)}
+      </dl>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="rt-faq">
+    <div class="container split">
+      <div>
+        <h2 id="rt-faq">Câu hỏi về tuyến {p.city} – Việt Nam</h2>
+        <p class="muted">Chưa thấy câu trả lời? Gọi / Zalo <a class="text-link" href={telHref(provider.hotline)} data-track="call_click" data-track-location="route_faq" data-track-route={p.id}>{pretty}</a>.</p>
+      </div>
+      <FaqList items={p.faq} />
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="rt-other">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="rt-other">Kho nhận hàng khác</h2>
+        <a class="text-link" href="/logistics/kho-trung-quoc/">Xem cả 4 kho Trung Quốc →</a>
+      </div>
+      <PickupCards exclude={p.id} />
+      <ul class="rt-links">
+        <li><a class="text-link" href="/logistics/van-chuyen-trung-quoc-viet-nam/">Vận chuyển Trung Quốc – Việt Nam</a></li>
+        <li><a class="text-link" href="/logistics/van-chuyen-trung-quoc-bac-ninh/">Nhận hàng tại Bắc Ninh</a></li>
+        <li><a class="text-link" href="/logistics/tra-cuu-van-don/">Tra cứu vận đơn</a></li>
+        {linkable('/logistics/kien-thuc/') && <li><a class="text-link" href="/logistics/kien-thuc/">Kiến thức nhập hàng</a></li>}
+        <li><a class="text-link" href="/cong-ty-thanh-vien/">Công ty thành viên</a></li>
+        <li><a class="text-link" href="/">Trang chủ VIP GROUP</a></li>
+      </ul>
+    </div>
+  </section>
+</LogisticsLayout>
+<style>
+  .rt-answer { padding-bottom: 0; }
+  .answer-box { border-left: 4px solid var(--brand); background: var(--bg-alt); border-radius: var(--radius-sm); padding: 20px 24px; max-width: 920px; }
+  .answer-title { font-size: 18px; margin-bottom: 8px; }
+  .answer { margin: 0 0 8px; font-size: 17px; line-height: 1.65; }
+  .answer-zh { margin: 0 0 10px; color: var(--text-2); line-height: 1.7; }
+  .updated { margin: 0; font-size: 14px; color: var(--muted); }
+  .rt-photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+  .rt-photos img { width: 100%; height: auto; border-radius: var(--radius-sm); }
+  .rt-steps { list-style: none; counter-reset: s; margin: 0 0 24px; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .rt-steps li { counter-increment: s; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 18px 20px; }
+  .rt-steps li::before { content: counter(s); display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--brand); color: var(--on-brand); font-weight: 800; margin-bottom: 8px; }
+  .rt-steps h3 { font-size: 17px; margin-bottom: 6px; }
+  .rt-steps p { margin: 0; color: var(--text-2); }
+  .rt-price-h { margin-top: 28px; font-size: 20px; }
+  .formula { font-weight: 700; padding: 10px 14px; background: var(--bg-alt); border-radius: var(--radius-sm); overflow-wrap: anywhere; }
+  .zh-block p, .zh-block li, .zh-block dd { line-height: 1.8; }
+  .zh-addr { overflow-wrap: anywhere; }
+  .zh-steps { padding-left: 20px; display: grid; gap: 6px; }
+  .zh-faq { margin: 0; display: grid; gap: 14px; }
+  .zh-faq > div { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 18px; }
+  .zh-faq dt { font-weight: 700; margin-bottom: 4px; }
+  .zh-faq dd { margin: 0; color: var(--text-2); overflow-wrap: anywhere; }
+  .rt-links { list-style: none; padding: 0; margin: 24px 0 0; display: flex; flex-wrap: wrap; gap: 10px 24px; }
+</style>
