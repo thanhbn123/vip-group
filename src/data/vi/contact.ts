@@ -15,7 +15,7 @@ import type { ContactInfo } from '../types';
 const TURNSTILE_SITE_KEY: string | null = '0x4AAAAAAF2QZNcXX6-6puJf';
 const siteKey = __VIPG_TURNSTILE_OVERRIDE__ || TURNSTILE_SITE_KEY;
 
-const PORTAL_LIVE = false;
+const PORTAL_LIVE = true; // owner 07/11/2026: "mở hết ra … đăng ký đăng nhập thật dùng luôn" — realm khách VIP ID + CRM portal đã chạy production
 const PORTAL_URLS = { loginUrl: 'https://dangnhap.vipgroup.com.vn/', registerUrl: 'https://dangky.vipgroup.com.vn/' };
 
 export const contact: ContactInfo = {

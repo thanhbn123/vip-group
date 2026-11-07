@@ -97,12 +97,18 @@ test('owner 07/11/2026: website TÁCH khỏi VIPORDER — không link viporder.c
   }
 });
 
-// Cổng khách hàng P1: website KHÔNG hiện nút đăng nhập/đăng ký khi contact.portal = null (Production NO-GO).
-test('cổng khách hàng tắt: không có link khachhang./tai-khoan trong bản build', () => {
+// Cổng khách hàng P1 (owner 07/11/2026 mở): mọi trang có thanh tài khoản với ĐÚNG 2 link https dangnhap/dangky;
+// không link nào tới host nội bộ cũ (khachhang./tai-khoan trên host website) hay http.
+test('thanh tài khoản khách: đúng 2 link https dangnhap/dangky trên mọi trang', () => {
   const src = readFileSync(new URL('../src/data/vi/contact.ts', import.meta.url), 'utf8');
-  assert.match(src, /^const PORTAL_LIVE = false;/m, 'PORTAL_LIVE phải là false cho tới khi owner GO mở cổng khách');
+  assert.match(src, /^const PORTAL_LIVE = true;/m);
   for (const f of allHtml()) {
+    if (f.endsWith('404.html')) continue;
     const html = readFileSync(f, 'utf8');
-    assert.ok(!/khachhang\.vipgroup\.com\.vn|dangky\.vipgroup\.com\.vn|dangnhap\.vipgroup\.com\.vn|\/tai-khoan\/|data-portal|<nav class="account-bar/.test(html), `${f} lộ link cổng khách hàng`);
+    const bar = html.match(/<nav class="account-bar[\s\S]*?<\/nav>/);
+    assert.ok(bar, `${f} thiếu thanh tài khoản`);
+    const hrefs = [...bar[0].matchAll(/href="([^"]+)"/g)].map((m) => m[1]).sort();
+    assert.deepEqual(hrefs, ['https://dangky.vipgroup.com.vn/', 'https://dangnhap.vipgroup.com.vn/'], `${f}: link thanh tài khoản sai`);
+    assert.ok(!/http:\/\/(dangky|dangnhap|khachhang)\./.test(html), `${f} có link http tới cổng khách`);
   }
 });
