@@ -166,3 +166,11 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
    - giới hạn theo IP;
    - trên mọi IP cộng lại, tài khoản chỉ bị làm chậm dần.
 7. **Kho.** `warehouses.status='planned'` cho XM/YW, kèm trigger chặn dữ liệu vận hành, **cho tới khi owner xác minh mã kho và dữ liệu vận hành** (chỉ thị owner 07/11).
+8. **HMAC (sau kiểm thử bảo mật độc lập).** Chuỗi ký áp dụng cho mọi lời gọi VIP ID ⇄ CRM:
+
+   ```
+   canonical = "<direction>.<METHOD>.<path>.<ts>.<body>"
+   ```
+
+   Body tối đa 10 KB; kiểm `Content-Length` trước khi đọc.
+9. **Host.** Khi bật realm khách, VIP ID chỉ nhận Host nằm trong danh sách host khách hoặc host nhân viên; host lạ trả 421/404. Caddy phải **giữ nguyên Host gốc**.
