@@ -1,6 +1,6 @@
 # CỔNG KHÁCH HÀNG VIP GROUP — KIẾN TRÚC P1 (hợp đồng liên hệ thống)
 
-Phiên bản 1.0 · 07/11/2026 · Controller: phiên website (vip-group-com-vn).
+Phiên bản 1.1 · 07/11/2026 (1.1: góp ý phiên CRM — portal_code, chống khoá ác ý, outbox CRM, C0) · Controller: phiên website (vip-group-com-vn).
 Căn cứ: OWNER DIRECTIVE — CUSTOMER PORTAL P1 (07/11/2026). **Production NO-GO.** Không đổi DNS, Cloudflare, CRM production hay website thật.
 
 ## 1. Quyết định owner → ràng buộc thiết kế
@@ -149,3 +149,20 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
 3. CRM production vẫn NO-GO PUBLIC (HTTPS, admin thứ hai, kênh cảnh báo).
 4. DNS và Caddy cho `khachhang.*` cần owner duyệt.
 5. Chưa có dữ liệu WMS cho Hạ Môn và Nghĩa Ô.
+
+## 11. Thay đổi v1.1 (07/11/2026, đã thống nhất với phiên CRM)
+
+1. **Tên đăng nhập.** Chỉ thị owner gửi Controller (A7) ghi "SĐT đã xác minh". Chỉ thị owner gửi phiên CRM (Q-P6) ghi "mã khách làm tên đăng nhập chính". Cách giải: VIP ID **nhận cả hai**, mỗi định danh trỏ duy nhất tới một tài khoản:
+   - SĐT E.164 đã xác minh, **hoặc**
+   - `portal_code` (VG + 6 số).
+
+   Owner chốt định danh chính ở hồ sơ nghiệm thu.
+2. **`portal_code`.** `ket-qua-duyet` và launch token có thêm trường `portal_code` (VGxxxxxx, **unique toàn hệ thống**). CRM đối chiếu thêm `portal_code` với hồ sơ khách.
+3. **Khách cũ được liên kết.** Giữ mã nội bộ cũ (chỉ unique theo tenant) và **cấp thêm** `customers.portal_code` loại VG. Thay thế câu "giữ nguyên mã cũ" ở §8.
+4. **`portal_outbox` của CRM.** CRM dùng bảng này để thử lại `ket-qua-duyet` và `thu-hoi`, idempotent theo (subject, event).
+5. **C0 (CRM).** Đường đăng nhập VIP ID của nhân viên phải **từ chối** `kind='customer'` (`adapters.js:38`). Sửa trước khi có tài khoản khách đầu tiên.
+6. **Chống khoá ác ý.** Realm khách không có khoá cứng theo tài khoản từ mọi IP:
+   - khoá theo cặp (tài khoản, IP);
+   - giới hạn theo IP;
+   - trên mọi IP cộng lại, tài khoản chỉ bị làm chậm dần.
+7. **Kho.** `warehouses.status='planned'` cho XM/YW, kèm trigger chặn dữ liệu vận hành, **cho tới khi owner xác minh mã kho và dữ liệu vận hành** (chỉ thị owner 07/11).
