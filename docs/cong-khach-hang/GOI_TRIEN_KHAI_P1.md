@@ -1,15 +1,15 @@
 # CỔNG KHÁCH HÀNG VIP GROUP P1 — GÓI CHUẨN BỊ TRIỂN KHAI PRODUCTION
 
-Phiên bản 0.1 · 07/11/2026 · Người lập: DevOps/Security (phiên website, chỉ đọc repo).
+Phiên bản 0.2 · 07/11/2026 · Người lập: DevOps/Security (phiên website, chỉ đọc repo).
 **Trạng thái: ĐỀ XUẤT – CHƯA ÁP DỤNG. Production NO-GO.** Tài liệu này chỉ để owner xem xét. Khi lập, tôi **không** chạy lệnh nào trên VPS, DNS, Cloudflare hay production, **không** sửa repo VIP ID hay CRM. Mọi lệnh bên dưới dành cho owner hoặc người vận hành, và chỉ chạy khi có phê duyệt riêng.
 
 Căn cứ (đọc ngày 07/11/2026):
-- Hợp đồng: `docs/cong-khach-hang/KIEN_TRUC_P1.md` (v1.1), gọi tắt **HĐ**.
-- VIP ID: `~/code/vip-group-id-khach`, nhánh `feature/khach-p1` @ `5e1effe`.
-- CRM: `~/Projects/vip-group-khoqctq`, nhánh `main` @ `a791c67`.
-- Website: repo này.
+- Hợp đồng: `docs/cong-khach-hang/KIEN_TRUC_P1.md` §1–§14, gọi tắt **HĐ**; phân công `docs/cong-khach-hang/ONE_CRM_PHAN_CONG.md`; báo cáo nghiệm thu `docs/cong-khach-hang/BAO_CAO_NGHIEM_THU_P1.md`.
+- VIP ID: `~/code/vip-group-id-khach`, nhánh `feature/khach-p1` @ **`6030e14`** (HEAD lúc đọc, chưa merge `main`, chưa deploy).
+- CRM: `~/Projects/vip-group-khoqctq`, nhánh `main` @ **`5007252`**; commit bằng chứng **`a87df12`** (`docs/evidence/g7-hotfix/SUMMARY.md`). Bỏ qua thay đổi chưa commit trong working tree CRM.
+- Website: repo này; production đã phát hành 07/11 từ `main` @ `ce289ca`, `contact.portal = null`.
 
-Quy ước trích dẫn: `VIPID:` = repo VIP ID, `CRM:` = repo CRM, `WEB:` = repo này.
+Quy ước trích dẫn: `VIPID:` = repo VIP ID, `CRM:` = repo CRM (theo `5007252`), `WEB:` = repo này.
 
 ---
 
@@ -17,375 +17,241 @@ Quy ước trích dẫn: `VIPID:` = repo VIP ID, `CRM:` = repo CRM, `WEB:` = rep
 
 | Hạng mục | Kết luận |
 |---|---|
-| Sẵn sàng production? | **Chưa.** Còn 8 điểm chặn cứng (mục 11.1). Lớn nhất: (1) VIP ID chưa có kênh gửi email (A8); (2) **hai bên đang ký HMAC theo hai kiểu khác nhau**, nên mọi lời gọi server↔server sẽ bị từ chối (mục 5.3); (3) container VIP ID không gọi được CRM qua `127.0.0.1` (mục 1.3); (4) CRM production chưa có bản phát hành chứa cổng khách, và vẫn NO-GO PUBLIC |
-| DNS | Thêm **một** bản ghi `A khachhang → 160.22.170.20` tại iNET/vCloudDNS. DNS **không** nằm ở Cloudflare |
-| Email | Tên miền đang dùng **Google Workspace** (MX, SPF, DKIM đã có). Đề xuất: gửi bằng Workspace với SMTP AUTH; thêm bản ghi DMARC. VIP ID cần thêm khoảng **2–3 ngày công** code |
-| Thứ tự | Sửa chặn → staging `khachhang-staging` E2E → backup → CRM → VIP ID → Caddy → kiểm tra → website. Website bật **sau cùng** |
-| Rollback nhanh nhất | Tắt cờ `COWORK_KHACH_ENABLED=0` / `PORTAL_ENABLED=0` (≈ 1 phút), rồi gỡ khối Caddy (< 2 phút). Không cần đụng DB |
+| Sẵn sàng production? | **Chưa.** Chặn cứng còn lại (mục 11.1): **P1-a** CRM chưa có nút/route nhân viên cấp link đặt lại mật khẩu; **P1-b** CRM chưa dùng `PORTAL_DATABASE_URL` (hoặc owner ký chấp nhận rủi ro); **B3** đường mạng VIP ID ⇄ CRM; **B4** chưa có bản phát hành; **B5** cảnh báo + admin CRM thứ hai; **B6** E2E trên staging; **B7** khoá Turnstile thật; **B8** DNS + Caddy |
+| Đã giải quyết | **B1 email**: owner bỏ xác minh email/SĐT; production chỉ đòi kênh thư thật khi bật `COWORK_KHACH_EMAIL_ENABLED=1` (VIPID `cowork/khach.py:110-112`). **B2 header HMAC**: hai bên cùng một chuỗi ký, kit 30/30 + 4/4 (mục 5.3) |
+| Kiểm thử | E2E local VIP ID `6030e14` + CRM `5007252`: **34 PASS / 0 FAIL / 2 PENDING** (WEB `BAO_CAO_NGHIEM_THU_P1.md:58`). Vẫn phải chạy lại trên staging |
+| DNS | Thêm **một** bản ghi `A khachhang → 160.22.170.20` tại iNET/vCloudDNS (DNS **không** ở Cloudflare) |
+| Thứ tự | Gỡ chặn → staging E2E → backup → CRM → VIP ID → Caddy → kiểm tra → website (PR riêng, sau cùng) |
+| Rollback nhanh nhất | `COWORK_KHACH_ENABLED=0` / `PORTAL_ENABLED=0` (≈ 1 phút), gỡ khối Caddy (< 2 phút). **Không** quay mã VIP ID về trước v6 nếu không khôi phục DB (mục 9) |
 
 ---
 
 ## 1. Kiến trúc production
 
-### 1.1. Sơ đồ (ĐỀ XUẤT)
+### 1.1. Sơ đồ (ĐỀ XUẤT – CHƯA ÁP DỤNG)
 
 ```
                          Internet (trình duyệt khách)
                                    │ HTTPS 443
+  DNS iNET/vCloudDNS: khachhang.vipgroup.com.vn  A  160.22.170.20   (chưa tạo)
                                    ▼
-  DNS iNET/vCloudDNS: khachhang.vipgroup.com.vn  A  160.22.170.20   (ĐỀ XUẤT, chưa tạo)
-                                   │
- ┌─────────────────────────────── VPS 160.22.170.20 ───────────────────────────────────────┐
- │  Caddy v2.11.4 · container vip-staging-caddy · network host · /srv/vip-staging-proxy/Caddyfile │
- │                                                                                          │
- │  site khachhang.vipgroup.com.vn                                                          │
- │   ├─ /tai-khoan, /tai-khoan/*  ──────────► 127.0.0.1:8899  VIP ID (container cowork-staging)│
- │   │                                         realm KHÁCH (chọn theo Host)                 │
- │   ├─ /portal, /portal/*        ──────────► 127.0.0.1:18185 CRM (container app, vipcrm6-prod)│
- │   ├─ /api/internal/khach/*     ──► CHỈ nguồn nội bộ đã đo (CRM → VIP ID), còn lại 404      │
- │   ├─ /api/internal/* khác      ──► 404                                                    │
- │   ├─ /                         ──► 302 /tai-khoan/dang-nhap                               │
- │   └─ mọi đường khác            ──► 404                                                    │
- │                                                                                          │
- │  site cowork.vipgroup.com.vn (đang chạy) ──► 127.0.0.1:8899  VIP ID realm NHÂN VIÊN       │
- │  site crm.vipgroup.com.vn    (CHƯA mở)   ──► 127.0.0.1:18185 CRM nhân viên                │
- │                                                                                          │
- │  Server↔server (HMAC, VIPID_PORTAL_SECRET):                                              │
- │   VIP ID ──POST /api/internal/portal/{signups,thu-hoi}──► CRM  (Host KHÔNG phải host khách)│
- │   CRM    ──POST https://khachhang…/api/internal/khach/{ket-qua-duyet,tam-khoa,thu-hoi}──► │
- │            Caddy ──► VIP ID (Host = khachhang.vipgroup.com.vn)                            │
- │  Trình duyệt: VIP ID 302 ──► /portal/auth/launch?token=… (HS256, TTL ≤ 60 s, nonce 1 lần)  │
- └──────────────────────────────────────────────────────────────────────────────────────────┘
+ ┌──────────────────────────── VPS 160.22.170.20 ─────────────────────────────────┐
+ │ Caddy v2.11.4 · container vip-staging-caddy · network host                      │
+ │  site khachhang.vipgroup.com.vn                                                 │
+ │   ├─ /tai-khoan, /tai-khoan/*  ──► 127.0.0.1:8899  VIP ID (cowork-staging)      │
+ │   ├─ /portal, /portal/*        ──► 127.0.0.1:18185 CRM (vipcrm6-prod app)       │
+ │   ├─ /api/internal/*           ──► 404 (mọi nhánh, theo PA N1)                  │
+ │   ├─ /                         ──► 302 /tai-khoan/dang-nhap                     │
+ │   └─ còn lại                   ──► 404                                          │
+ │  site cowork.vipgroup.com.vn (đang chạy) ──► 127.0.0.1:8899 VIP ID nhân viên     │
+ │                                                                                 │
+ │  Server↔server (HMAC VIPID_PORTAL_SECRET) qua network docker chung (PA N1):     │
+ │   VIP ID ──POST /api/internal/portal/{signups,thu-hoi}──► CRM app:5175          │
+ │   CRM    ──POST /api/internal/khach/{ket-qua-duyet,tam-khoa,thu-hoi,            │
+ │             tao-link-dat-lai} (Host: khachhang…)──► VIP ID cowork:8899          │
+ │  Trình duyệt: VIP ID 302 ──► /portal/auth/launch?token=… (HS256, ≤ 60 s, 1 lần) │
+ └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Cơ sở:
-- IP VPS, Caddy, container: VIPID `docs/CAU-HINH-TEN-MIEN.md:12-13,17`, `docs/TRIEN-KHAI-PRODUCTION.md:14`.
-- VIP ID production chạy trong container `cowork-staging` cổng `127.0.0.1:8899`: VIPID `deploy/vps/docker-compose.yml:9-14`, `deploy/vps/README.md:71-79`, `docs/TRIEN-KHAI-PRODUCTION.md:297-301`.
-- CRM production `127.0.0.1:18185`: CRM `deploy/production/compose.yml:55`, `VIP_CRM_V6_PRODUCTION_RUNBOOK.md:22`.
-- Chia đường dẫn theo HĐ §2 và §3.2 (`KIEN_TRUC_P1.md:22-34,61-72`).
+Cơ sở: VIP ID chạy container `cowork-staging`, `127.0.0.1:8899`, network bridge mặc định (VIPID `deploy/vps/docker-compose.yml:1-15`). CRM `127.0.0.1:18185 → 5175`, network `edge` 172.31.250.0/24 + `db` internal (CRM `deploy/production/compose.yml:55-56,78-80`). Chia đường theo HĐ §2, §3.2.
 
 ### 1.2. Mỗi bên tự chặn theo Host (đã có trong code)
 
-| Bên | Host khách (`khachhang…`) | Host khác | Nguồn |
+| Bên | Host khách | Host khác | Nguồn |
 |---|---|---|---|
-| VIP ID | chỉ `/tai-khoan/*` khách và `/api/internal/khach/*`. Route nhân viên trả 404 | `/tai-khoan/*` khách trả 404. Host không thuộc hai danh sách trả **421** | VIPID `cowork/config.py:118-129`, `cowork/khach_web.py:31-58`, `cowork/khach.py:197-206` |
-| CRM | chỉ `/portal`, `/portal/*`. Mọi đường khác (kể cả `/api/internal/portal/*`) trả 404 | `/portal*` trả 404. `/api/internal/portal/*` **chỉ** nhận ở host này | CRM `server/lib/hostguard.js:4-11,44-56` |
+| VIP ID | chỉ `/tai-khoan/*` và `/api/internal/khach/*`; route nhân viên 404 | `/tai-khoan/*` 404; host không thuộc hai danh sách → **421** | VIPID `cowork/khach_web.py:25-60`, `cowork/khach.py:191-200`, `cowork/config.py:123-129` |
+| CRM | chỉ `/portal`, `/portal/*`; mọi đường khác (kể cả `/api/internal/portal/*`) 404 | `/portal*` 404; `/api/internal/portal/*` **chỉ** ở host này | CRM `server/lib/hostguard.js:5-10` |
 
-**Hệ quả cho vận hành:** việc chặn theo Host của CRM chỉ bật khi đặt `PORTAL_HOST` (CRM `server/config.js:89-92`). Nếu Caddy chuyển `khachhang…/*` sang CRM khi `PORTAL_HOST` còn rỗng, **toàn bộ giao diện CRM nhân viên sẽ lộ ra Internet** trên host khách. Vì vậy khối Caddy đề xuất **chỉ** chuyển `/portal*` sang CRM (mục 6.2), và khối này chỉ được thêm **sau khi** đã kiểm `PORTAL_HOST`.
+**Hệ quả vận hành:** hostguard CRM chỉ bật khi đặt `PORTAL_HOST`. Production bật cổng mà thiếu `PORTAL_HOST` thì CRM từ chối khởi động (CRM `server/config.js:62`). Dù vậy, khối Caddy chỉ chuyển `/portal*` sang CRM (mục 6.2), không bao giờ `/*`.
 
-### 1.3. Đường gọi server↔server: cần owner quyết định (điểm chặn B3)
+Khách "cũ" (tài khoản `kind='customer'` đăng nhập mật khẩu local) **vẫn dùng được CRM nhân viên** khi `STAFF_HOST_ALLOW_LEGACY_CUSTOMERS` khác `0` (mặc định) (CRM `server/config.js:102-104`, `server/app.js:88`). Owner quyết định (Q2, mục 11.2).
 
-**VIP ID → CRM** (`CRM_PORTAL_INTERNAL_URL`, mặc định `http://127.0.0.1:8897`, VIPID `cowork/config.py:133-134`):
-- VIP ID chạy trong container, network bridge mặc định (VIPID `deploy/vps/docker-compose.yml:13-14`).
-- CRM chỉ publish trên `127.0.0.1:18185` của host (CRM `compose.yml:55`).
-- Vì vậy `http://127.0.0.1:18185` **từ trong container VIP ID không tới được CRM** (127.0.0.1 khi đó là chính container).
+### 1.3. Đường gọi server↔server — điểm chặn B3
 
-Các phương án:
+Sự thật trong code:
+- VIP ID → CRM dùng `CRM_PORTAL_INTERNAL_URL` (mặc định `http://127.0.0.1:8897`, VIPID `cowork/config.py:133-134`). Trong container, `127.0.0.1` là chính container, nên **không** tới được `127.0.0.1:18185` của host.
+- CRM → VIP ID dùng `VIPID_PORTAL_URL`, luôn gửi `Host: <PORTAL_HOST>`. Production nhận `https:`, hoặc `http:` **chỉ** tới đích nội bộ: tên dịch vụ docker một nhãn (vd `cowork`), `localhost`, 127/8, 10/8, 172.16/12, 192.168/16, `::1`, `fc00::/7` (CRM `server/lib/internal-url.js:1-46`, `server/config.js:65-71`). Tên miền có dấu chấm hoặc IP công khai bắt buộc https.
+- Request VIP ID **không** gọi CRM; mọi sự kiện xếp hàng `crm_sync_pending`, vòng nền gửi mỗi `COWORK_KHACH_SYNC_GIAY` giây (mặc định 5) (VIPID `cowork/khach_web.py:182-187`, `cowork/config.py:179`).
 
-| PA | Cách làm | Ưu | Nhược |
-|---|---|---|---|
-| **N1 (đề xuất)** | Gắn container `cowork-staging` vào network `edge` của CRM (network ngoài, khai báo `external`). Đặt `CRM_PORTAL_INTERNAL_URL=http://<tên dịch vụ/alias app CRM>:5175` | Không đi qua Internet hay Caddy. Host gửi đi không phải host khách nên CRM nhận `/api/internal/portal/*`. Không cần mở `crm.vipgroup.com.vn` | Phải sửa compose VIP ID. Hai dự án chung một network docker. Phải đo tên network thật (`<project>_edge`) |
-| N2 | `CRM_PORTAL_INTERNAL_URL=https://crm.vipgroup.com.vn` | Có TLS | Phụ thuộc việc mở công khai CRM (đang NO-GO). Phải chặn `/api/internal/portal/*` theo IP ở khối `crm.*` |
-
-**CRM → VIP ID** (`VIPID_PORTAL_URL`):
-- Production **bắt buộc** `https:` (CRM `server/config.js:60-64`).
-- CRM luôn gửi `Host: <PORTAL_HOST>` (CRM `server/modules/portal/vipid-client.js:109`).
-- VIP ID chỉ phục vụ `/api/internal/khach/*` trên host khách (VIPID `docs/CAU-HINH-TEN-MIEN.md:225`).
-
-Vì vậy đường thực tế duy nhất là `VIPID_PORTAL_URL=https://khachhang.vipgroup.com.vn`: CRM container ra IP công khai, rồi quay vòng (hairpin) vào Caddy trên chính VPS. Khi đó Caddy **không được** chặn toàn bộ `/api/internal/khach/*`, mà chỉ cho phép nguồn của container CRM. Dự kiến nguồn đó là dải `172.31.250.0/24` (network `edge` ghim ở CRM `compose.yml:79`), nhưng **phải đo trên máy**: xem nhật ký Caddy sau một lời gọi thử, mục 8 bước S3. Proxy e2e cục bộ của website (WEB `tests/portal-e2e/proxy.mjs:4,21`) đang chặn hết `/api/internal/*`. Cách đó **không** dùng được cho production theo thiết kế hiện tại.
+| PA | Cách làm | Ghi chú |
+|---|---|---|
+| **N1 (đề xuất)** | Gắn container `cowork-staging` vào network `edge` của CRM (khai báo `external`, tên thật dạng `vipcrm6-prod_edge` — **phải đo**). VIP ID: `CRM_PORTAL_INTERNAL_URL=http://<alias app CRM>:5175`. CRM: `VIPID_PORTAL_URL=http://cowork:8899` (tên dịch vụ một nhãn, được CRM nhận) | Không đi qua Internet/Caddy, không hairpin; Caddy chặn **toàn bộ** `/api/internal/*`. Phải sửa compose VIP ID (đội VIP ID). Nên đặt alias riêng cho app CRM (vd `vipcrm-app`) để tránh trùng tên `app` |
+| N2 (dự phòng) | CRM: `VIPID_PORTAL_URL=https://khachhang.vipgroup.com.vn` (hairpin qua Caddy). VIP ID → CRM vẫn cần N1 hoặc mở `crm.*` | Caddy phải cho `/api/internal/khach/*` **chỉ** từ nguồn đo được (dự kiến 172.31.250.0/24). Phức tạp hơn, phụ thuộc NO-GO PUBLIC của CRM |
 
 ### 1.4. Những thứ KHÔNG được ra Internet
 
 | Thành phần | Cách bảo đảm |
 |---|---|
-| `/api/internal/portal/*` (CRM) | Caddy host khách trả 404. CRM hostguard cũng 404 trên host khách. Nếu sau này mở `crm.*` thì thêm chặn theo IP |
-| `/api/internal/khach/*` (VIP ID) | Caddy chỉ cho nguồn nội bộ đã đo. Phía sau vẫn có HMAC, chống phát lại và giới hạn 10 KB (VIPID `cowork/khach_web.py:535-581`, `cowork/khach.py:967-994`) |
-| Giao diện CRM nhân viên, `/api/*` CRM | Caddy host khách chỉ chuyển `/portal*`. CRM hostguard trả 404 |
-| Route nhân viên VIP ID (`/`, `/dang-nhap`, quản trị, `/api/internal/brain…`) | Caddy host khách chỉ chuyển `/tai-khoan*` và `/api/internal/khach/*`. VIP ID tách realm theo Host |
-| Cổng 8899 / 18185 / Postgres | Chỉ bind `127.0.0.1`. DB nằm ở network `internal: true` (CRM `compose.yml:80`) |
-| Caddy admin API `127.0.0.1:2019` | Rủi ro có sẵn: user `deploy` thuộc nhóm docker (CRM `VIP_CRM_V6_HTTPS_GO_PUBLIC_PLAN.md:108`). Không do P1 tạo ra, nhưng owner cần biết |
+| `/api/internal/portal/*` (CRM), `/api/internal/khach/*` (VIP ID) | Caddy host khách 404 (N1). Phía sau còn HMAC, chống phát lại, lệch giờ ±300 s, giới hạn body (VIPID `cowork/khach.py:964-990`; CRM `server/modules/portal/internal.js:26,51-56,174-181`) |
+| Giao diện/`/api/*` CRM nhân viên | Caddy chỉ chuyển `/portal*`; hostguard 404 |
+| Route nhân viên VIP ID | Caddy chỉ chuyển `/tai-khoan*`; VIP ID tách realm theo Host |
+| Cổng 8899 / 18185 / Postgres | Chỉ bind `127.0.0.1`; DB ở network `internal: true` |
+| Caddy admin `127.0.0.1:2019` | Rủi ro có sẵn (user `deploy` thuộc nhóm docker), không do P1 tạo ra |
 
 ---
 
-## 2. Email — điểm chặn A8
+## 2. Đăng ký, khôi phục và email (quyết định owner 07/11)
 
-### 2.1. Hiện trạng (đã kiểm trong repo)
+- **Không xác minh email, không gọi xác minh SĐT** (HĐ §13). Đăng ký tạo ngay tài khoản `cho_duyet`, gửi signup sang CRM; nhân viên duyệt là cổng duy nhất. Email là thông tin **tuỳ chọn**, không unique; SĐT unique (VIPID `docs/CAU-HINH-TEN-MIEN.md:239-249`; schema v6 bỏ `email_norm NOT NULL UNIQUE`, `cowork/db.py:117-123`).
+- **Kênh email:** `COWORK_KHACH_EMAIL_ENABLED=0` (mặc định) thì không ghi outbox email và production **không** đòi kênh thư. Bật `=1` mà chưa có kênh thật thì từ chối khởi động (A8) (VIPID `cowork/config.py:171-173`, `cowork/khach.py:110-112`). Hiện chưa có kênh thật nào (`KENH_EMAIL_THAT` rỗng, `cowork/khach.py:48`). **Production đặt `=0`.**
+- **Khôi phục mật khẩu do nhân viên hỗ trợ:** trang quên mật khẩu chỉ hướng dẫn gọi hotline/Zalo (`COWORK_KHACH_HOTLINE`, mặc định `0961 102 655`, VIPID `cowork/config.py:175`). Nhân viên CRM cấp link một lần, 30 phút, qua `POST /api/internal/khach/tao-link-dat-lai` `{subject, requested_by}` → `{url, expires_at}` (VIPID `cowork/khach_web.py:727-729`, `cowork/khach.py:1332-1352`).
+  - **P1-a:** ở CRM `5007252` **chưa có** route/nút nhân viên gọi endpoint này (chỉ có trong thay đổi chưa commit của CRM). VIP ID không có CLI tương đương; bản demo dùng `tests/portal-e2e/demo.mjs reset-link` (ký HMAC từ máy dev — **không** dùng ở production). CRM đang chờ owner xác nhận trực tiếp.
+- **Chống đăng ký ồ ạt:** 5 đăng ký/giờ/IP (IPv6 gộp /64) và trần toàn hệ thống **200/giờ**; vượt trần → trang 503 "Hệ thống đang nhận quá nhiều đăng ký… liên hệ hotline/Zalo" + audit `khach.canh_bao.dang_ky_tang_dot_bien` (≤ 1 dòng/giờ) (VIPID `cowork/khach.py:597-610`, `cowork/config.py:153,177`).
+- Email đăng ký trùng SĐT: phản hồi y hệt, không tạo tài khoản, đánh dấu `phone_conflict` gửi CRM (VIPID `cowork/khach.py:648-656`).
 
-- VIP ID **chỉ ghi outbox**, không gửi thật:
-  - `gui_email` ghi bảng `customer_outbox` (VIPID `cowork/khach.py:472-478`);
-  - tập kênh thật `KENH_EMAIL_THAT` đang **rỗng** (VIPID `cowork/khach.py:45-46`);
-  - `COWORK_KHACH_MAIL_TRANSPORT` chỉ có giá trị `outbox` (VIPID `cowork/config.py:141-143`).
-- Khi `COWORK_ENV=production` và realm khách bật, VIP ID **từ chối khởi động** (VIPID `cowork/khach.py:103-105`, gọi từ `cowork/main.py:26`).
-  - **Lưu ý:** lỗi khởi động làm dừng **cả** `cowork.vipgroup.com.vn` của nhân viên, vì cùng một tiến trình. Xem mục 8 bước V2 (kiểm cấu hình trong container tạm).
-- Tên miền dùng **Google Workspace**. Bản đo DNS chỉ đọc ngày 30/09/2026 (WEB `docs/DNS_MIGRATION.md:16-19,23`, `docs/PRODUCTION.md:50`):
-  - `MX 1 SMTP.GOOGLE.COM`;
-  - `TXT v=spf1 include:_spf.google.com ~all`;
-  - `google._domainkey` (DKIM RSA 2048);
-  - `google-site-verification`;
-  - **không có `_dmarc`**.
-- DNS có thẩm quyền: `ns1/ns2.vclouddns.vn` (iNET). Owner đã chọn **phương án B: giữ DNS ở iNET**, không chuyển sang Cloudflare (WEB `docs/DNS_MIGRATION.md:6`).
-- Chính sách bảo mật của website đã nêu "Google Workspace của công ty" là nơi xử lý dữ liệu (WEB `src/pages/chinh-sach-bao-mat.astro:29`).
-
-### 2.2. Các phương án gửi
-
-| PA | Cấu hình | DNS cần đổi | Ghi chú |
-|---|---|---|---|
-| **E1 (đề xuất)** Workspace, SMTP AUTH | `smtps://smtp.gmail.com:465` (hoặc `smtp://smtp.gmail.com:587` STARTTLS). Tài khoản riêng `no-reply@vipgroup.com.vn` có bật xác minh 2 bước và **App Password** | Không cần thêm SPF/DKIM (đã có). **Thêm DMARC** | Cùng kiểu mà CRM đã chuẩn bị cho kênh cảnh báo (CRM `deploy/production/backup/backup.env.example:38-39`, `ops/alert-send.sh:7-8`). Cần một license Workspace cho hộp `no-reply` (owner kiểm chi phí) |
-| E2 Workspace SMTP relay | Admin console → Gmail → Routing → **SMTP relay service** → `smtp-relay.gmail.com:587`. Bật "Require SMTP Authentication" **và** "Require TLS". Người gửi: "Only addresses in my domains" | Như E1 | **Không** dùng kiểu xác thực "chỉ theo IP 160.22.170.20": VPS dùng chung với khoảng 39 container của dự án khác (CRM `VIP_CRM_V6_HTTPS_GO_PUBLIC_PLAN.md:74`). Theo IP thì tiến trình nào trên VPS cũng gửi được thư mang tên @vipgroup.com.vn |
-| E3 Nhà cung cấp giao dịch (Amazon SES, Postmark, Mailgun, Brevo…) | API hoặc SMTP của nhà cung cấp | Sửa **chính** bản ghi SPF hiện có (thêm `include:` của nhà cung cấp, hoặc dùng tên miền con MAIL FROM riêng). Thêm DKIM (CNAME/TXT do nhà cung cấp cấp). Thêm DMARC | Phải cập nhật chính sách bảo mật (bên xử lý mới, có thể chuyển dữ liệu ra nước ngoài). Phải có tài khoản, có chi phí. Lợi thế: báo cáo bounce, hạn mức cao |
-
-Hạn mức gửi của Gmail/relay: owner kiểm theo tài liệu Google hiện hành. P1 dự kiến lưu lượng thấp (kích hoạt và khôi phục), nên không phải yếu tố quyết định.
-
-### 2.3. Bản ghi DNS (ĐỀ XUẤT, làm tại iNET/vCloudDNS)
-
-| Tên | Loại | Giá trị | Ghi chú |
-|---|---|---|---|
-| `vipgroup.com.vn` | TXT (SPF) | **giữ nguyên** `v=spf1 include:_spf.google.com ~all` | E1/E2: không đổi. E3: **sửa bản ghi này**, không tạo bản ghi SPF thứ hai (hai bản ghi SPF thì SPF lỗi `permerror`) |
-| `google._domainkey` | TXT | giữ nguyên | Owner kiểm trong Admin console → Apps → Google Workspace → Gmail → **Authenticate email**: trạng thái phải là "Authenticating email" cho `vipgroup.com.vn` |
-| `_dmarc.vipgroup.com.vn` | TXT | `v=DMARC1; p=none; rua=mailto:<hộp nhận báo cáo>; fo=1` | Bản ghi **mới**. Chạy `p=none` 2–4 tuần, đọc báo cáo, rồi nâng lên `p=quarantine`. Hộp nhận báo cáo do owner chọn |
-
-Phải giữ nguyên các bản ghi email đánh dấu **EMAIL CRITICAL** (WEB `docs/DNS_MIGRATION.md:16-19`).
-
-### 2.4. Địa chỉ gửi đề xuất
-
-- `From: VIP GROUP <no-reply@vipgroup.com.vn>`.
-- `Reply-To`: tuỳ chọn, `viporder@vipgroup.com.vn` (email công khai, WEB `src/data/vi/contact.ts:19`). Chân thư hiện ghi "Email tự động, vui lòng không trả lời" (VIPID `cowork/khach.py:486-487`). Nếu đặt Reply-To thì nên sửa câu này cho nhất quán.
-
-### 2.5. Thay đổi code còn thiếu ở VIP ID (ước tính)
-
-Tên biến dưới đây là **ĐỀ XUẤT**, hiện **chưa có** trong code. Đội VIP ID chốt tên cuối cùng.
-
-| # | Việc | Ước tính |
-|---|---|---|
-| M1 | Kênh `smtp`, cấu hình: `COWORK_KHACH_MAIL_TRANSPORT=smtp`, `COWORK_KHACH_SMTP_URL`, `COWORK_KHACH_SMTP_USER`, `COWORK_KHACH_SMTP_PASS_FILE` (tệp 0600, không đọc từ env), `COWORK_KHACH_MAIL_FROM`. TLS bắt buộc, kiểm chứng chỉ, có timeout | 0,5 ngày |
-| M2 | Bộ gửi **tách khỏi request**: cron `docker exec cowork-staging python -m cowork.cli …` hoặc luồng nền đọc `customer_outbox WHERE sent_at IS NULL`. Gửi đồng bộ trong request sẽ làm lộ tài khoản qua thời gian phản hồi: đăng ký trùng có gửi thư, đăng ký mới cũng gửi, nhưng nhánh "im lặng" thì không (VIPID `cowork/khach.py:557-659`) | 0,5–1 ngày |
-| M3 | Thêm cột thử lại (`attempts`, `last_error`, `next_at`) bằng migration chỉ thêm, có backoff. Sau khi gửi xong thì **xoá link token trong `body_text`**: bảng đang lưu nguyên link một lần, và link đó lọt vào bản backup | 0,5 ngày |
-| M4 | Chỉ thêm `smtp` vào `KENH_EMAIL_THAT` khi đủ cấu hình. Không ghi nội dung thư hay mật khẩu vào log. Thêm test với máy chủ SMTP giả | 0,5 ngày |
-| M5 | Kiểm thử thật trên staging: thư tới Gmail và một hộp ngoài Google; xem "Show original": SPF/DKIM/DMARC đều PASS; link hết hạn sau 30 phút (VIPID `cowork/config.py:145`) | 0,5 ngày |
-
-**Tổng: khoảng 2–3 ngày công**, cộng một vòng rà soát bảo mật. A8 chỉ coi là xong khi M5 có bằng chứng (HĐ `KIEN_TRUC_P1.md:16`).
+**Gửi email thật (giai đoạn sau) — ĐỀ XUẤT – CHƯA ÁP DỤNG:** tên miền dùng Google Workspace (MX/SPF/DKIM có, **chưa có `_dmarc`**, WEB `docs/DNS_MIGRATION.md:16-19,23`). Khi cần: Workspace SMTP AUTH từ hộp `no-reply@`, App Password trong tệp 0600, bộ gửi tách khỏi request, thêm `_dmarc` `v=DMARC1; p=none; rua=mailto:<hộp owner chọn>`. Không chặn P1.
 
 ---
 
-## 3. Cloudflare Turnstile (thử thách đăng nhập)
+## 3. Cloudflare Turnstile — bắt buộc ở production
 
-VIP ID bắt buộc có Turnstile ở production khi bật realm khách, và từ chối khoá thử nghiệm của Cloudflare (VIPID `cowork/khach.py:116-121,245-247`).
+- Production bật realm khách mà thiếu site key/secret, hoặc dùng **khoá thử nghiệm** của Cloudflare, thì VIP ID **từ chối khởi động** (VIPID `cowork/khach.py:124-129,253-255`).
+- Dùng ở **hai nơi**: đăng ký (action `khach_dang_ky`) và đăng nhập khi bị thử thách sau nhiều lần sai (action `khach_login`, audit `khach.dang_nhap.thu_thach`) (VIPID `cowork/khach.py:256-259,751-753`; `docs/CAU-HINH-TEN-MIEN.md:257-258`).
+- Kiểm `hostname` và `action` trong kết quả siteverify; container phải ra được `https://challenges.cloudflare.com` (VIPID `cowork/config.py:169`).
 
-### 3.1. Tạo widget riêng (owner làm trên dashboard Cloudflare)
+Tạo widget (owner, dashboard Cloudflare): tên `VIP GROUP — Cổng khách hàng`, hostname **chỉ** `khachhang.vipgroup.com.vn`, mode **Managed**, không pre-clearance. **Không** dùng lại widget form lead website (WEB `src/data/vi/contact.ts:15`). Staging dùng widget riêng. Turnstile không cần zone DNS ở Cloudflare.
 
-| Trường | Giá trị |
-|---|---|
-| Tên widget | `VIP GROUP — Cổng khách hàng (đăng nhập)` |
-| Hostname | `khachhang.vipgroup.com.vn` (chỉ host này). VIP ID kiểm `hostname` trong kết quả siteverify phải trùng host khách đang phục vụ (VIPID `cowork/khach.py:251-259`) |
-| Widget mode | **Managed** |
-| Pre-clearance | Không |
-| Action | `khach_login`. Template gửi `data-action` (VIPID `cowork/templates/khach/dang_nhap.html:26`), server kiểm `action == "khach_login"` (VIPID `cowork/khach.py:248,255`). Action do client gửi, không cấu hình trên dashboard |
-
-- **Không dùng lại** widget của form lead website (`0x4AAAAAAF2QZNcXX6-6puJf`, WEB `src/data/vi/contact.ts:15`). Hostname và secret khác nhau, nên lộ một bên thì bên kia vẫn an toàn.
-- Turnstile không cần zone DNS ở Cloudflare, nên chạy được dù DNS ở iNET.
-- Staging (`khachhang-staging…`) dùng widget riêng, hoặc khoá thử nghiệm của Cloudflare (VIPID `deploy/vps/README.md:104-106`).
-
-### 3.2. Biến môi trường (đúng tên VIP ID đọc)
-
-| Biến | Giá trị | Nguồn |
+| Biến VIP ID | Giá trị | Nguồn |
 |---|---|---|
-| `COWORK_KHACH_TURNSTILE_SITE_KEY` | site key (công khai), đặt trong `.env` của VIP ID | VIPID `cowork/config.py:169` |
-| `COWORK_KHACH_TURNSTILE_SECRET_FILE` | `/data/turnstile_secret.key` (mặc định `DATA_DIR/turnstile_secret.key`) | VIPID `cowork/config.py:170-171` |
-| `COWORK_KHACH_TURNSTILE_SECRET` | **không dùng** ở production. Code có nhận biến này (VIPID `cowork/khach.py:229-237`), nhưng tệp 0600 an toàn hơn: không lộ qua `docker inspect`, không lộ qua env của tiến trình | — |
+| `COWORK_KHACH_TURNSTILE_SITE_KEY` | site key thật | VIPID `cowork/config.py:166` |
+| `COWORK_KHACH_TURNSTILE_SECRET_FILE` | `/data/turnstile_secret.key` (0600, uid 10001) | `cowork/config.py:167-168` |
+| `COWORK_KHACH_TURNSTILE_SECRET` | **không dùng** ở production (lộ qua `docker inspect`) | `cowork/khach.py:239-243` |
 
-- Secret **không** tự sinh: thiếu thì tắt thử thách, và production từ chối khởi động (VIPID `cowork/config.py:166-168`).
-- Container cần ra được `https://challenges.cloudflare.com` (VIPID `cowork/config.py:172`).
-
-### 3.3. Ghi secret (người vận hành chạy trên VPS, không dán vào chat hay ticket)
+Ghi secret (trên VPS, không dán vào chat/ticket):
 
 ```bash
-# Dán secret khi được hỏi (không hiện lên màn hình, không vào history)
 read -rs TS && printf '%s' "$TS" | docker run --rm -i \
   -v /srv/vip-staging/cowork/deploy/vps/data:/data alpine:3.20 \
   sh -c 'umask 077; cat > /data/turnstile_secret.key && chown 10001:10001 /data/turnstile_secret.key && chmod 600 /data/turnstile_secret.key'
 unset TS
 ```
 
-uid 10001 là user `cowork` trong image (VIPID `deploy/vps/Dockerfile:9`). Cách chown qua container tạm lấy theo VIPID `deploy/vps/README.md:20-21`.
+**Kiểm sống (B7):** trên staging và ngay sau mở production, đăng ký thử một lần và cố tình sai mật khẩu đủ để bị thử thách; widget phải hiện và qua được.
 
 ---
 
-## 4. Danh mục bí mật
+## 4. Bí mật
 
-### 4.1. Bảng
-
-| Bí mật | Ở đâu (VIP ID) | Ở đâu (CRM) | Sinh bằng | Ràng buộc |
+| Bí mật | VIP ID | CRM | Sinh | Ràng buộc |
 |---|---|---|---|---|
-| `VIPID_PORTAL_SECRET` | tệp `/data/portal_secret.key` trong container (host: `/srv/vip-staging/cowork/deploy/vps/data/portal_secret.key`), qua `VIPID_PORTAL_SECRET_FILE` (VIPID `cowork/config.py:140`, `cowork/khach.py:73-78`) | `~/vipcrm6-prod/secrets/vipid_portal_secret` (docker secret → `/run/secrets/vipid_portal_secret`) (CRM `compose.yml:45,54,89`, runbook `:162-164`) | `openssl rand -hex 32` (64 ký tự = 64 byte ASCII) | **Cùng một giá trị** hai bên. ≥ 32 byte. **Khác** `VIPID_SHARED_SECRET`, `COWORK_SHARED_SECRET`, `LEAD_INTAKE_SECRET`, và khác các khoá VIP ID `secret.key`, `brain_secret.key`, `hatang_secret.key`. Hai bên đều kiểm khi khởi động (VIPID `cowork/khach.py:136-143`; CRM `server/config.js:47-58`, `server/modules/portal/vipid-client.js:28-32`) |
-| Turnstile secret | `/data/turnstile_secret.key` (mục 3.3) | — | Cloudflare cấp | Không dùng khoá thử nghiệm |
-| Mật khẩu SMTP (App Password) | ĐỀ XUẤT `/data/smtp_pass` 0600 (mục 2.5 M1) | (CRM cảnh báo dùng `~/vipcrm6-prod/secrets/smtp_pass` riêng, runbook `:143-144`) | Google cấp App Password | Mỗi hệ thống một App Password riêng để thu hồi riêng được |
-| Mật khẩu role DB cổng | — | **Hiện không có.** `crm_portal` là role `NOLOGIN`, app chuyển sang bằng `SET LOCAL ROLE` (CRM `deploy/production/backup/db-roles.sql:46-55`) | — | Lớp gia cố tuỳ chọn: role LOGIN riêng (đề xuất tên `vipcrm6_portal`) và `PORTAL_DATABASE_URL`. **Chưa làm ở production** (CRM `VIP_CRM_V6_CUSTOMER_PORTAL_P1.md:186`). Nếu owner chọn làm: thêm tệp `~/vipcrm6-prod/secrets/db_portal_password`, sinh bằng `openssl rand -base64 33`. Mật khẩu này nằm trong URL ở `app.env` (0600) |
+| `VIPID_PORTAL_SECRET` | `/data/portal_secret.key` qua `VIPID_PORTAL_SECRET_FILE` (VIPID `cowork/config.py:140`, `cowork/khach.py:72-80`) | `~/vipcrm6-prod/secrets/vipid_portal_secret` → `/run/secrets/vipid_portal_secret` (CRM `deploy/production/compose.yml:54,89`) | `openssl rand -hex 32` | **Cùng giá trị** hai bên, ≥ 32 byte, khác mọi bí mật khác; hai bên kiểm khi khởi động (VIPID `cowork/khach.py:144-150`; CRM `server/config.js:55-60`) |
+| Turnstile secret | `/data/turnstile_secret.key` | — | Cloudflare | Không khoá thử nghiệm |
+| Mật khẩu role cổng (P1-b) | — | ĐỀ XUẤT `~/vipcrm6-prod/secrets/db_portal_password`, dùng trong `PORTAL_DATABASE_URL` (`app.env` 0600) | `openssl rand -base64 33` | Role LOGIN NOINHERIT, **chỉ** là thành viên `crm_portal` (CRM `server/config.js:107-108`, `VIP_CRM_V6_CUSTOMER_PORTAL_P1.md:186`) |
 
-**Cảnh báo quan trọng ở VIP ID:** khi thiếu tệp, hàm `_secret()` **tự sinh khoá mới** (VIPID `cowork/config.py:76-98`). Nếu khởi động khi chưa đặt tệp `portal_secret.key`, VIP ID sẽ chạy với khoá **khác** CRM: không mất an toàn, nhưng mọi HMAC đều sai. Vì vậy phải đặt tệp **trước** khi bật `COWORK_KHACH_ENABLED=1`, rồi so khớp như lệnh bên dưới.
-
-### 4.2. Sinh và phân phối `VIPID_PORTAL_SECRET` (cả hai bên trên **cùng VPS**, bí mật không rời máy)
+**Cảnh báo VIP ID:** thiếu tệp thì `_secret()` **tự sinh khoá mới** (VIPID `cowork/config.py:76-98`) — chạy được nhưng mọi HMAC sai. Đặt tệp **trước** khi bật realm, rồi so khớp:
 
 ```bash
-# 1) Sinh tại CRM (lệnh trích nguyên runbook CRM :164)
 ( umask 077; openssl rand -hex 32 > ~/vipcrm6-prod/secrets/vipid_portal_secret )
-id -u deploy          # phải = 1000 (uid 'node' của CRM, runbook :165)
-
-# 2) Chép sang VIP ID, chủ sở hữu 10001, 0600
+id -u deploy   # phải = 1000 (uid node của CRM)
 docker run --rm -i -v /srv/vip-staging/cowork/deploy/vps/data:/data alpine:3.20 \
   sh -c 'umask 077; cat > /data/portal_secret.key && chown 10001:10001 /data/portal_secret.key && chmod 600 /data/portal_secret.key' \
   < ~/vipcrm6-prod/secrets/vipid_portal_secret
-
-# 3) So khớp mà không in giá trị
 docker run --rm -v /srv/vip-staging/cowork/deploy/vps/data:/data:ro \
   -v ~/vipcrm6-prod/secrets/vipid_portal_secret:/crm.key:ro alpine:3.20 \
   sh -c 'cmp -s /data/portal_secret.key /crm.key && echo GIONG || echo KHAC'
 ```
 
-VIP ID `strip()` khoảng trắng, CRM bỏ ký tự xuống dòng cuối (VIPID `cowork/config.py:83`; CRM `server/config.js:25-31`). Vì vậy dấu xuống dòng cuối tệp không làm hai bên lệch nhau.
-
-### 4.3. Xoay vòng
-
-| Bí mật | Quy trình | Ảnh hưởng |
-|---|---|---|
-| `VIPID_PORTAL_SECRET` | Hai bên **không** hỗ trợ hai khoá cùng lúc, nên phải đổi đồng thời. Các bước: (1) sinh khoá mới vào tệp tạm; (2) thay **cả hai** tệp (mục 4.2); (3) `RELEASE=<current> docker compose -p vipcrm6-prod -f ~/vipcrm6-prod/app/deploy/production/compose.yml up -d --no-deps app`; (4) `docker compose -f deploy/vps/docker-compose.yml up -d` tại `/srv/vip-staging/cowork`. Phải khởi động lại vì VIP ID giữ khoá trong bộ nhớ (`_bi_mat_cache`, VIPID `cowork/khach.py:69-78`); (5) `docker exec cowork-staging python -m cowork.cli khach-dong-bo --tat-ca` (VIPID `cowork/cli.py:8,209-215`) | CRM gián đoạn 10–40 s. VIP ID gián đoạn vài giây, **kể cả nhân viên**. Launch token đang bay (≤ 60 s) bị từ chối, khách đăng nhập lại. Hàng đợi hai bên (`crm_sync_pending`, `portal_outbox`) tự gửi lại, không mất sự kiện |
-| Turnstile | Dashboard Cloudflare → widget → xoay secret. Ghi tệp mới (mục 3.3), khởi động lại VIP ID. Owner kiểm trên dashboard xem secret cũ còn hiệu lực bao lâu | Vài giây |
-| SMTP | Tạo App Password mới, thay tệp, khởi động lại hoặc chờ lượt gửi kế tiếp, rồi **thu hồi** App Password cũ | Thư chờ trong outbox, gửi sau |
-| Khi nghi lộ | Tắt cờ hai bên **trước** (mục 9), rồi mới xoay. Ghi bằng chứng | — |
+**Xoay vòng `VIPID_PORTAL_SECRET`:** không hỗ trợ hai khoá cùng lúc ⇒ thay **cả hai** tệp, `up -d --no-deps app` (CRM, gián đoạn 10–40 s), `docker compose -f deploy/vps/docker-compose.yml up -d` (VIP ID giữ khoá trong bộ nhớ, `_bi_mat_cache`), rồi `docker exec cowork-staging python -m cowork.cli khach-dong-bo --tat-ca`. Launch đang bay (≤ 60 s) bị từ chối; hàng đợi hai bên tự gửi lại. Nghi lộ ⇒ tắt cờ hai bên **trước**, rồi mới xoay.
 
 ---
 
-## 5. Ma trận cấu hình production
+## 5. Cấu hình production và điều kiện tiên quyết
 
 ### 5.1. VIP ID — `/srv/vip-staging/cowork/deploy/vps/.env.staging`
 
-Tên tệp là **`.env.staging` dù đây là production**: compose dùng tệp này (VIPID `deploy/vps/docker-compose.yml:11-12`). CRM đã ghi nhận đây là rủi ro nhầm môi trường (CRM `VIP_CRM_V6_CUSTOMER_PORTAL_P1.md:115`, V6). Nội dung tệp thật trên VPS **không có trong repo**: owner kiểm lại từng dòng.
+Tên tệp là `.env.staging` dù là production (VIPID `deploy/vps/docker-compose.yml:11-12`). Nội dung thật không có trong repo: owner kiểm từng dòng.
 
-| Biến | Giá trị production | Bắt buộc? | Nguồn |
-|---|---|---|---|
-| `COWORK_ENV` | `production` | Có (bật các kiểm tra production) | `config.py:70`, `khach.py:88-92` |
-| `COWORK_HOST` / `COWORK_PORT` | `0.0.0.0` / `8899` (trong container) | Giữ | `.env.staging.example` |
-| `COWORK_DATA_DIR` | `/data` | Giữ | `.env.staging.example`, `config.py:34` |
-| `COWORK_PUBLIC_URL` | `https://cowork.vipgroup.com.vn` | Giữ | `docs/TRIEN-KHAI-PRODUCTION.md:75` |
-| `COWORK_COOKIE_SECURE` | `1` | **Có**, thiếu thì từ chối khởi động | `config.py:52`, `khach.py:114-115` |
-| `COWORK_TIN_PROXY` | `1` | **Có**, thiếu thì từ chối khởi động | `config.py:73`, `khach.py:111-113` |
-| `COWORK_KHACH_ENABLED` | `1`, **bật sau cùng** (mục 8 bước V4) | — | `config.py:118` |
-| `COWORK_KHACH_HOSTS` | `khachhang.vipgroup.com.vn` | Có | `config.py:123-124` |
-| `COWORK_STAFF_HOSTS` | `cowork.vipgroup.com.vn,127.0.0.1:8899` | **Có**, thiếu thì từ chối khởi động. **Phải có `127.0.0.1:8899`**: healthcheck docker gọi `http://127.0.0.1:8899/api/health` (VIPID `docker-compose.yml:23`, `deploy.sh:12`), nếu thiếu sẽ nhận 421 và container báo unhealthy | `config.py:128-129`, `khach.py:122-125` |
-| `COWORK_KHACH_PUBLIC_URL` | `https://khachhang.vipgroup.com.vn` | Có (https) | `config.py:131-132`, `khach.py:144-148` |
-| `CRM_PORTAL_PUBLIC_URL` | `https://khachhang.vipgroup.com.vn`. Launch đi tới `…/portal/auth/launch` (`khach.py:948-949`) và origin này được thêm vào CSP `form-action` (`khach_web.py:80-90`) | Có (https) | `config.py:135-136` |
-| `CRM_PORTAL_INTERNAL_URL` | theo quyết định N1/N2 (mục 1.3) | Có | `config.py:133-134` |
-| `CRM_PORTAL_TIMEOUT` | `3` (mặc định) | — | `config.py:137` |
-| `VIPID_PORTAL_SECRET_FILE` | `/data/portal_secret.key` (ghi tường minh) | Có | `config.py:140` |
-| `COWORK_KHACH_MAIL_TRANSPORT` | `smtp`, **giá trị này chưa tồn tại** (mục 2.5) | Có | `config.py:143` |
-| `COWORK_KHACH_TURNSTILE_SITE_KEY` | site key thật | Có | `config.py:169` |
-| `COWORK_KHACH_TURNSTILE_SECRET_FILE` | `/data/turnstile_secret.key` | Có | `config.py:170-171` |
-| Tham số tinh chỉnh (giữ mặc định): `COWORK_KHACH_TOKEN_TTL_MIN=30`, `_LAUNCH_TTL=60` (trần 60), `_SESSION_HOURS=12`, `_IDLE_MINUTES=120`, `_LOGIN_MAX_FAIL=5`, `_LOGIN_IP_MAX_FAIL=20`, `_LOGIN_WINDOW_MIN=15`, `_LOCK_MIN=15`, `_SIGNUP_IP_PER_HOUR=5`, `_FORGOT_IP_PER_HOUR=10`, `_UNVERIFIED_TTL_HOURS=48`, `_SCRYPT_LOG2_N=17`, `_SCRYPT_DONG_THOI=2`, `_THIET_BI_NGAY=180`, `_RESET_ACC_IP_PER_HOUR=3` | — | — | `config.py:144-164` |
+| Biến | Giá trị production | Nguồn (VIPID) |
+|---|---|---|
+| `COWORK_ENV` | `production` | `cowork/config.py:70` |
+| `COWORK_TIN_PROXY` | `1` — **thiếu ⇒ từ chối khởi động** | `config.py:73`, `khach.py:119-121` |
+| `COWORK_COOKIE_SECURE` | `1` — **thiếu ⇒ từ chối khởi động** | `config.py:52`, `khach.py:122-123` |
+| `COWORK_STAFF_HOSTS` | `cowork.vipgroup.com.vn,127.0.0.1:8899` — **thiếu ⇒ từ chối khởi động**; cần `127.0.0.1:8899` cho healthcheck docker | `config.py:128-129`, `khach.py:130-133`, `docker-compose.yml:21-22` |
+| `COWORK_KHACH_ENABLED` | `1`, **bật sau cùng** (bước V3) | `config.py:118` |
+| `COWORK_KHACH_HOSTS` | `khachhang.vipgroup.com.vn` | `config.py:123-124` |
+| `COWORK_KHACH_PUBLIC_URL`, `CRM_PORTAL_PUBLIC_URL` | `https://khachhang.vipgroup.com.vn` (bắt buộc https) | `config.py:131-136`, `khach.py:152-156` |
+| `CRM_PORTAL_INTERNAL_URL` | theo N1 (mục 1.3) | `config.py:133-134` |
+| `VIPID_PORTAL_SECRET_FILE` | `/data/portal_secret.key` | `config.py:140` |
+| `COWORK_KHACH_EMAIL_ENABLED` | `0` | `config.py:173` |
+| `COWORK_KHACH_HOTLINE` | `0961 102 655` (hoặc số owner chốt) | `config.py:175` |
+| `COWORK_KHACH_TURNSTILE_SITE_KEY` / `_SECRET_FILE` | khoá thật (mục 3) | `config.py:166-168` |
+| Giữ mặc định | `_SIGNUP_GLOBAL_PER_HOUR=200`, `_SIGNUP_IP_PER_HOUR=5`, `_SYNC_GIAY=5`, `CRM_PORTAL_TIMEOUT=3`, `_TOKEN_TTL_MIN=30`, `_LAUNCH_TTL=60` (trần 60), `_SESSION_HOURS=12`, `_IDLE_MINUTES=120`, `_LOGIN_MAX_FAIL=5`, `_LOGIN_IP_MAX_FAIL=20`, `_LOCK_MIN=15`, `_SCRYPT_LOG2_N=17`, `_SCRYPT_DONG_THOI=2` | `config.py:137,144-161,177-179` |
 
-Hai điểm owner cần biết:
-- **CGNAT di động:** `COWORK_KHACH_SIGNUP_IP_PER_HOUR=5` tính theo IP (IPv6 gộp theo /64, `khach.py:213-222`). Ở Việt Nam, nhiều thuê bao 4G chung một IP, nên khách thật có thể bị chặn đăng ký khi cao điểm. Theo dõi sự kiện `khach.dang_ky.qua_tan_suat` tuần đầu rồi mới chỉnh (mục 10).
-- **RAM:** scrypt N=2¹⁷ dùng 128 MiB mỗi lượt, tối đa 2 lượt đồng thời, tức khoảng 256 MiB đỉnh (`config.py:158-161`). Container VIP ID **không** đặt giới hạn bộ nhớ (`docker-compose.yml`). Cần kiểm RAM trống của VPS: CRM dùng ngưỡng watchdog 1,2 GB (CRM runbook `:21`).
+Ghi chú:
+- **Uvicorn một worker** (Dockerfile không đặt `--workers`, VIPID `deploy/vps/Dockerfile:25-27`) là đủ. Gửi CRM nhận dòng theo **lease** nguyên tử nên nhiều tiến trình (vòng nền + cron CLI) không gửi trùng (VIPID `cowork/khach.py:1018-1059`).
+- **RAM:** scrypt N=2¹⁷ ≈ 128 MiB/lượt × 2 lượt đồng thời; container VIP ID không đặt giới hạn bộ nhớ. Kiểm RAM trống.
+- **CGNAT:** 5 đăng ký/giờ/IP có thể chặn khách 4G chung IP; theo dõi `khach.dang_ky.qua_tan_suat` tuần đầu.
 
 ### 5.2. CRM — `~/vipcrm6-prod/secrets/app.env` và compose
 
-| Biến | Nơi | Giá trị production | Nguồn |
-|---|---|---|---|
-| `APP_ENV` | compose (cố định) | `production` | CRM `compose.yml:47` |
-| `COOKIE_SECURE` | compose | `1` | `compose.yml:49` |
-| `TRUST_PROXY` | compose | `172.31.250.1` (gateway network edge, nơi Caddy đi qua docker-proxy) | `compose.yml:50,79` |
-| `VIPID_PORTAL_SECRET_FILE` | compose | `/run/secrets/vipid_portal_secret` | `compose.yml:54` |
-| `PORTAL_ENABLED` | app.env | `1` (production mặc định **tắt**) | `server/config.js:104-107`, runbook `:158` |
-| `PORTAL_HOST` | app.env | `khachhang.vipgroup.com.vn` (không kèm cổng) | `server/config.js:89-92`, runbook `:159` |
-| `PORTAL_PUBLIC_URL` | app.env | `https://khachhang.vipgroup.com.vn` | runbook `:160` |
-| `VIPID_PORTAL_URL` | app.env | `https://khachhang.vipgroup.com.vn` (client tự nối thêm `/api/internal/khach/…`, `vipid-client.js:11-15,99-110`) | `server/config.js:60-64,94` |
-| `PORTAL_SIG_V2_REQUIRED` | app.env | `1`, **chỉ sau khi** sửa B2 (mục 5.3) | `server/config.js:95-96`, `internal.js:11-14` |
-| `PORTAL_DATABASE_URL` | app.env | rỗng (hoặc role LOGIN riêng nếu owner chọn, mục 4.1) | `server/config.js:97-98` |
-| `PORTAL_TENANT_CODE` | app.env | `VIP` (mặc định) | `server/modules/portal/review.js:30` |
-| `PORTAL_LAUNCH_RATE_PER_IP` | app.env | `30` (mặc định) | `launch.js:24-26,116` |
-| `PORTAL_INTERNAL_RATE_PER_IP` | app.env | `120` (mặc định) | `internal.js:125` |
+| Biến | Giá trị production | Nguồn (CRM) |
+|---|---|---|
+| `APP_ENV`, `COOKIE_SECURE`, `TRUST_PROXY`, `VIPID_PORTAL_SECRET_FILE` | cố định trong compose: `production`, `1`, `172.31.250.1`, `/run/secrets/vipid_portal_secret` | `deploy/production/compose.yml:46-54` |
+| `PORTAL_ENABLED` | `1` (production mặc định tắt) | `server/config.js:113-117` |
+| `PORTAL_HOST` | `khachhang.vipgroup.com.vn` | `server/config.js:101` |
+| `PORTAL_PUBLIC_URL` | `https://khachhang.vipgroup.com.vn` | `server/config.js:105` |
+| `VIPID_PORTAL_URL` | N1: `http://cowork:8899` (hoặc https theo N2) | `server/config.js:65-71,106`, `server/lib/internal-url.js` |
+| `PORTAL_DATABASE_URL` | **P1-b:** URL role LOGIN NOINHERIT chỉ là thành viên `crm_portal`. Không đặt ⇒ app dùng `SET LOCAL ROLE` trên pool app; `RESET ROLE` trong giao dịch lấy lại quyền app (đã ghi nhận) | `server/config.js:107-108`, `VIP_CRM_V6_CUSTOMER_PORTAL_P1.md:186` |
+| `STAFF_HOST_ALLOW_LEGACY_CUSTOMERS` | theo Q2 (mặc định cho phép) | `server/config.js:102-104` |
 
-`PORTAL_*` cố ý **không** đặt trong `environment:` của compose (CRM runbook `:166`).
+`PORTAL_*` cố ý **không** đặt trong `environment:` compose (CRM runbook §6). Không còn biến `PORTAL_SIG_V2_REQUIRED` (đã bỏ cùng header V2).
 
-### 5.3. Điểm chặn B2 — header ký HMAC lệch nhau
+### 5.3. Hợp đồng HMAC và thu hồi — B2 ĐÃ GIẢI QUYẾT
 
-| Chiều | Bên gửi ký | Bên nhận kiểm | Kết quả |
-|---|---|---|---|
-| VIP ID → CRM | `X-Portal-Sig = HMAC("vipid->crm.POST.<path>.<ts>." + body)`, **không** có `X-Portal-Sig-V2` (VIPID `khach.py:953-964,1017-1024`) | Không có V2 nên CRM kiểm kiểu v1.1: `X-Portal-Sig = HMAC("vipid->crm.<ts>.<body>")` (CRM `internal.js:27-29,46-50,69-77`) | **401 SIGNATURE_INVALID** |
-| CRM → VIP ID | `X-Portal-Sig` = v1.1 (không có method/path), `X-Portal-Sig-V2` = có method/path (CRM `vipid-client.js:43-57,104-108`) | VIP ID chỉ đọc `X-Portal-Sig` và kiểm có method/path (VIPID `khach_web.py:559-561`, `khach.py:967-981`) | **401 CHU_KY_SAI** và audit `khach.hmac.sai` |
+- Một header duy nhất `X-Portal-Sig` = hex(HMAC-SHA256(secret, `"<chiều>.<METHOD>.<path>.<ts>." + body`)), kèm `X-Portal-Ts`; không còn `X-Portal-Sig-V2` (VIPID `cowork/khach.py:950-961`; CRM `server/modules/portal/internal.js:8-9,174`, `server/modules/portal/vipid-client.js:4,120`).
+- Bằng chứng: kit hợp đồng (WEB `6d7fee5`) với CRM `5007252` — chiều VIP ID → CRM **30 PASS / 0 FAIL / 1 INFO**, chiều CRM → VIP ID **4/4** (CRM `docs/evidence/g7-hotfix/SUMMARY.md`, commit `a87df12`).
+- **Idempotency-Key:** VIP ID gửi mỗi sự kiện kèm `Idempotency-Key`; CRM tôn trọng khoá này nên gửi lại sau timeout không tạo trùng (VIPID `cowork/khach.py:1033,1069`; CRM `server/modules/portal/internal.js:204-227`).
+- **Thu hồi (HĐ §14):** body `{subject, reason, revoked_at, revoked_at_ms}`; launch token có `iat_ms`. CRM ưu tiên `revoked_at_ms`, từ chối token có `iat_ms` trước mốc; `iat` tương lai > **5 s** bị từ chối (CRM `server/modules/portal/internal.js:266-285`, `server/modules/portal/launch.js:24,75-77,132`). VIP ID ghi mốc nguyên tử, kẹp tối đa `now + 5 phút`, kẹp thì audit `khach.canh_bao.dong_ho` (VIPID `docs/CAU-HINH-TEN-MIEN.md:272-302`).
 
-Nguyên nhân:
-- HĐ §11.8 đổi chuỗi ký nhưng không nêu tên header.
-- VIP ID đặt chuỗi mới vào `X-Portal-Sig` và kiểm thử với CRM **giả** (commit `5bd7249` "CRM giả theo chuỗi ký mới").
-- CRM giữ `X-Portal-Sig` cho v1.1 và thêm header V2 riêng (CRM commit `80cd161`).
+### 5.4. Điều kiện tiên quyết production (kiểm trước G3)
 
-**Sửa đề xuất (đội VIP ID, khoảng 0,5 ngày + E2E chung):**
-1. Gửi `X-Portal-Sig-V2`, có thể kèm `X-Portal-Sig` v1.1 trong giai đoạn chuyển.
-2. Kiểm `X-Portal-Sig-V2` trên `/api/internal/khach/*`.
-3. Sau đó CRM bật `PORTAL_SIG_V2_REQUIRED=1`.
-4. Ghi tên header vào HĐ (v1.2).
-
-Chưa có E2E nào chạy giữa VIP ID thật và CRM thật.
+| # | Điều kiện | Kiểm |
+|---|---|---|
+| T1 | Khoá Turnstile thật (đăng ký + đăng nhập bị thử thách); production từ chối khoá thử | V2 in `CAU_HINH_OK` + kiểm sống mục 3 |
+| T2 | `COWORK_TIN_PROXY=1`, `COWORK_COOKIE_SECURE=1`, `COWORK_STAFF_HOSTS` đặt | V2 |
+| T3 | NTP đồng bộ trên VPS (lệch iat ≤ 5 s, HMAC ±300 s). CRM đã đo chỉ đọc 07/11: `System clock synchronized: yes`, `NTP service: active` (CRM `docs/evidence/prod-readiness/survey_deploy.txt:269-270`) | `timedatectl` lại ngày triển khai |
+| T4 | `PORTAL_DATABASE_URL` role riêng (P1-b), **hoặc** owner ký chấp nhận rủi ro | Biên bản |
+| T5 | `COWORK_KHACH_EMAIL_ENABLED=0` | V2 |
+| T6 | Backup DB VIP ID **trước** khi mã v6 chạy lần đầu (mục 9) | B2 in `BACKUP_OK` |
+| T7 | Truy vấn trước deploy CRM: không có user `vip_subject LIKE 'cust:%'` có `password_hash` hoặc `kind≠customer` (ràng buộc 704) | CRM `docs/evidence/g7-hotfix/SUMMARY.md` |
 
 ---
 
 ## 6. DNS và Caddy
 
-### 6.1. DNS (ĐỀ XUẤT – chưa áp dụng; owner làm tại iNET OnePortal)
+### 6.1. DNS (ĐỀ XUẤT – CHƯA ÁP DỤNG; owner làm tại iNET)
 
-| Tên | Loại | Giá trị | TTL | Ghi chú |
+| Tên | Loại | Giá trị | TTL | Khi |
 |---|---|---|---|---|
-| `khachhang-staging` | A | `160.22.170.20` | 300 | Tạo trước, cho staging |
-| `khachhang` | A | `160.22.170.20` | 300 | Tạo khi qua cổng go/no-go G5 (mục 8) |
+| `khachhang-staging` | A | `160.22.170.20` | 300 | Trước, cho staging |
+| `khachhang` | A | `160.22.170.20` | 300 | Qua G3 |
 
-- Cùng IP với `cowork` và `ai` (VIPID `docs/CAU-HINH-TEN-MIEN.md:12-13`) và `crm` (CRM `VIP_CRM_V6_HTTPS_GO_PUBLIC_PLAN.md:10`).
-- Không có AAAA. Không có CNAME. Tắt OneShield/proxy, giống bản ghi `www` (WEB `docs/DNS_MIGRATION.md:6`).
-- Zone không có CAA (WEB `docs/DNS_MIGRATION.md:23`), nên Let's Encrypt HTTP-01 qua cổng 80 cấp được chứng chỉ (VIPID `docs/CAU-HINH-TEN-MIEN.md:19`).
-- **Không** sửa 14 bản ghi A sẵn có và các bản ghi email.
-- Kiểm tra: `dig +short A khachhang.vipgroup.com.vn @ns1.vclouddns.vn`, `@8.8.8.8`, `@1.1.1.1`. Cả ba phải trả `160.22.170.20`.
+Không AAAA/CNAME, tắt OneShield. Zone không có CAA nên Let's Encrypt HTTP-01 cấp được. Không sửa bản ghi sẵn có (đặc biệt bản ghi EMAIL CRITICAL, WEB `docs/DNS_MIGRATION.md:16-19`). Kiểm: `dig +short A khachhang.vipgroup.com.vn @ns1.vclouddns.vn` / `@8.8.8.8` / `@1.1.1.1` → `160.22.170.20`.
 
-### 6.2. Khối Caddy (ĐỀ XUẤT – chưa áp dụng)
+### 6.2. Khối Caddy (ĐỀ XUẤT – CHƯA ÁP DỤNG, theo PA N1)
 
 ```caddy
-# ===== ĐỀ XUẤT – CHƯA ÁP DỤNG · Cổng khách hàng VIP GROUP P1 =====
-# Đích: /srv/vip-staging-proxy/Caddyfile (root giữ). Chỉ THÊM khối này, không sửa khối khác.
-# Matcher loại trừ nhau ⇒ thứ tự các handle không quan trọng.
+# ===== ĐỀ XUẤT – CHƯA ÁP DỤNG · Cổng khách hàng VIP GROUP P1 (PA N1) =====
+# Đích: /srv/vip-staging-proxy/Caddyfile. Chỉ THÊM khối này. Matcher loại trừ nhau.
 khachhang.vipgroup.com.vn {
 	encode zstd gzip
-
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
 		X-Robots-Tag "noindex, nofollow"
-		# '?' = chỉ đặt khi upstream KHÔNG gửi. KHÔNG ghi đè CSP của VIP ID/CRM
-		# (trang Turnstile cần CSP riêng — VIPID docs/CAU-HINH-TEN-MIEN.md:227-228).
+		# '?' = chỉ đặt khi upstream không gửi. KHÔNG ghi đè CSP (trang Turnstile cần CSP riêng).
 		?Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
 		?X-Frame-Options "DENY"
 		?Referrer-Policy "same-origin"
 		-Server
 	}
 
-	# (1) CRM → VIP ID (server↔server). Chỉ nguồn nội bộ ĐÃ ĐO (mục 1.3, bước S3).
-	@vipid_noi_bo path /api/internal/khach/*
-	handle @vipid_noi_bo {
-		@ngoai not remote_ip <NGUON_CRM_DA_DO>   # dự kiến 172.31.250.0/24 — PHẢI đo
-		respond @ngoai "Not Found" 404
-		request_body {
-			max_size 10KB
-		}
-		reverse_proxy 127.0.0.1:8899 {
-			header_up X-Real-IP {remote_host}
-		}
-	}
-
-	# (2) Mọi /api/internal khác (kể cả /api/internal/portal/* của CRM): không bao giờ qua host khách.
-	@noi_bo_khac {
-		path /api/internal /api/internal/*
-		not path /api/internal/khach/*
-	}
-	handle @noi_bo_khac {
+	# Server↔server đi qua network docker (N1) ⇒ mọi /api/internal* từ Internet: 404.
+	@noi_bo path /api/internal /api/internal/*
+	handle @noi_bo {
 		respond "Not Found" 404
 	}
 
-	# (3) VIP ID realm khách
 	@vipid path /tai-khoan /tai-khoan/*
 	handle @vipid {
 		request_body {
@@ -396,7 +262,7 @@ khachhang.vipgroup.com.vn {
 		}
 	}
 
-	# (4) CRM portal — CHỈ /portal* (không bao giờ /* ⇒ không lộ CRM nhân viên nếu PORTAL_HOST sai)
+	# CHỈ /portal* — không bao giờ /*
 	@crm path /portal /portal/*
 	handle @crm {
 		request_body {
@@ -407,13 +273,11 @@ khachhang.vipgroup.com.vn {
 		}
 	}
 
-	# (5) Trang gốc
 	@goc path /
 	handle @goc {
 		redir /tai-khoan/dang-nhap 302
 	}
 
-	# (6) Còn lại
 	handle {
 		respond "Not Found" 404
 	}
@@ -423,8 +287,8 @@ khachhang.vipgroup.com.vn {
 			roll_size 10mb
 			roll_keep 5
 		}
-		# Xoá token khỏi URI trong log: ?t= (link email, 30 phút) và ?token= (launch, 60 s).
-		# Cú pháp phải 'caddy validate' trên 2.11.4; nếu không nhận, bọc trong 'fields { … }'.
+		# Xoá token khỏi URI: ?t= (link đặt lại, 30 phút) và ?token= (launch, 60 s).
+		# Phải 'caddy validate' trên 2.11.4; không nhận thì bọc trong 'fields { … }'.
 		format filter {
 			wrap json
 			request>uri query {
@@ -436,30 +300,23 @@ khachhang.vipgroup.com.vn {
 }
 ```
 
-Giải thích từng điểm:
-- **Giữ Host gốc:** `reverse_proxy` của Caddy mặc định chuyển nguyên `Host`, và đặt `X-Forwarded-Host`, `X-Forwarded-For`, `X-Forwarded-Proto`. Khi không khai báo `trusted_proxies`, Caddy bỏ giá trị `X-Forwarded-*` mà client gửi lên. HĐ §11.9 (`KIEN_TRUC_P1.md:176`) và CRM hostguard (`hostguard.js:13-14`) đều cần Host gốc.
-- **Ghi đè `X-Real-IP`:** VIP ID với `COWORK_TIN_PROXY=1` ưu tiên `X-Real-IP` (VIPID `cowork/audit.py:15-17`). Uvicorn chạy `--no-proxy-headers` (VIPID `Dockerfile:25-27`). Lưu ý: VIP ID tin `X-Real-IP` từ **mọi** nguồn tới `127.0.0.1:8899`. Mọi tiến trình cục bộ trên VPS đều giả được IP. Rủi ro này chấp nhận được vì cổng chỉ bind loopback, nhưng owner cần biết.
-- **`X-Forwarded-Proto`:** Caddy đặt `https`. VIP ID dùng giá trị này để bật HSTS và kiểm https (VIPID `cowork/auth.py:15-18`, `khach_web.py:92-93`).
-- **HSTS:** không dùng `preload`. Có `-Server` nên Caddy hoãn toàn khối header tới lúc ghi phản hồi, và giá trị HSTS của Caddy thay giá trị của upstream.
-- **Giới hạn body:** VIP ID đã tự chặn ở 10 KB cho `/api/internal/khach/*` (`khach_web.py:535-551`). CRM chặn ở 16 KB (`internal.js:22`). Form đăng ký/đăng nhập nhỏ, 64 KB là đủ rộng. Đội CRM xác nhận lại nếu `/portal/api/*` có POST lớn hơn.
-- **Không** thêm `header_down Set-Cookie "…; Secure"` như khối cowork: cả hai app đã đặt `Secure` khi `COOKIE_SECURE=1`.
-- **Log:** Caddy mặc định đã che `Cookie`, `Set-Cookie`, `Authorization` trong log. Bộ lọc `query` ở trên xoá thêm token trong URL.
-  - Rủi ro token trong access log đã được ghi nhận với Brain (VIPID `docs/TRIEN-KHAI-PRODUCTION.md:249-254`).
-  - Log app CRM (json-file) có thể vẫn ghi URL launch: đội CRM kiểm.
+Nếu owner chọn N2: thay `@noi_bo` bằng hai nhánh — `/api/internal/khach/*` chỉ cho `remote_ip <NGUON_CRM_DA_DO>` (đo ở bước S3, dự kiến 172.31.250.0/24), còn lại 404.
 
-### 6.3. Áp dụng (người có quyền root; theo mẫu đã diễn tập của CRM)
+Giải thích:
+- Caddy giữ nguyên `Host`, đặt `X-Forwarded-*` và bỏ giá trị client gửi; hai app cần Host gốc.
+- `X-Real-IP` ghi đè từ `remote_host`: VIP ID với `COWORK_TIN_PROXY=1` tin header này từ **mọi** nguồn tới 8899 (uvicorn `--no-proxy-headers`). Chấp nhận được vì 8899 chỉ bind loopback và (N1) network `edge`, nhưng owner cần biết.
+- Không `preload` HSTS. Không cần thêm `Secure` cho cookie (hai app tự đặt).
 
-1. Dùng kiểu script `apply-caddy-prod-root.sh`: backup → **thêm** khối → `validate` → `reload` graceful → chờ HTTPS → so mã HTTP các site khác → lỗi thì tự khôi phục (CRM `deploy/production/apply-caddy-prod-root.sh:2-8,63-89`). Đội CRM hoặc DevOps có thể nhân bản script này cho `DOMAIN=khachhang.vipgroup.com.vn` (khoảng 0,5 ngày, cần diễn tập sandbox như CRM `VIP_CRM_V6_HTTPS_GO_PUBLIC_PLAN.md:79-93`).
-2. **Không bao giờ** `docker restart vip-staging-caddy`: container này phục vụ 13 site khác (CRM `VIP_CRM_V6_HTTPS_GO_PUBLIC_PLAN.md:105`).
-   - Ghi đè tệp tại chỗ bằng `cp -p` để giữ inode, rồi `reload`.
-   - Không dùng `sed -i`: lệnh này đổi inode, khi đó bind mount read-only không thấy nội dung mới và buộc phải restart (VIPID `docs/CAU-HINH-TEN-MIEN.md:175-191,207`).
-3. Kiểm cú pháp trước bằng container tạm `--network none`, như CRM đã làm (CRM `VIP_CRM_V6_HTTPS_GO_PUBLIC_PLAN.md:12`).
+### 6.3. Áp dụng (người có quyền root)
+
+1. Theo mẫu `apply-caddy-prod-root.sh` của CRM: backup → thêm khối → `validate` (container tạm `--network none`) → `reload` graceful → chờ HTTPS → so mã HTTP các site khác → lỗi thì tự khôi phục (CRM `deploy/production/apply-caddy-prod-root.sh`).
+2. **Không bao giờ** `docker restart vip-staging-caddy` (phục vụ nhiều site khác). Ghi đè bằng `cp -p` (giữ inode), không `sed -i`.
 
 ---
 
-## 7. Bật trên website (sau cùng, chỉ khi cổng đã chạy ổn)
+## 7. Bật trên website (PR riêng, sau khi cổng chạy ổn)
 
-Giá trị cần đặt trong `src/data/vi/contact.ts`. Hiện tại là `portal: null` (WEB `src/data/vi/contact.ts:28-30`). Kiểu dữ liệu: WEB `src/data/types.ts:96`.
+Website production đã phát hành 07/11 từ `main` @ `ce289ca` với `portal: null` (WEB `src/data/vi/contact.ts:28-30`; kiểu `src/data/types.ts:96`). Bật link cổng là **một PR riêng**, chỉ sau G5:
 
 ```ts
 portal: {
@@ -468,138 +325,119 @@ portal: {
 },
 ```
 
-Quy trình:
-1. Chỉ mở PR khi mục 8 đã PASS tới **G6**, có ít nhất 72 giờ chạy ổn, và owner duyệt bằng văn bản.
-2. Nhánh `feature/vipg-web-0xx-portal-on`. PR phải sửa **cả** test đang khoá giá trị `null` (WEB `tests/content.test.mjs:100-106`): đổi sang kiểm đúng 2 URL `https://khachhang.vipgroup.com.vn/tai-khoan/…`, và chỉ trang tra cứu hiện khối `data-portal` (WEB `src/pages/logistics/tra-cuu-van-don.astro:11,25-30`).
-3. Kiểm trên preview/staging: nút hiện, link đúng, sự kiện `portal_login_click` / `portal_register_click` được ghi.
-4. Merge vào `main`, rồi chạy workflow "Production (Cloudflare Pages) — chạy tay từ main" với SHA đã duyệt (WEB `docs/PRODUCTION.md:41`).
-5. Rollback: Cloudflare Pages → Deployments → bản production trước → **Rollback** (có hiệu lực ngay, WEB `docs/PRODUCTION.md:83`). Hoặc revert PR.
+1. PR sửa cả test đang khoá `null` (WEB `tests/content.test.mjs:100-106`): kiểm đúng 2 URL và chỉ trang tra cứu hiện khối `data-portal`.
+2. Kiểm trên preview: nút hiện, link đúng, sự kiện `portal_login_click` / `portal_register_click`.
+3. Merge `main`, chạy workflow production chạy tay với SHA đã duyệt (WEB `docs/PRODUCTION.md:41`).
+4. Rollback: Cloudflare Pages → Deployments → bản trước → **Rollback**, hoặc revert PR.
 
 ---
 
 ## 8. Thứ tự triển khai (runbook đề xuất)
 
-Mỗi cổng **G** là một điểm go/no-go. Owner ký mới đi tiếp. Thời gian là ước tính.
+Mỗi cổng **G** là go/no-go; owner ký mới đi tiếp.
 
 ### Giai đoạn 0 — Điều kiện trước (không đụng production)
 
 | # | Việc | Ai | Xong khi |
 |---|---|---|---|
-| P0.1 | Owner chốt các quyết định ở mục 11.2 (định danh đăng nhập, email, N1/N2, OTP, smoke test) | Owner | Có văn bản |
-| P0.2 | VIP ID: kênh SMTP (mục 2.5) và sửa header HMAC (mục 5.3). Merge `feature/khach-p1` vào `main` của repo VIP ID (VPS `git pull --ff-only` từ `main`, VIPID `deploy/vps/deploy.sh:6`; repo GitHub đang **public**, VIPID `deploy/vps/README.md:39`) | Đội VIP ID | Test xanh, rà soát bảo mật |
-| P0.3 | CRM: release chứa cổng khách (production đang `55d6ae3`, bản này bỏ qua `PORTAL_*`, CRM runbook `:154,205`). Diễn tập `update-prod.sh` với `REHEARSAL=1` (runbook `:51-52`) | Đội CRM | rc 0 khi diễn tập |
-| P0.4 | CRM đủ điều kiện mở công khai: P6 admin thứ hai, P7 bản sửa khoá, P8 kênh cảnh báo thật (CRM `VIP_CRM_V6_HTTPS_GO_PUBLIC_PLAN.md:15-17`) | Owner + CRM | PASS |
-| P0.5 | Widget Turnstile (mục 3), tài khoản email (mục 2), DMARC `p=none` | Owner | Có site key; thư thử tới nơi |
+| P0.1 | Owner chốt quyết định mục 11.2 | Owner | Có văn bản |
+| P0.2 | VIP ID: merge `feature/khach-p1` vào `main` (VPS `git pull --ff-only` từ `main`, VIPID `deploy/vps/deploy.sh`); sửa compose cho N1 | Đội VIP ID | Test xanh, rà soát |
+| P0.3 | CRM: P1-a (route/nút cấp link), P1-b (`PORTAL_DATABASE_URL` + role trong `db-roles.sql`) hoặc biên bản chấp nhận rủi ro; release chứa cổng; diễn tập `update-prod.sh` `REHEARSAL=1` | Đội CRM | rc 0 khi diễn tập |
+| P0.4 | CRM đủ điều kiện mở công khai: admin thứ hai, kênh cảnh báo thật | Owner + CRM | PASS |
+| P0.5 | Widget Turnstile production + staging (mục 3) | Owner | Có site key |
 
 **G0:** P0.1–P0.5 xong.
 
 ### Giai đoạn 1 — Staging `khachhang-staging.vipgroup.com.vn` (dữ liệu tổng hợp)
 
-| # | Việc | Thời gian |
-|---|---|---|
-| S1 | DNS A `khachhang-staging`. Khối Caddy giống mục 6.2 nhưng trỏ tới instance staging | 30 phút |
-| S2 | CRM staging: `STAGING_PORTAL=1 CONFIRM_SYNTHETIC_DATA=1` (CRM runbook `:175-182`). VIP ID staging với `.env` staging (VIPID `deploy/vps/README.md:90-106`), dùng khoá riêng của staging | 1 giờ |
-| S3 | **Đo nguồn hairpin:** CRM staging gửi một sự kiện thật vào outbox. Đọc nhật ký Caddy, lấy `remote_ip` của `/api/internal/khach/*`, điền vào `<NGUON_CRM_DA_DO>`. Kiểm từ Internet: `curl -X POST https://khachhang-staging…/api/internal/khach/thu-hoi` phải trả **404** | 30 phút |
-| S4 | E2E đủ ca (a)–(g) theo CRM runbook `:192-197`: đăng ký → email thật tới hộp `@example.test`? **Không được**, vì `example.test` không nhận thư. Phải dùng hộp thử thật của công ty (owner chỉ định) → xác minh → duyệt → đăng nhập SĐT/VG → launch → xem kiện → khoá → thu hồi → quên mật khẩu | 0,5–1 ngày |
-| S5 | Diễn tập rollback trên staging: tắt từng cờ, gỡ khối Caddy, `portal-down.sql` trên DB staging (CRM `VIP_CRM_V6_CUSTOMER_PORTAL_P1.md:68`) | 1 giờ |
+| # | Việc |
+|---|---|
+| S1 | DNS A `khachhang-staging`; khối Caddy như 6.2 trỏ instance staging |
+| S2 | CRM staging `STAGING_PORTAL=1 CONFIRM_SYNTHETIC_DATA=1` (CRM runbook §7.1); VIP ID staging với khoá riêng staging; network N1 |
+| S3 | **Kiểm đường mạng:** từ container VIP ID gọi được CRM qua `CRM_PORTAL_INTERNAL_URL`, từ container CRM gọi được VIP ID qua `VIPID_PORTAL_URL` (xem audit nhận hai bên). Từ Internet: `curl -X POST https://khachhang-staging…/api/internal/khach/thu-hoi` và `…/api/internal/portal/signups` → **404**. (N2: đo `remote_ip` hairpin từ log Caddy) |
+| S4 | E2E đủ ca: đăng ký (có Turnstile) → nhân viên duyệt (cảnh báo trùng SĐT nếu có) → nhận mã VG → đăng nhập bằng SĐT **và** VG → launch → xem kiện / tra mã của khách khác → 404 → khoá/mở khoá → đăng xuất (thu hồi, đăng nhập lại được) → quên mật khẩu: nhân viên cấp link từ CRM (cần P1-a) → đặt lại → phiên cũ bị thu hồi → trần đăng ký 503. Chạy lại bộ E2E website (`tests/portal-e2e`) và kit hợp đồng nhắm staging |
+| S5 | Diễn tập rollback: tắt từng cờ, gỡ Caddy, `portal-down.sql` trên DB staging (mục 9) |
 
-**G1:** S1–S5 PASS, có bằng chứng trong `docs/evidence/portal-staging/…` (CRM) và `evidence/` (VIP ID).
+**G1:** S1–S5 PASS, bằng chứng trong `docs/evidence/portal-staging/…` (CRM) và `evidence/` (VIP ID).
 
 ### Giai đoạn 2 — Production (khung bảo trì báo trước; khoảng 2–3 giờ)
 
-| # | Bước | Lệnh hoặc nội dung chính | Kiểm | Dừng nếu |
+| # | Bước | Lệnh / nội dung | Kiểm | Dừng nếu |
 |---|---|---|---|---|
-| B1 | Chụp trạng thái mọi container (trước) | `ssh viporder-staging 'bash -s' < docs/evidence/staging/snapshot.sh > before.txt` (CRM runbook `:19`) | Ghi baseline | Đã có bất thường |
-| B2 | **Backup VIP ID** | `/srv/vip-staging/cowork/deploy/vps/backup.sh` → in `BACKUP_OK … users … audit …` (VIPID `deploy/vps/backup.sh:9-19`). Thêm bản sao `.env.staging` và `data/*.key` (0600, **không** rời VPS) | `integrity_check = ok` | Lỗi |
-| B3 | **Backup CRM**: tự động trong `update-prod.sh` (pre-migrate bắt buộc, CRM runbook `:42-46`) | — | rc ≠ 4 | rc 4 |
+| B1 | Chụp trạng thái container (trước) | `snapshot.sh` của CRM (runbook) | Baseline | Bất thường |
+| B2 | **Backup VIP ID** (bắt buộc — là đường lui duy nhất nếu quay mã về trước v6) | `/srv/vip-staging/cowork/deploy/vps/backup.sh` → `BACKUP_OK …`; sao `.env.staging`, `data/*.key` (0600, không rời VPS) | `integrity_check = ok` | Lỗi |
+| B3 | Backup CRM (tự động trong `update-prod.sh`, pre-migrate) | — | rc ≠ 4 | rc 4 |
 | **G2** | Owner xác nhận backup đọc được | | | |
-| C1 | Cập nhật CRM release cổng khách, `PORTAL_ENABLED=0` | `CONFIRM_HOST=viporder-staging CONFIRM_UPDATE=I_APPROVE_UPDATE_<rel> CONFIRM_STAGING_PASSED=<rel> STOP_APP_FOR_MIGRATION=1 deploy/production/update-prod.sh viporder-staging <rel>` (runbook `:37-39`). Chạy `db-roles.sql` (tạo `crm_portal`) rồi migration 660–702 (chỉ thêm) | rc 0, healthy | rc ≠ 0, theo bảng mã thoát (runbook `:57-69`) |
-| C2 | Sinh và phân phối `VIPID_PORTAL_SECRET` (mục 4.2). Đặt `PORTAL_HOST`, `PORTAL_PUBLIC_URL`, `VIPID_PORTAL_URL`; `PORTAL_ENABLED=1`; tạo lại app | `up -d --no-deps app` | App khởi động (nghĩa là `portalStartupErrors` rỗng). Từ VPS: `curl -s -o /dev/null -w '%{http_code}' -H 'Host: khachhang.vipgroup.com.vn' http://127.0.0.1:18185/api/me` → **404** (hostguard) | App không lên ⇒ `PORTAL_ENABLED=0` |
-| V1 | Cập nhật VIP ID lên `main` mới, realm **vẫn tắt**. Đặt **trước** `COWORK_STAFF_HOSTS=cowork.vipgroup.com.vn,127.0.0.1:8899` | `./deploy/vps/deploy.sh` (VIPID `deploy/vps/deploy.sh:5-18`). Schema VIP ID tự nâng lên v4 khi khởi động, chỉ thêm (`cowork/db.py:51-64,80-85`, `schema.py:4`) | Health 200; nhân viên đăng nhập cowork 200; SSO Brain 200; host lạ (`curl -H 'Host: x' http://127.0.0.1:8899/api/health`) → 421 | Nhân viên lỗi ⇒ quay mã cũ |
-| V2 | Đặt tệp secret (mục 3.3, 4.2), thêm biến mục 5.1, `COWORK_KHACH_ENABLED=1`. **Kiểm cấu hình bằng container tạm trước**, để lỗi khởi động không làm sập cowork | `docker run --rm --env-file deploy/vps/.env.staging -v $PWD/deploy/vps/data:/data:ro cowork-staging:local python -c "from cowork import khach; khach.kiem_cau_hinh(); print('CAU_HINH_OK')"` | In `CAU_HINH_OK` | In `Realm khách bị chặn: …` ⇒ sửa, chưa restart |
-| V3 | Khởi động lại VIP ID | `docker compose -f deploy/vps/docker-compose.yml up -d` | Healthy; nhân viên vẫn OK | Unhealthy ⇒ `COWORK_KHACH_ENABLED=0`, `up -d` |
-| V4 | Cron thử lại hàng đợi CRM | `*/5 * * * * docker exec cowork-staging python -m cowork.cli khach-dong-bo` (VIPID `cowork/cli.py:8`). Nếu chọn cron cho bộ gửi email (M2) thì thêm cron đó | `crontab -l` | — |
-| **G3** | Owner duyệt mở đường công khai | | | |
-| D1 | DNS A `khachhang` (mục 6.1) | iNET | `dig` ba resolver | Sai IP |
-| K1 | Khối Caddy (mục 6.2) với `<NGUON_CRM_DA_DO>` đo ở S3 (đo lại trên production nếu network khác) | Script root (mục 6.3) | rc 0; chứng chỉ LE `CN=khachhang.vipgroup.com.vn` | rc 4/5/6, script tự khôi phục |
-| K2 | Smoke test chỉ đọc (bảng dưới) | | Tất cả đúng | Một mục sai ⇒ rollback K1 |
-| **G4** | Owner duyệt smoke test chức năng | | | |
-| F1 | Smoke test chức năng với **tài khoản thật do owner duyệt** (bảng dưới) | | PASS | Rollback theo mục 9 |
-| B4 | Chụp trạng thái (sau), so với B1 | `impact-diff` (CRM runbook `:28`) | Các container khác không đổi | Khác |
+| C1 | CRM release cổng, `PORTAL_ENABLED=0` | `CONFIRM_HOST=… CONFIRM_UPDATE=I_APPROVE_UPDATE_<rel> CONFIRM_STAGING_PASSED=<rel> STOP_APP_FOR_MIGRATION=1 deploy/production/update-prod.sh viporder-staging <rel>`. Chạy `db-roles.sql` (tạo `crm_portal`, và role LOGIN cổng nếu làm P1-b) rồi migration **660 và 700–706** (CRM `server/migrations/660_core_warehouses.sql` … `706_portal_session_auth_at.sql`) | rc 0, healthy; T7 | rc ≠ 0 theo bảng mã thoát |
+| C2 | Secret (mục 4), `PORTAL_HOST`, `PORTAL_PUBLIC_URL`, `VIPID_PORTAL_URL`, `PORTAL_DATABASE_URL`, `PORTAL_ENABLED=1`; tạo lại app | `up -d --no-deps app` | App lên (lỗi cấu hình ⇒ không khởi động). `curl -s -o /dev/null -w '%{http_code}' -H 'Host: khachhang.vipgroup.com.vn' http://127.0.0.1:18185/api/me` → **404** | `PORTAL_ENABLED=0` |
+| V1 | VIP ID lên `main` mới, realm **vẫn tắt**; đặt trước `COWORK_STAFF_HOSTS`. **Schema tự nâng lên v6 khi khởi động, có DỰNG LẠI BẢNG `customer_accounts`** (không phải chỉ thêm; VIPID `cowork/schema.py:4`, `cowork/db.py:88-157`). Lỗi nâng cấp ⇒ hoàn tác giao dịch, audit `khach.migration.loi`, realm khách tự tắt, nhân viên vẫn chạy | `./deploy/vps/deploy.sh` | Health 200; nhân viên cowork 200; SSO Brain 200; `curl -H 'Host: x' http://127.0.0.1:8899/api/health` → 421; không có `khach.migration.loi` | Nhân viên lỗi ⇒ khôi phục **mã + DB** từ B2 (mục 9) |
+| V2 | Tệp secret, biến mục 5.1, `COWORK_KHACH_ENABLED=1`. **Kiểm bằng container tạm trước** (lỗi khởi động làm sập cả cowork nhân viên) | `docker run --rm --env-file deploy/vps/.env.staging -v $PWD/deploy/vps/data:/data:ro cowork-staging:local python -c "from cowork import khach; khach.kiem_cau_hinh(); print('CAU_HINH_OK')"` | `CAU_HINH_OK` | `Realm khách bị chặn: …` ⇒ sửa, chưa restart |
+| V3 | Khởi động lại VIP ID | `docker compose -f deploy/vps/docker-compose.yml up -d` | Healthy; nhân viên OK | `COWORK_KHACH_ENABLED=0`, `up -d` |
+| V4 | (Tuỳ chọn) cron dự phòng hàng đợi — vòng nền đã gửi mỗi 5 s | `*/5 * * * * docker exec cowork-staging python -m cowork.cli khach-dong-bo` | `crontab -l` | — |
+| **G3** | Owner duyệt mở đường công khai; T1–T7 đủ | | | |
+| D1 | DNS A `khachhang` | iNET | `dig` ba resolver | Sai IP |
+| K1 | Khối Caddy (6.2) | Script root (6.3) | rc 0; chứng chỉ `CN=khachhang.vipgroup.com.vn` | Script tự khôi phục |
+| K2 | Smoke chỉ đọc (8.1) | | Tất cả đúng | Rollback K1 |
+| **G4** | Owner duyệt smoke chức năng | | | |
+| F1 | Smoke chức năng với tài khoản thật do owner duyệt (8.2) | | PASS | Mục 9 |
+| B4 | Chụp trạng thái (sau), so B1 | `impact-diff` | Container khác không đổi | Khác |
 | **G5** | Theo dõi 72 giờ (mục 10) | | Không cảnh báo nghiêm trọng | |
-| W1 | Bật website (mục 7) | | | |
+| W1 | PR website bật link (mục 7) | | | |
 | **G6** | Nghiệm thu | | | |
 
-### 8.1. Smoke test chỉ đọc (K2): không tạo dữ liệu
+### 8.1. Smoke test chỉ đọc (K2)
 
 ```bash
 D=https://khachhang.vipgroup.com.vn
-curl -sS -o /dev/null -w 'goc %{http_code} → %{redirect_url}\n' $D/                       # 302 → /tai-khoan/dang-nhap
-curl -sS -o /dev/null -w 'login %{http_code}\n'  $D/tai-khoan/dang-nhap                     # 200
+curl -sS -o /dev/null -w 'goc %{http_code} → %{redirect_url}\n' $D/                 # 302 → /tai-khoan/dang-nhap
+curl -sS -o /dev/null -w 'login %{http_code}\n'  $D/tai-khoan/dang-nhap               # 200
 curl -sSI $D/tai-khoan/dang-nhap | grep -iE '^(strict-transport|content-security|x-frame|referrer|cache-control|server):'
-curl -sS -o /dev/null -w 'portal-me %{http_code}\n' $D/portal/api/me                         # 401/403 (không phiên)
-curl -sS -o /dev/null -w 'launch-rac %{http_code}\n' "$D/portal/auth/launch?token=x"         # 4xx, có audit portal.launch denied
-for p in / /dang-nhap /api/me /api/health /api/internal/brain/x /api/internal/portal/signups /api/internal/khach/thu-hoi /admin; do
-  curl -sS -o /dev/null -w "$p %{http_code}\n" -X POST "$D$p"; done                         # tất cả 404 (POST / → 404; GET / mới 302)
-curl -sS -o /dev/null -w 'http %{http_code}\n' http://khachhang.vipgroup.com.vn/              # 308 → https
+curl -sS -o /dev/null -w 'portal-me %{http_code}\n' $D/portal/api/me                   # 401/403
+curl -sS -o /dev/null -w 'launch-rac %{http_code}\n' "$D/portal/auth/launch?token=x"   # 4xx, audit portal.launch denied
+for p in / /dang-nhap /api/me /api/health /api/internal/brain/x /api/internal/portal/signups \
+         /api/internal/khach/thu-hoi /api/internal/khach/tao-link-dat-lai /admin; do
+  curl -sS -o /dev/null -w "$p %{http_code}\n" -X POST "$D$p"; done                   # tất cả 404
+curl -sS -o /dev/null -w 'http %{http_code}\n' http://khachhang.vipgroup.com.vn/        # 308 → https
 echo | openssl s_client -connect khachhang.vipgroup.com.vn:443 -servername khachhang.vipgroup.com.vn 2>/dev/null \
   | openssl x509 -noout -subject -issuer -dates
-# Hồi quy nhân viên:
-curl -sS -o /dev/null -w 'cowork %{http_code}\n' https://cowork.vipgroup.com.vn/api/health   # 200
-curl -sS -o /dev/null -w 'cowork-tk %{http_code}\n' https://cowork.vipgroup.com.vn/tai-khoan/dang-ky   # 404
-# Chống giả mạo header (gửi IP giả; audit phải ghi IP thật của máy kiểm):
-curl -sS -o /dev/null -H 'X-Real-IP: 203.0.113.9' -H 'X-Forwarded-For: 203.0.113.9' -H 'X-Forwarded-Proto: http' $D/tai-khoan/dang-nhap
+curl -sS -o /dev/null -w 'cowork %{http_code}\n' https://cowork.vipgroup.com.vn/api/health          # 200
+curl -sS -o /dev/null -w 'cowork-tk %{http_code}\n' https://cowork.vipgroup.com.vn/tai-khoan/dang-ky # 404
+curl -sS -o /dev/null -H 'X-Real-IP: 203.0.113.9' -H 'X-Forwarded-For: 203.0.113.9' $D/tai-khoan/dang-nhap
 ```
 
-Trên VPS, xác nhận audit ghi đúng IP thật (Python có sẵn trong image, không cần sqlite3 CLI):
+Trên VPS, audit phải ghi IP thật của máy kiểm (không phải 203.0.113.9):
 ```bash
 docker exec cowork-staging python -c "import sqlite3;c=sqlite3.connect('file:/data/cowork.db?mode=ro',uri=True);print(c.execute(\"select action,ip,created_at from audit_log where tenant_id='khach' order by id desc limit 5\").fetchall())"
 ```
 
-### 8.2. Smoke test chức năng (F1): không tạo dữ liệu giả ở production
+### 8.2. Smoke test chức năng (F1): không dữ liệu giả ở production
 
-Owner đã yêu cầu không có dữ liệu giả ở production (HĐ A10, `KIEN_TRUC_P1.md:18`). Vì vậy **không** dùng `+8490000000x` hay `@example.test` ở đây. Đề xuất:
-
-- **Một tài khoản thật**: một nhân viên (hoặc owner) đăng ký bằng SĐT thật và email thật của chính mình, với tư cách **khách thật** của VIP GROUP. Owner ghi tên trước vào biên bản.
-- Đi đúng quy trình: đăng ký → nhận email (kiểm SPF/DKIM/DMARC PASS trong "Show original") → xác minh → nhân viên **gọi xác minh** theo checklist (VIPID `docs/KHACH-DUYET-CHECKLIST.md`) → duyệt → nhận mã VG → đăng nhập bằng SĐT **và** bằng mã VG → thấy danh sách kiện (trống, hoặc kiện thật nếu là khách thật) → tra một mã vận đơn không thuộc mình → **404** → đăng xuất → quên mật khẩu → đặt lại → các phiên cũ bị thu hồi.
-- **Hệ quả owner phải chấp nhận:**
-  - mã `VG1001` (hoặc mã đầu tiên) thuộc về tài khoản này. Sequence không lùi, không tái sử dụng (CRM `VIP_CRM_V6_CUSTOMER_PORTAL_P1.md:60`);
-  - bản ghi `customers` và `users(kind='customer')` tồn tại vĩnh viễn, vì audit chỉ ghi thêm;
-  - nếu không giữ tài khoản, kết thúc bằng **tạm khoá** từ CRM (`portal.customer.lock` → VIP ID `khach.tam_khoa`), không xoá.
-- Kiểm hai chiều HMAC: duyệt sinh `ket-qua-duyet` (CRM → VIP ID); đăng xuất sinh `thu-hoi` (VIP ID → CRM). Sau đó `crm_sync_pending` và `portal_outbox` đều không còn mục treo.
-- Nếu owner **không** muốn có tài khoản nào ở production trước khi mở cho khách: chỉ chạy 8.1, và coi khách thật đầu tiên là smoke test có người theo dõi trực tiếp. Phương án này rủi ro hơn.
+Owner yêu cầu không có dữ liệu giả ở production (HĐ A10). Đề xuất **một tài khoản thật** do owner chỉ định (Q5):
+- Đăng ký bằng SĐT thật (email tuỳ chọn) qua Turnstile → nhân viên duyệt trên CRM → nhận mã VG → đăng nhập bằng SĐT **và** mã VG → thấy kiện (trống hoặc thật) → tra một mã vận đơn không thuộc mình → **404** → đăng xuất → đăng nhập lại được → nhân viên cấp link đặt lại (P1-a) → đặt lại → phiên cũ bị thu hồi.
+- Kiểm hai chiều: duyệt sinh `ket-qua-duyet` (CRM → VIP ID); đăng xuất sinh `thu-hoi` (VIP ID → CRM). Sau đó `crm_sync_pending` và `portal_outbox` không còn mục treo.
+- Hệ quả owner chấp nhận: `VG1001` (mã đầu tiên) thuộc tài khoản này, không tái sử dụng; bản ghi tồn tại vĩnh viễn. Không giữ thì **tạm khoá** từ CRM, không xoá.
+- Không muốn có tài khoản trước khi mở: chỉ chạy 8.1 và theo dõi trực tiếp khách thật đầu tiên (rủi ro hơn).
 
 ---
 
 ## 9. Rollback
 
-Nguyên tắc chung (VIPID `docs/ROLLBACK.md:3`): không xoá dữ liệu thật; tắt bằng cờ trước, gỡ đường vào sau; chỉ khôi phục DB khi hỏng dữ liệu.
+Nguyên tắc (VIPID `docs/ROLLBACK.md:3`): không xoá dữ liệu thật; tắt bằng cờ trước, gỡ đường vào sau; chỉ khôi phục DB khi hỏng dữ liệu hoặc bắt buộc.
 
 | Lớp | Thao tác | Thời gian | Dữ liệu |
 |---|---|---|---|
-| Website | Pages → Rollback về bản trước, hoặc revert PR `contact.portal` → `null` | 1–15 phút | Không có |
-| VIP ID realm | `COWORK_KHACH_ENABLED=0` trong `.env.staging` → `docker compose -f deploy/vps/docker-compose.yml up -d` | ~1 phút (nhân viên gián đoạn vài giây) | Bảng `customer_*` vẫn còn và không ảnh hưởng gì. Host khách trả 421 vì `COWORK_STAFF_HOSTS` đã đặt (`khach_web.py:42-50`). Khách đang đăng nhập bị mất phiên |
-| CRM cổng | `PORTAL_ENABLED=0` → `RELEASE=<current> docker compose -p vipcrm6-prod -f ~/vipcrm6-prod/app/deploy/production/compose.yml up -d --no-deps app` (CRM runbook `:168`) | 10–40 s gián đoạn CRM | Không đụng DB. Route portal trả 404, launch bị từ chối |
-| Caddy | `cp -p <Caddyfile.bak-before-khachhang-…> /srv/vip-staging-proxy/Caddyfile` → `docker exec vip-staging-caddy caddy validate …` → `caddy reload …` (mẫu CRM `VIP_CRM_V6_HTTPS_GO_PUBLIC_PLAN.md:95-105`) | < 2 phút | Không có. **Không** restart container |
-| DNS | Xoá A `khachhang` tại iNET. Thường **không cần**: gỡ Caddy là đủ chặn | ~5 phút + thời gian cache (TTL 300) | Không có |
-| Mã VIP ID | Quay commit trước → `deploy.sh`. Mã cũ bỏ qua bảng mới | ~2 phút | Schema chỉ thêm, **không có bước down**. Không cần gỡ bảng |
-| DB VIP ID | Chỉ khi hỏng: khôi phục `cowork-*.db` (VIPID `docs/ROLLBACK.md:84-95`) | ~5 phút | **Mất** mọi ghi của nhân viên sau thời điểm backup (phiên, audit, việc). Tránh dùng |
-| DB CRM (schema) | `deploy/production/ops/portal-down.sql` (role owner, một giao dịch) | phút | **Từ chối (`DOWN_REFUSED`)** khi đã có dữ liệu cổng (đăng ký, mã VG, user `cust:*`, phiên…) (CRM `VIP_CRM_V6_CUSTOMER_PORTAL_P1.md:68`). Sau khách thật đầu tiên thì coi như **chỉ tiến** |
-| DB CRM (dữ liệu) | `restore-db.sh` (CRM runbook `:87-109`) | 5–15 phút | **Mất** mọi giao dịch CRM sau bản backup (kể cả vận hành kho). Chỉ dùng khi hỏng dữ liệu, cần phê duyệt riêng. Ưu tiên bút toán bù (runbook `:84`) |
-| Bí mật | Mục 4.3 | — | — |
+| Website | Pages → Rollback, hoặc revert PR `contact.portal` → `null` | 1–15 phút | Không |
+| **VIP ID realm (cách an toàn)** | `COWORK_KHACH_ENABLED=0` → `docker compose -f deploy/vps/docker-compose.yml up -d` | ~1 phút (nhân viên gián đoạn vài giây) | Bảng khách giữ nguyên; host khách trả 421; khách mất phiên |
+| CRM cổng | `PORTAL_ENABLED=0` → `RELEASE=<current> docker compose -p vipcrm6-prod -f ~/vipcrm6-prod/app/deploy/production/compose.yml up -d --no-deps app` | 10–40 s | Không đụng DB |
+| Caddy | `cp -p <Caddyfile.bak-…> /srv/vip-staging-proxy/Caddyfile` → `caddy validate` → `caddy reload` | < 2 phút | Không. **Không** restart container |
+| DNS | Xoá A `khachhang` (thường không cần) | ~5 phút + TTL | Không |
+| **Mã VIP ID** | Quay về commit trước v6 **không** dùng được DB đã nâng v6 (ràng buộc khác) ⇒ phải khôi phục cùng lúc DB từ backup B2 (VIPID `docs/CAU-HINH-TEN-MIEN.md:266-269`, `docs/ROLLBACK.md:84-95`) | ~5 phút | **Mất** mọi ghi của nhân viên sau B2 (phiên, audit, việc). Chỉ dùng khi nhân viên bị ảnh hưởng mà tắt cờ không đủ |
+| DB CRM (schema) | `deploy/production/ops/portal-down.sql` (role owner, một giao dịch): đảo ngược **660, 700–706**; từ chối (`DOWN_REFUSED`) khi đã có dữ liệu cổng, XM/YW đã được tham chiếu, hoặc có migration mới hơn 706 (CRM `portal-down.sql:1,18-21,40,57,108`; test PDN-01..03 `tests/api/portal_down.test.js:49,68,85`) | phút | Sau khách thật đầu tiên ⇒ coi như **chỉ tiến**. Role `crm_portal` giữ lại |
+| DB CRM (dữ liệu) | `restore-db.sh` (CRM runbook) | 5–15 phút | **Mất** mọi giao dịch CRM sau backup. Phê duyệt riêng; ưu tiên bút toán bù |
 
-Cần cân nhắc về dữ liệu khi rollback:
-- Đăng ký đang chờ vẫn nằm trong `portal_signups` (CRM) và `customer_accounts` (VIP ID). Khi bật lại, chạy `khach-dong-bo --tat-ca`. Outbox CRM tự thử lại.
-- Khách đã có mã VG vẫn giữ mã. Thông báo cho khách qua hotline/Zalo nếu tắt lâu.
-- Link email còn hạn (≤ 30 phút) sẽ lỗi khi realm tắt. Khách yêu cầu gửi lại sau.
+Dữ liệu khi rollback: đăng ký chờ vẫn nằm ở `portal_signups` (CRM) và `customer_accounts` (VIP ID); bật lại thì `khach-dong-bo --tat-ca`, outbox CRM tự thử lại. Khách có mã VG giữ mã; báo khách qua hotline/Zalo nếu tắt lâu. Link đặt lại còn hạn sẽ lỗi khi realm tắt.
 
-Điều kiện kích hoạt rollback:
-- 5xx diện rộng ⇒ gỡ Caddy trước, giữ dịch vụ lại để điều tra;
-- nghi lộ dữ liệu chéo khách ⇒ `PORTAL_ENABLED=0` **ngay**;
-- nghi lộ bí mật ⇒ tắt cả hai cờ rồi xoay khoá;
-- nhân viên cowork bị ảnh hưởng ⇒ `COWORK_KHACH_ENABLED=0`.
-
-Người quyết định: owner `anh-thanh` (VIPID `docs/ROLLBACK.md:159`).
+Kích hoạt rollback: 5xx diện rộng ⇒ gỡ Caddy trước; nghi lộ dữ liệu chéo khách ⇒ `PORTAL_ENABLED=0` **ngay**; nghi lộ bí mật ⇒ tắt hai cờ rồi xoay khoá; nhân viên cowork bị ảnh hưởng ⇒ `COWORK_KHACH_ENABLED=0`. Người quyết định: owner (VIPID `docs/ROLLBACK.md:159`).
 
 ---
 
@@ -607,46 +445,44 @@ Người quyết định: owner `anh-thanh` (VIPID `docs/ROLLBACK.md:159`).
 
 ### 10.1. Sự kiện cần theo dõi
 
-**VIP ID** (`audit_log`, `tenant_id='khach'`, VIPID `cowork/schema.py:170-184`):
+**VIP ID** (`audit_log`, `tenant_id='khach'`):
 
 | Sự kiện | Ý nghĩa | Ngưỡng đề xuất |
 |---|---|---|
-| `khach.canh_bao.do_mat_khau` | Một tài khoản bị dò mật khẩu (`khach.py:813`) | Bất kỳ ⇒ báo |
-| `khach.dang_nhap.sai`, `.khoa_cap_ip`, `.chan_ip`, `.gioi_han_toan_cuc`, `.thu_thach` | Dò hoặc khoá (`khach.py:769-809`) | > 50/giờ hoặc tăng đột biến |
-| `khach.dang_ky.trung`, `khach.dang_ky.xung_dot_sdt` | Đăng ký trùng; có người khác thử **giữ chỗ SĐT** (`khach.py:629,639`) | `xung_dot_sdt` bất kỳ ⇒ nhân viên duyệt cẩn thận (VIPID `docs/KHACH-DUYET-CHECKLIST.md:7-8`) |
-| `khach.dang_ky.qua_tan_suat`, `khach.quen_mat_khau.qua_tan_suat` | Chạm giới hạn theo IP (có thể do CGNAT) | Theo dõi tuần đầu, chỉnh ngưỡng |
-| `khach.xac_minh_email.token_sai` | Dò token | > 20/giờ |
-| `khach.hmac.sai`, `khach.hmac.phat_lai` | **HMAC sai hoặc phát lại** từ phía "CRM" (`khach_web.py:566`, `khach.py:990`) | Bất kỳ ⇒ báo ngay (sai khoá, lệch đồng hồ, hoặc bị tấn công) |
-| `khach.tam_khoa`, `khach.thu_hoi`, `khach.dat_lai_mat_khau`, `khach.duyet`, `khach.tu_choi` | Sự kiện quản trị | Ghi nhận |
-| Hàng đợi `crm_sync_pending WHERE done_at IS NULL` | VIP ID → CRM chưa gửi được | > 0 quá 30 phút ⇒ báo |
-| `customer_outbox WHERE sent_at IS NULL` (sau M2) | Email chưa gửi | > 0 quá 10 phút ⇒ báo |
-| Log container: `Gửi CRM … thất bại`, `Turnstile siteverify lỗi`, HTTP 503 (quá tải scrypt) | `khach.py:1037`, `khach_web.py:222,236` | Bất kỳ lặp lại |
+| `khach.canh_bao.dang_ky_tang_dot_bien` | Chạm trần 200 đăng ký/giờ, đang trả 503 (VIPID `cowork/khach.py:605`) | Bất kỳ ⇒ báo ngay |
+| `khach.canh_bao.dong_ho` | Mốc thu hồi/launch bị kẹp do lệch đồng hồ (`khach.py:1119`) | Bất kỳ ⇒ kiểm NTP, runbook `khach-dat-lai-moc` (VIPID `docs/CAU-HINH-TEN-MIEN.md:293-302`) |
+| `khach.migration.loi` | Nâng cấp schema khách lỗi, realm khách đã tự tắt (`cowork/db.py:110-113`) | Bất kỳ ⇒ báo ngay |
+| `khach.canh_bao.do_mat_khau` | Một tài khoản bị dò (`khach.py:781`) | Bất kỳ |
+| `khach.dang_nhap.sai`, `.khoa_cap_ip`, `.chan_ip`, `.gioi_han_toan_cuc`, `.thu_thach` | Dò/khoá (`khach.py:737-777`) | > 50/giờ hoặc đột biến |
+| `khach.dang_ky.trung`, `khach.dang_ky.xung_dot_sdt` | **Xung đột đăng ký** — SĐT đã có (`khach.py:648,656`) | `xung_dot_sdt` bất kỳ ⇒ nhân viên duyệt cẩn thận |
+| `khach.dang_ky.qua_tan_suat`, `khach.quen_mat_khau.qua_tan_suat`, `khach.turnstile.qua_tan_suat` | Chạm giới hạn IP (có thể CGNAT) | Theo dõi tuần đầu |
+| `khach.hmac.sai`, `khach.hmac.phat_lai` | HMAC sai/phát lại từ phía "CRM" (`khach_web.py:688`, `khach.py:987`) | Bất kỳ ⇒ báo ngay |
+| `khach.tao_link_dat_lai`, `khach.dat_lai_mat_khau`, `khach.duyet`, `khach.tu_choi`, `khach.tam_khoa`, `khach.thu_hoi`, `khach.ops.dat_lai_moc` | Sự kiện quản trị | Ghi nhận; `tao_link_dat_lai` đối chiếu yêu cầu hotline |
+| `crm_sync_pending WHERE done_at IS NULL` | VIP ID → CRM chưa gửi được | > 0 quá 30 phút |
+| Log: `Gửi CRM … thất bại`, `Turnstile siteverify lỗi`, HTTP 503 hàng đợi băm | `khach.py:1086`, `khach_web.py:204,236` | Lặp lại |
 
 **CRM** (`audit_log` Postgres):
 
 | Sự kiện | Ngưỡng |
 |---|---|
-| `portal.signup.receive` / `portal.thu_hoi.receive` với `outcome='denied'`, `reason` bắt đầu bằng `SIGNATURE_INVALID`, `TS_SKEW`, `SIGNATURE_V2_REQUIRED`, `EVENT_MISMATCH` (`internal.js:146,152`) | Bất kỳ ⇒ báo |
-| `portal.signup.receive` với `reason='SUBJECT_CONFLICT'` (`internal.js:181`) | Ghi nhận |
-| `portal.launch` với `outcome='denied'` (`launch.js:112-114`) | > 30/giờ |
-| `portal.parcels.search` (khối lượng theo khách) | Tăng đột biến ⇒ nghi dò mã vận đơn |
-| `portal.outbox.retry`; `portal_outbox` treo | > 0 quá 30 phút |
-| `portal.user.deactivate`, `portal.customer.lock/unlock` | Ghi nhận |
+| `portal.signup.receive` / `portal.thu_hoi.receive` `outcome='denied'` với `SIGNATURE_INVALID`, `TS_SKEW`, `EVENT_MISMATCH`; `portal.hmac.replay` (CRM `internal.js:163-192`) | Bất kỳ ⇒ báo |
+| `portal.signup.receive` `reason='SUBJECT_CONFLICT'`; đăng ký có `phone_conflict` | Ghi nhận, nhân viên xem |
+| `portal.launch` `outcome='denied'` (gồm `TOKEN_REVOKED`, `TOKEN_IAT_FUTURE`) (`launch.js:116-132`) | > 30/giờ; `TOKEN_IAT_FUTURE` bất kỳ ⇒ kiểm NTP |
+| `portal.parcels.search` theo khách | Đột biến ⇒ nghi dò mã |
+| `portal_outbox` treo/failed; `portal.outbox.retry`, **`portal.outbox.abandon`**, `portal.outbox.host_misdirected` | Treo > 30 phút; abandon/host_misdirected bất kỳ ⇒ báo |
+| `portal.customer.lock/unlock`, `portal.user.deactivate` | Ghi nhận |
 
 ### 10.2. Vị trí log
 
 | Nguồn | Vị trí |
 |---|---|
-| Caddy host khách (đề xuất) | `/data/access-khachhang.log` trong container `vip-staging-caddy` (mẫu cowork: `/data/access-cowork.log`, VIPID `docs/CAU-HINH-TEN-MIEN.md:84`) |
-| VIP ID app | `docker logs cowork-staging` (uvicorn tắt access log, `Dockerfile:27`). Audit nằm trong `/data/cowork.db` (host `/srv/vip-staging/cowork/deploy/vps/data/cowork.db`). Backup ở `/srv/vip-staging/cowork-backups` (`backup.sh:6`) |
-| CRM app | `docker logs` project `vipcrm6-prod` (json-file 10 MB × 5, `compose.yml:6-8`). Audit trong Postgres. Monitor ở `~/vipcrm6-prod/backups/logs/monitor.log`, cảnh báo ở `backups/state/ALERTS.log` (runbook `:140,150`) |
-| Caddy CRM nhân viên | `/data/logs/crm-prod-access.log` (CRM `Caddyfile.prod.snippet:25`) |
+| Caddy host khách | `/data/access-khachhang.log` trong `vip-staging-caddy` |
+| VIP ID | `docker logs cowork-staging` (tắt access log). Audit trong `/data/cowork.db`; backup `/srv/vip-staging/cowork-backups` |
+| CRM | `docker logs` project `vipcrm6-prod` (json-file 10 MB × 5); audit Postgres; `~/vipcrm6-prod/backups/logs/monitor.log`, `backups/state/ALERTS.log` |
 
-### 10.3. Kênh cảnh báo: chưa có (điểm chặn B5)
+### 10.3. Kênh cảnh báo: chưa có (B5)
 
-- CRM đã có `ops/alert-send.sh` (SMTP/Zalo), nhưng đang **PENDING CONFIGURATION** (CRM runbook `:126,150`).
-- VIP ID **chưa có** cơ chế cảnh báo nào.
-- Đề xuất (khoảng 0,5–1 ngày): một script cron mỗi 5 phút chạy `docker exec cowork-staging python -c …`, đếm các sự kiện ở 10.1 từ lần chạy trước, rồi gọi chung `alert-send.sh` của CRM sau khi kênh đã cấu hình. Nếu dùng SMTP Workspace (mục 2) thì kênh cảnh báo CRM cũng dùng được ngay. Đó là một lý do chọn E1.
+CRM có `ops/alert-send.sh` nhưng **PENDING CONFIGURATION** (rc 3, cảnh báo không tới ai, CRM runbook §5). VIP ID chưa có cảnh báo. ĐỀ XUẤT – CHƯA ÁP DỤNG: cron 5 phút đếm sự kiện 10.1 từ lần chạy trước (`docker exec cowork-staging python -c …` và truy vấn chỉ đọc Postgres), gọi chung `alert-send.sh` sau khi kênh đã cấu hình.
 
 ---
 
@@ -654,33 +490,34 @@ Người quyết định: owner `anh-thanh` (VIPID `docs/ROLLBACK.md:159`).
 
 ### 11.1. Điểm chặn
 
-| # | Điểm chặn | Bên xử lý | Ước tính | Chặn |
-|---|---|---|---|---|
-| **B1** | A8: VIP ID chưa có kênh gửi email thật; production từ chối khởi động (`khach.py:103-105`) | VIP ID + owner (tài khoản) | 2–3 ngày công | Cứng |
-| **B2** | Header HMAC lệch: VIP ID `X-Portal-Sig` (method+path) ↔ CRM `X-Portal-Sig` v1.1 + `X-Portal-Sig-V2`. Cả hai chiều đều 401 (mục 5.3) | VIP ID (và cập nhật HĐ) | 0,5 ngày + E2E | Cứng |
-| **B3** | Đường mạng: container VIP ID không tới được `127.0.0.1:18185` của CRM. CRM → VIP ID bắt buộc https, nên phải quay vòng qua Caddy và cần allowlist IP đã đo (mục 1.3) | DevOps + owner chọn N1/N2 | 0,5 ngày | Cứng |
-| **B4** | Chưa có bản phát hành nào chứa cổng: VIP ID `feature/khach-p1` chưa vào `main`; CRM production `55d6ae3` bỏ qua `PORTAL_*`. Công cụ `update-prod.sh` có thay đổi mới, chưa diễn tập (runbook `:51-52`) | VIP ID, CRM | theo backlog | Cứng |
-| **B5** | CRM NO-GO PUBLIC: chưa có admin thứ hai (P6), chưa có kênh cảnh báo thật (P8) (CRM HTTPS plan `:15-17`). VIP ID chưa có cảnh báo (mục 10.3) | Owner + CRM | — | Cứng |
-| **B6** | Chưa có E2E staging giữa VIP ID thật và CRM thật (C14). Bản tra soát VIP ID chỉ dùng CRM giả | Cả hai | 1–1,5 ngày | Cứng |
-| B7 | Widget Turnstile production | Owner | 15 phút | Cứng (VIP ID từ chối khởi động) |
-| B8 | DNS A `khachhang` / `khachhang-staging` và khối Caddy (root) | Owner + root | 1 giờ | Cứng |
-| B9 | DMARC chưa có; chưa xác nhận DKIM Workspace đang ký | Owner | 30 phút + 2–4 tuần theo dõi | Mềm (nên có trước khi mở) |
-| B10 | Kho XM/YW chưa có dữ liệu WMS; cổng hiển thị "Sắp mở" (HĐ `:151`) | Owner | — | Không chặn P1 |
+| # | Điểm chặn | Bên xử lý | Chặn |
+|---|---|---|---|
+| **P1-a** | CRM chưa có route/nút nhân viên "Cấp link đặt lại mật khẩu" (gọi VIP ID `tao-link-dat-lai`). Không có thì khách quên mật khẩu không khôi phục được ở production | CRM, **chờ owner xác nhận trực tiếp** với phiên CRM | Cứng |
+| **P1-b** | Cổng CRM chưa dùng `PORTAL_DATABASE_URL` (role LOGIN riêng, chỉ thành viên `crm_portal`); hiện cách ly DB dựa vào kiểm tra trong code | CRM + owner | Cứng, **hoặc** owner ký chấp nhận rủi ro |
+| **B3** | Đường mạng VIP ID container ⇄ CRM: `127.0.0.1` không dùng được; CRM chỉ nhận http tới đích nội bộ (tên dịch vụ docker / dải riêng). Cần N1 (mục 1.3) | DevOps + VIP ID (compose) | Cứng |
+| **B4** | Chưa phát hành: VIP ID `feature/khach-p1` chưa merge `main`, chưa deploy; CRM production chưa có bản chứa cổng | VIP ID, CRM | Cứng |
+| **B5** | Kênh cảnh báo thật (CRM + VIP ID) và admin CRM thứ hai | Owner + CRM | Cứng |
+| **B6** | E2E thật: **đạt ở local** (34/0/2, VIP ID `6030e14` + CRM `5007252`; pending FLOW-11b = P1-a, INTEROP-02 chỉ ở mock). **Vẫn bắt buộc chạy trên staging** | Cả hai | Cứng |
+| **B7** | Khoá Turnstile production + kiểm sống (đăng ký + đăng nhập bị thử thách) | Owner | Cứng (VIP ID từ chối khởi động) |
+| **B8** | DNS A `khachhang` / `khachhang-staging` và khối Caddy (root) | Owner + root | Cứng |
+| ~~B1~~ | Email: **không còn chặn** — đã bỏ xác minh; production chỉ đòi kênh thư khi `COWORK_KHACH_EMAIL_ENABLED=1` | — | Đã gỡ |
+| ~~B2~~ | Header HMAC lệch: **đã giải quyết**, kit 30/30 + 4/4 | — | Đã gỡ |
+| B9 | DMARC chưa có (chỉ cần khi gửi email thật) | Owner | Mềm |
 
 ### 11.2. Quyết định owner cần đưa ra
 
-| # | Câu hỏi | Đề xuất của gói này |
+| # | Câu hỏi | Đề xuất |
 |---|---|---|
-| Q1 | Định danh đăng nhập: chỉ mã VG (CRM đề xuất K1), hay **cả** SĐT và VG (VIP ID đang làm theo HĐ §11.1)? | Chốt trước B6. Nếu chỉ VG thì VIP ID tắt đăng nhập bằng SĐT để giảm bề mặt dò |
-| Q2 | Kênh email: E1 Workspace SMTP AUTH (`no-reply@`, App Password), E2 relay có xác thực, hay E3 nhà cung cấp ngoài? | **E1**. Hộp nhận báo cáo DMARC do owner chỉ định |
-| Q3 | Đường VIP ID → CRM: N1 (network docker chung) hay N2 (`https://crm.vipgroup.com.vn`)? | **N1** |
-| Q4 | Xác minh SĐT: chấp nhận "nhân viên gọi điện" cho P1, OTP để giai đoạn 2? (HĐ `:148`, CRM K4) | Chấp nhận cho P1 |
-| Q5 | Smoke test chức năng: tài khoản thật do owner chọn (mục 8.2), chấp nhận mã VG đầu tiên thuộc tài khoản đó? | Có. Ghi tên vào biên bản |
-| Q6 | Có làm role LOGIN riêng (`PORTAL_DATABASE_URL`) cho CRM cổng trước khi mở không? (CRM P1 `:186`) | Nên làm. Thêm một secret (mục 4.1) |
-| Q7 | Giới hạn đăng ký 5/giờ/IP có quá chặt với CGNAT không? | Giữ khi mở, theo dõi `khach.dang_ky.qua_tan_suat` 1 tuần |
-| Q8 | Khung bảo trì cho giai đoạn 2 (khoảng 2–3 giờ; nhân viên cowork gián đoạn vài giây ở V1, V3; CRM gián đoạn 20–40 s ở C1) | Ngoài giờ làm việc, báo trước |
-| Q9 | Có tạo staging `khachhang-staging` công khai (DNS + Caddy) không, hay chỉ kiểm qua SSH tunnel (CRM runbook `:184-190`)? | Cần DNS công khai cho staging, vì Turnstile và chứng chỉ thật đều kiểm theo hostname |
-| Q10 | Ai giữ quyền root để chạy script Caddy, và ai nhận bàn giao bí mật (không qua chat)? | Owner chỉ định bằng văn bản |
+| Q1 | Định danh đăng nhập: SĐT hay mã VG? Hiện **hỗ trợ cả hai** (VIPID `cowork/khach.py:680`) | Giữ cả hai cho P1; theo dõi dò mật khẩu |
+| Q2 | Khách "cũ" có tiếp tục đăng nhập CRM nhân viên không (`STAFF_HOST_ALLOW_LEGACY_CUSTOMERS`, mặc định có)? | Giữ cho tới khi cổng thay thế được (khiếu nại, ticket, POD); đặt `0` khi xong |
+| Q3 | P1-a: xác nhận với CRM thêm nút cấp link; P2-c: bỏ tích "đã gọi xác minh SĐT" trên màn duyệt | Xác nhận trực tiếp với phiên CRM |
+| Q4 | P1-b: làm role riêng trước khi mở, hay ký chấp nhận rủi ro? | Làm trước khi mở |
+| Q5 | Tài khoản smoke production (mục 8.2), chấp nhận mã VG đầu tiên thuộc tài khoản đó? | Có, ghi tên vào biên bản |
+| Q6 | Mã kho XM (Hạ Môn) / YW (Nghĩa Ô): owner xác minh mã và dữ liệu vận hành trước khi chuyển khỏi `planned` (HĐ §11.7) | Giữ "Sắp mở" cho P1 |
+| Q7 | Đường mạng N1 hay N2 | **N1** |
+| Q8 | Khung bảo trì giai đoạn 2 (nhân viên cowork gián đoạn vài giây ở V1, V3; CRM 10–40 s ở C1/C2) | Ngoài giờ, báo trước |
+| Q9 | Staging công khai `khachhang-staging` (DNS + Caddy) hay chỉ SSH tunnel? | Công khai, vì Turnstile và chứng chỉ kiểm theo hostname |
+| Q10 | Ai giữ quyền root chạy Caddy, ai nhận bàn giao bí mật (không qua chat)? | Owner chỉ định bằng văn bản |
 
 ---
 

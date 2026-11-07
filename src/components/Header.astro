@@ -7,10 +7,23 @@ import { getContent } from '../data';
 interface Props { locale?: Locale }
 const { locale = defaultLocale } = Astro.props;
 const ui = t(locale);
-const { company } = getContent(locale);
+const { company, contact } = getContent(locale);
+const portal = contact.portal;
 const current = Astro.url.pathname;
 const isCurrent = (href: string) => (href === '/' ? current === '/' : current.startsWith(href));
 ---
+{portal && (
+  <nav class="account-bar" aria-label={ui.accountNav}>
+    <div class="container account-inner">
+      <span class="account-note">{ui.accountLabel}</span>
+      <a class="acc-login" href={portal.loginUrl} data-track="portal_login_click" data-track-location="header">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.2 0-8 2.1-8 5v2h16v-2c0-2.9-3.8-5-8-5Z"/></svg>
+        {ui.login}
+      </a>
+      <a class="acc-register" href={portal.registerUrl} data-track="portal_register_click" data-track-location="header">{ui.register}</a>
+    </div>
+  </nav>
+)}
 <header class="site-header">
   <div class="container nav">
     <a href="/" class="brand">
@@ -35,6 +48,15 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
 </header>
 
 <style>
+  .account-bar { background: var(--brand-ink, #8a0512); color: #fff; font-size: 13px; }
+  .account-inner { min-height: 38px; display: flex; align-items: center; justify-content: flex-end; gap: 6px 16px; flex-wrap: wrap; padding-block: 4px; }
+  .account-note { margin-right: auto; opacity: .85; font-weight: 600; letter-spacing: .02em; }
+  .account-bar a { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 4px 12px; border-radius: 999px; font-weight: 700; color: #fff; text-decoration: none; }
+  .acc-login:hover { background: rgba(255, 255, 255, .14); }
+  .acc-register { background: #fff; color: var(--brand) !important; }
+  .acc-register:hover { background: #ffe9eb; }
+  .account-bar a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  @media (max-width: 480px) { .account-note { display: none; } .account-inner { justify-content: space-between; } }
   .site-header { position: sticky; top: 0; z-index: 50; background: rgba(255, 255, 255, .96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 3px solid var(--brand); }
   .nav { height: var(--header-h); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
   .menu ul { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 4px; }
