@@ -134,3 +134,13 @@ Thực hiện theo `docs/seo/G10_GSC_AI_SEARCH_MONITORING.md`, bổ sung cho V2:
 5. Sau phát hành: gửi sitemap và yêu cầu lập chỉ mục 5 URL; đo baseline AI Overview/Gemini theo G10.
 
 **Rollback:** Cloudflare Pages → Deployments → Rollback, hoặc `git revert` merge commit. Thay đổi chỉ cộng thêm trang và chỉnh link nội bộ, không ảnh hưởng trang tập đoàn.
+
+---
+
+## 7. CẬP NHẬT 07/11/2026 — GIÁ ĐÃ CHỐT (phiên 8d tích hợp)
+
+- **Owner directive 07/11/2026:** bảng giá chung (20.000 / 16.000 / 15.000 / 14.000 / 12.000 đ/kg) **áp dụng cho cả 4 kho**; bậc giá chọn theo **trọng lượng tính cước của TỪNG KIỆN**, không gộp cả lô; trọng lượng tính cước kiện = max(cân thực, D×R×C cm ÷ 6000).
+- Mâu thuẫn "từng kiện" / "cả lô" (§1, §6) **đã được owner giải quyết**: từng kiện. Câu "cả lô" (xác nhận 06/11) đã thay trên toàn site.
+- `priceApplies` 4 kho: có value + nguồn `SRC_OWNER_PRICE`. Trang tuyến + mạng lưới hiện bảng 5 bậc, FAQ vi/zh nêu đủ 5 mức, JSON-LD `offers` (eligibleQuantity "kg/kiện").
+- Logic dùng chung `src/lib/pricing.ts` (công cụ tính + test `tests/pricing-policy.test.mjs`).
+- **Còn hỏi owner:** làm tròn trọng lượng (0,1 / 0,5 / 1 kg — hiện KHÔNG làm tròn, kiện 5,02 kg → 16.000); bậc 500 kg và trên 1.000 kg cho một kiện (pallet) có đúng ý; cước tối thiểu mỗi kiện.

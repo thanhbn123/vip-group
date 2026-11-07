@@ -1,6 +1,6 @@
 {
-  "at": "2026-11-06T15:26:15.727Z",
-  "total": 204,
+  "at": "2026-11-07T00:27:09.561Z",
+  "total": 209,
   "failed": 0,
   "results": [
     {
@@ -997,6 +997,31 @@
       "name": "calc: cân quy đổi 360.000 ÷ 6000 = 60 kg (owner xác nhận hệ số 6000)",
       "ok": true,
       "detail": "60 kg"
+    },
+    {
+      "name": "cước theo kiện: 20 kg/kiện tính cước",
+      "ok": true,
+      "detail": "20 kg"
+    },
+    {
+      "name": "cước theo kiện: bậc 16.000 đ/kg (không gộp 60 kg của cả lô)",
+      "ok": true,
+      "detail": "16.000 đ/kg (Trên 5 đến dưới 100 kg)"
+    },
+    {
+      "name": "cước theo kiện: tổng 960.000 đ = 320.000 đ/kiện × 3",
+      "ok": true,
+      "detail": "960.000 đ"
+    },
+    {
+      "name": "biên 5 kg/kiện → 20.000 đ/kg",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5,01 kg/kiện → 16.000 đ/kg",
+      "ok": true,
+      "detail": ""
     },
     {
       "name": "bảng giá: form thu lead chọn sẵn \"báo giá vận chuyển\"",

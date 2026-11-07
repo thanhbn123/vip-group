@@ -200,7 +200,7 @@ function pickupFaq(p: PickupBase): FaqItem[] {
     {
       q: `Cước vận chuyển từ ${p.city} về Việt Nam tính thế nào?`,
       a: p.priceApplies.value
-        ? `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000), áp dụng bảng giá vận chuyển Trung Quốc – Việt Nam. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.`
+        ? `Hàng nhận tại kho ${p.city} áp dụng bảng giá chung cho 4 kho: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá chọn theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000), không gộp cả lô. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.`
         : `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000). Bảng giá chung Trung Quốc – Việt Nam có tại trang Bảng giá; đơn giá áp dụng cho hàng nhận tại kho ${p.city} được xác nhận khi báo giá, cùng phụ phí và thuế (nếu có).`,
     },
     {
@@ -216,7 +216,12 @@ function pickupFaqZh(p: PickupBase): { q: string; a: string }[] {
   return [
     { q: `${p.cityZh}仓地址是什么？`, a: `${p.addressZh.value ?? ''}。收货人姓名、联系电话及客户编号（唛头）由客户注册后单独提供，网站不公开。` },
     { q: '供应商如何发货？', a: '请按客户提供的收货信息发货，并在每件货物外箱标明客户编号（唛头）；如使用国内快递，请将快递单号告知客户。' },
-    { q: '运费如何计算？', a: '运费按计费重量（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 6000）以公斤计算，具体单价以正式报价为准；附加费及税费（如有）将在正式报价前确认。' },
+    {
+      q: '运费如何计算？',
+      a: p.priceApplies.value
+        ? '四个仓库适用统一价格表（越南盾/公斤）：0–5 公斤 20,000；超过 5 公斤，不足 100 公斤 16,000；100 公斤至不足 500 公斤 15,000；500–1,000 公斤 14,000；超过 1,000 公斤 12,000。价格档位按每件货物的计费重量确定（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 6000），不合并整批重量；附加费及税费（如有）将在正式报价前确认。'
+        : '运费按计费重量（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 6000）以公斤计算，具体单价以正式报价为准；附加费及税费（如有）将在正式报价前确认。',
+    },
     ...(p.extraFaqZh ? [p.extraFaqZh] : []),
     { q: '如何联系？', a: `热线 / Zalo：${HOTLINE}（越南号码）。` },
   ];

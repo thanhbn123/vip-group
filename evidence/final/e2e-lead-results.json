@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-06T15:26:30.471Z",
+  "at": "2026-11-07T00:25:57.864Z",
   "total": 21,
   "failed": 0,
   "res": [
@@ -31,7 +31,7 @@
     {
       "n": "[desktop] Sheet nhận đúng 1 dòng, đúng dữ liệu",
       "ok": true,
-      "d": "{\"lead_id\":\"VG-E2E-0001\",\"idempotency_key\":\"5684a6e8-4e29-4b39-8195-b27b659c0d94\",\"source\":\"vipgroup.com.vn\",\"page\":\"/lien-he/\",\"utm\":{\"source\":\"\",\"medium\":\"\",\"campaign\":\"\"},\"name\":\"Khách Thử E2E\",\"phone\":\"0961102655\",\"email\":null,\"need\":\"bao-gia-van-chuyen\",\"route\":\"tham-quyen\",\"weight_kg\":250,\"message\":\"Lô hàng thử desktop\",\"consent_at\":\"2026-11-06T15:26:21.514Z\",\"created_at\":\"2026-11-06T15:26:21.514Z\"}"
+      "d": "{\"lead_id\":\"VG-E2E-0001\",\"idempotency_key\":\"7019566f-820e-4908-a41f-a084379cc28e\",\"source\":\"vipgroup.com.vn\",\"page\":\"/lien-he/\",\"utm\":{\"source\":\"\",\"medium\":\"\",\"campaign\":\"\"},\"name\":\"Khách Thử E2E\",\"phone\":\"0961102655\",\"email\":null,\"need\":\"bao-gia-van-chuyen\",\"route\":\"tham-quyen\",\"weight_kg\":250,\"message\":\"Lô hàng thử desktop\",\"consent_at\":\"2026-11-07T00:25:49.298Z\",\"created_at\":\"2026-11-07T00:25:49.298Z\"}"
     },
     {
       "n": "[desktop] form khoá sau khi gửi (chống gửi lặp)",
@@ -76,7 +76,7 @@
     {
       "n": "[mobile] Sheet nhận đúng 1 dòng, đúng dữ liệu",
       "ok": true,
-      "d": "{\"lead_id\":\"VG-E2E-0002\",\"idempotency_key\":\"beb56ca9-364a-4143-be86-fb4cb971931d\",\"source\":\"vipgroup.com.vn\",\"page\":\"/lien-he/\",\"utm\":{\"source\":\"\",\"medium\":\"\",\"campaign\":\"\"},\"name\":\"Khách Thử E2E\",\"phone\":\"0961102655\",\"email\":null,\"need\":\"bao-gia-van-chuyen\",\"route\":\"tham-quyen\",\"weight_kg\":250,\"message\":\"Lô hàng thử mobile\",\"consent_at\":\"2026-11-06T15:26:29.432Z\",\"created_at\":\"2026-11-06T15:26:29.432Z\"}"
+      "d": "{\"lead_id\":\"VG-E2E-0002\",\"idempotency_key\":\"d7447deb-d9c1-43c5-b491-9036df56c38a\",\"source\":\"vipgroup.com.vn\",\"page\":\"/lien-he/\",\"utm\":{\"source\":\"\",\"medium\":\"\",\"campaign\":\"\"},\"name\":\"Khách Thử E2E\",\"phone\":\"0961102655\",\"email\":null,\"need\":\"bao-gia-van-chuyen\",\"route\":\"tham-quyen\",\"weight_kg\":250,\"message\":\"Lô hàng thử mobile\",\"consent_at\":\"2026-11-07T00:25:56.917Z\",\"created_at\":\"2026-11-07T00:25:56.917Z\"}"
     },
     {
       "n": "[mobile] form khoá sau khi gửi (chống gửi lặp)",

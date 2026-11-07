@@ -98,3 +98,22 @@ test('công cụ tính trên trang bảng giá có đủ ô cước ước tính
   for (const k of ['charge', 'tier', 'cost', 'cost-per']) assert.match(html, new RegExp(`data-out="${k}"`), k);
   assert.match(html, /data-divisor="6000"/);
 });
+
+test('ca bàn giao: 3 kiện × 4 kg → mỗi kiện 20.000 đ/kg (không gộp 12 kg → 16.000)', () => {
+  const e = P.estimate(T, { lCm: 20, wCm: 20, hCm: 20, kg: 4, count: 3 }); // quy đổi 1,33 kg < 4 kg
+  assert.equal(e.chargeablePerPackage, 4);
+  assert.equal(e.tier.price, 20000);
+  assert.equal(e.total, 240000);
+  assert.equal(P.tierFor(T, 12).price, 16000, 'nếu gộp lô 12 kg sẽ ra 16.000 — KHÔNG được dùng');
+});
+
+test('FAQ trang tuyến (vi + zh) nêu đủ 5 mức và "từng kiện"', () => {
+  for (const p of ROUTES) {
+    const html = read(p);
+    const faq = [...html.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)].map((m) => JSON.parse(m[1])).find((d) => d['@type'] === 'FAQPage');
+    const cuoc = faq.mainEntity.find((q) => /Cước vận chuyển từ .* tính thế nào/.test(q.name));
+    assert.ok(cuoc, `${p}: thiếu câu cước trong FAQPage`);
+    for (const v of ['20.000đ/kg', '16.000đ/kg', '15.000đ/kg', '14.000đ/kg', '12.000đ/kg', 'từng kiện']) assert.ok(cuoc.acceptedAnswer.text.includes(v), `${p}: ${v}`);
+    assert.match(text(html), /按每件货物的计费重量确定/, `${p}: FAQ zh`);
+  }
+});

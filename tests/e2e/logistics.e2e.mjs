@@ -67,6 +67,14 @@ for (const [base, label, list] of [[PROD, 'prod', PAGES], [DEMO, 'demo', [...PAG
   check('calc: 60×50×40 × 3 kiện = 0,36 m³', (await page.textContent('[data-out="m3"]'))?.trim() === '0,36 m³', await page.textContent('[data-out="m3"]'));
   check('calc: cân thực 12 kg × 3 = 36 kg', (await page.textContent('[data-out="kg"]'))?.trim() === '36 kg');
   check('calc: cân quy đổi 360.000 ÷ 6000 = 60 kg (owner xác nhận hệ số 6000)', (await page.textContent('[data-out="dim"]'))?.trim() === '60 kg', await page.textContent('[data-out="dim"]'));
+  // Owner 07/11/2026: bậc giá theo TỪNG KIỆN — 3 kiện × (60×50×40 cm, 12 kg) → mỗi kiện tính 20 kg → 16.000 đ/kg.
+  check('cước theo kiện: 20 kg/kiện tính cước', (await page.textContent('[data-out="charge"]'))?.trim() === '20 kg', await page.textContent('[data-out="charge"]'));
+  check('cước theo kiện: bậc 16.000 đ/kg (không gộp 60 kg của cả lô)', /^16\.000 đ\/kg/.test((await page.textContent('[data-out="tier"]'))?.trim() ?? ''), await page.textContent('[data-out="tier"]'));
+  check('cước theo kiện: tổng 960.000 đ = 320.000 đ/kiện × 3', (await page.textContent('[data-out="cost"]'))?.trim() === '960.000 đ' && /320\.000 đ\/kiện × 3/.test(await page.textContent('[data-out="cost-per"]')), await page.textContent('[data-out="cost"]'));
+  await page.fill('#vc-l', '10'); await page.fill('#vc-w', '10'); await page.fill('#vc-h', '10'); await page.fill('#vc-kg', '5'); await page.fill('#vc-n', '1');
+  check('biên 5 kg/kiện → 20.000 đ/kg', /^20\.000 đ\/kg/.test((await page.textContent('[data-out="tier"]'))?.trim() ?? ''));
+  await page.fill('#vc-kg', '5.01');
+  check('5,01 kg/kiện → 16.000 đ/kg', /^16\.000 đ\/kg/.test((await page.textContent('[data-out="tier"]'))?.trim() ?? ''));
   check('bảng giá: form thu lead chọn sẵn "báo giá vận chuyển"', (await page.inputValue('#cf-need')) === 'bao-gia-van-chuyen');
   await page.route('https://zalo.me/**', (r) => r.abort());
   await page.evaluate(() => document.querySelectorAll('a[href^="tel:"]').forEach((a) => a.addEventListener('click', (e) => e.preventDefault())));
