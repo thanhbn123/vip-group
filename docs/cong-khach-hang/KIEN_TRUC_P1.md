@@ -243,7 +243,7 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
 2. **Chuyển hướng sau đăng nhập.** Tham số `tiep` chỉ chấp nhận URL tuyệt đối `https://khachhang.vipgroup.com.vn/portal…`, khớp danh sách cấu hình `COWORK_KHACH_TIEP_CHO_PHEP`. Không khớp thì bỏ qua và về `vao-cong`. Mọi đường về khachhang đều đi qua launch token một lần (60 giây, nonce, aud `vip-crm-portal`).
 3. **Gọi nội bộ CRM ↔ VIP ID** đi qua mạng docker. CRM gửi `Host: dangnhap.vipgroup.com.vn` (biến mới phía CRM: `VIPID_PORTAL_HOST`) khi gọi `/api/internal/khach/*`. VIP ID gửi Host phù hợp CRM. `/api/internal/*` trả **404 trên mọi tên miền công khai**.
 4. **CSRF.** Form VIP ID post cùng origin (dangky→dangky, dangnhap→dangnhap). Portal gọi API cùng origin khachhang. Đăng xuất từ portal: `POST /portal/api/logout` rồi chuyển `https://dangnhap…/tai-khoan/dang-xuat` (trang xác nhận + POST có CSRF).
-5. **Turnstile.** Widget riêng cho `dangky` và `dangnhap` (hostname kiểm tại server).
+5. **Turnstile.** Một widget, hai hostname `dangky` và `dangnhap`. VIP ID chỉ có một biến site key; server kiểm hostname khớp host đang phục vụ.
 6. **COWORK → CRM.**
    - Module `crm`: quyền `crm.view` (thấy module) và `crm.use` (mở CRM). Vai trò dưới nhân viên (partner) bị từ chối ở backend.
    - COWORK ký `{ver:1, aud:'vip-crm', sub:<id nhân viên COWORK>, tenant_code, iat, exp≤60s, nonce}` bằng `COWORK_SHARED_SECRET` rồi chuyển hướng `https://crm.vipgroup.com.vn/api/auth/cowork/launch?token=`.
@@ -264,7 +264,7 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
 - Bí mật: một giá trị **riêng** dùng chung hai bên.
   - Ở VIP ID: biến `COWORK_CRM_LAUNCH_SECRET`.
   - Ở CRM: biến `COWORK_SHARED_SECRET`.
-- Kiểm tra phía CRM: CRM kiểm nonce dùng một lần. Phía COWORK có route `GET /crm/mo` → 303 tới `https://crm.vipgroup.com.vn/api/auth/cowork/launch?token=`.
+- Kiểm tra phía CRM: CRM kiểm nonce dùng một lần. Phía COWORK có route `POST /crm/mo` (có CSRF) → 303 tới `https://crm.vipgroup.com.vn/api/auth/cowork/launch?token=`.
 - Tenant: `tenant_code` lấy qua `COWORK_CRM_TENANT_MAP`, mặc định `vip-group → VIP`.
 
 **CRM (khachhang)**
