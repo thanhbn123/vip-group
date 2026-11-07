@@ -6,10 +6,7 @@ export const providerLd = () => ({
   '@id': 'https://www.vipgroup.com.vn/#organization',
   name: provider.name,
   legalName: provider.legalName,
-  // Điểm giao dịch Bắc Ninh — chỉ khai khi owner đã cung cấp địa chỉ (value + source).
-  ...(provider.officeAddress.value && provider.officeAddress.source
-    ? { address: { '@type': 'PostalAddress', streetAddress: provider.officeAddress.value, addressCountry: 'VN' } }
-    : {}),
+  // Địa chỉ đã có trong Organization VIP GROUP (Lạng Sơn) — không khai lặp ở provider.
 });
 
 /**

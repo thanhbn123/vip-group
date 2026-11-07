@@ -25,8 +25,8 @@ export const provider: LogisticsProvider = {
   // Hotline/Zalo tập trung của VIP GROUP (src/data/vi/contact.ts).
   hotline: contact.hotline!,
   zaloUrl: contact.zaloUrl!,
-  // Owner: VIP GROUP có địa chỉ tại Bắc Ninh — CHƯA nhận được địa chỉ → hiển thị "liên hệ hotline".
-  officeAddress: { value: null, source: null },
+  // Owner 07/11/2026: TẠM ghi văn phòng Lạng Sơn (địa chỉ pháp lý VIP GROUP); địa chỉ Bắc Ninh cập nhật sau.
+  officeAddress: { value: `${contact.address} (văn phòng VIP GROUP — tạm thời)`, source: 'Owner 07/11/2026: tạm ghi văn phòng Lạng Sơn' },
   registerHref: '/lien-he/?nhu-cau=khac&dang-ky=1#form-lien-he',
 };
 
@@ -317,7 +317,7 @@ export const pages: LogisticsPage[] = [
     description:
       'Logistics VIP GROUP: nhận hàng tại 4 kho Trung Quốc, vận chuyển về Việt Nam, nhập khẩu chính ngạch, khai báo hải quan, đặt hàng 1688.',
     h1: 'Logistics Trung Quốc – Việt Nam',
-    lead: 'Nhận hàng tại Trung Quốc, vận chuyển về Việt Nam, hỗ trợ nhập khẩu chính ngạch và khai báo hải quan — VIP GROUP có điểm giao dịch tại Bắc Ninh.',
+    lead: 'Nhận hàng tại Trung Quốc, vận chuyển về Việt Nam, hỗ trợ nhập khẩu chính ngạch và khai báo hải quan — phục vụ khách hàng Bắc Ninh và toàn miền Bắc.',
     status: 'ready',
     keyword: 'logistics Trung Việt VIP GROUP (thương hiệu + tổng quan)',
   },
@@ -465,7 +465,7 @@ export const pages: LogisticsPage[] = [
     key: 'lien-he',
     href: '/logistics/lien-he/',
     nav: 'Liên hệ',
-    title: 'Liên hệ Logistics – điểm giao dịch Bắc Ninh, Hotline/Zalo',
+    title: 'Liên hệ Logistics VIP GROUP – Hotline/Zalo, văn phòng',
     description:
       `Liên hệ dịch vụ vận chuyển Trung Quốc – Việt Nam của VIP GROUP: Hotline/Zalo ${HOTLINE}, form yêu cầu báo giá, khu vực phục vụ Bắc Ninh.`,
     h1: 'Liên hệ và khu vực phục vụ',

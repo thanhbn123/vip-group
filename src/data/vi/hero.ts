@@ -13,4 +13,10 @@ export interface HeroBanner {
   alt: string;
 }
 
-export const heroBanner: HeroBanner | null = null;
+export const heroBanner: HeroBanner | null = {
+  base: '/banner/hero',
+  widths: [1600, 900, 600],
+  width: 1600,
+  height: 740,
+  alt: 'Minh họa xe đầu kéo chở hàng đóng kiện tại bãi kho — vận chuyển hàng Trung Quốc về Việt Nam',
+};

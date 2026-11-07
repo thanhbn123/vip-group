@@ -150,10 +150,12 @@ test('Service schema: đơn vị cung cấp là VIP GROUP (@id Organization), kh
   assert.deepEqual(bn.areaServed, [{ '@type': 'AdministrativeArea', name: 'Bắc Ninh' }]);
 });
 
-test('trang Bắc Ninh: điểm giao dịch VIP GROUP — địa chỉ chờ owner, hiện "liên hệ" (không dùng địa chỉ cũ)', () => {
-  const t = text(read('/logistics/van-chuyen-trung-quoc-bac-ninh/'));
-  assert.match(t, /Điểm giao dịch VIP GROUP tại Bắc Ninh/);
-  assert.match(read('/logistics/van-chuyen-trung-quoc-bac-ninh/'), /data-owner-input-pending/);
+test('owner 07/11/2026: văn phòng TẠM ghi Lạng Sơn trên trang Bắc Ninh + Liên hệ (không dùng địa chỉ VIPORDER cũ)', () => {
+  for (const p of ['/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/lien-he/']) {
+    const t = text(read(p)).replace(/\s+/g, ' ');
+    assert.match(t, /Số 183 đường Bắc Sơn, Phường Kỳ Lừa, Tỉnh Lạng Sơn, Việt Nam \(văn phòng VIP GROUP — tạm thời\)/, p);
+    assert.doesNotMatch(t, /Nam Hồng|Đồng Nguyên|điểm giao dịch tại Bắc Ninh/i, p);
+  }
 });
 
 test('mọi dữ kiện có value đều phải có source (không xuất bản thông tin không nguồn)', () => {
