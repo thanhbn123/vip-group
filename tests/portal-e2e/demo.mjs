@@ -7,7 +7,7 @@
 //   node tests/portal-e2e/demo.mjs reset-link <SĐT|VGxxxx> # nhân viên cấp link đặt lại mật khẩu (thay nút CRM, tới khi CRM có)
 //   node tests/portal-e2e/demo.mjs lock <VGxxxx> | unlock <VGxxxx>   # khoá / mở cổng của khách (API nhân viên CRM)
 //   node tests/portal-e2e/demo.mjs stop                   # tắt đúng các tiến trình của demo, dropdb, xoá bản clone CRM
-//   TOPO=multi …start   # §15: dangky / dangnhap / khachhang.localhost (cần CRM hỗ trợ §15); mặc định single (khach.localhost)
+//   Mặc định §15: dangky. / dangnhap. / khachhang.vipgroup.localhost:8890; TOPO=single …start → một host khach.localhost (CRM cũ)
 //
 // Mật khẩu demo CHỈ ghi vào $DEMO_DIR/TAI_KHOAN_DEMO.txt (0600), không bao giờ in ra màn hình.
 import crypto from 'node:crypto';
@@ -16,7 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { stackConfig, vipidEnv, crmEnv, crmScript, crmSql, waitHttp, proxyEnv } from './stack.mjs';
+import { stackConfig, vipidEnv, crmEnv, crmScript, crmSql, waitHttp, proxyEnv, ensureCoworkSecret } from './stack.mjs';
 import { raw } from './http.mjs';
 import { KhachClient, account, internalPost } from './vipid.mjs';
 import { RealCrm, waitFor } from './crm.mjs';
@@ -29,7 +29,7 @@ const ACC_FILE = path.join(DEMO_DIR, 'TAI_KHOAN_DEMO.txt');
 const STATE = path.join(DEMO_DIR, 'state.json');
 const CRM_SRC = process.env.CRM_SRC || '/Users/viporder/Projects/vip-group-khoqctq';
 const CLONE = path.join(DEMO_DIR, 'crm-clone');
-const VIPID_SRC = process.env.VIPID_SRC || '/Users/viporder/code/vip-group-id-khach';
+const VIPID_SRC = process.env.VIPID_SRC || (fs.existsSync('/Users/viporder/code/vip-group-id-cowork-crm') ? '/Users/viporder/code/vip-group-id-cowork-crm' : '/Users/viporder/code/vip-group-id-khach');
 const VIPID_CLONE = path.join(DEMO_DIR, 'vipid-clone');
 const DB = 'vipcrm5_demo_portal';
 // Owner 07/11 (CRM d5666fc): duyệt không cần "đã gọi xác minh SĐT"; nhân viên cấp link đặt lại qua CRM.
@@ -37,6 +37,8 @@ const DB = 'vipcrm5_demo_portal';
 process.env.CRM_SKIP_VERIFY_PHONE ??= '1';
 process.env.CRM_VERIFY_FALLBACK ??= '1';
 process.env.CRM_RESET_LINK_ROUTE ??= '/api/portal/customers/:id/reset-link';
+// §15: mặc định ba host dangky / dangnhap / khachhang .vipgroup.localhost (cùng một site như *.vipgroup.com.vn)
+process.env.TOPO ??= 'multi';
 
 function config() {
   const cfg = stackConfig({
@@ -124,6 +126,7 @@ async function start() {
   fs.mkdirSync(cfg.dataDir, { recursive: true, mode: 0o700 });
   r = spawnSync(cfg.PY, ['-c', 'from cowork import khach; khach.portal_secret()'], { cwd: cfg.VIPID_REPO, env: demoVipidEnv(cfg), encoding: 'utf8' });
   if (r.status !== 0) throw new Error(`portal secret: ${r.stderr}`);
+  ensureCoworkSecret(cfg); // COWORK → CRM (cowork-launch/1): VIP ID đọc tệp, CRM nhận COWORK_SHARED_SECRET
   const pids = {};
   pids.crm = bg('crm', process.execPath, ['server/index.js'], { cwd: CLONE, env: crmEnv(cfg) });
   pids.vipid = bg('vipid', cfg.PY, ['-m', 'uvicorn', 'cowork.main:app', '--host', '127.0.0.1', '--port', String(cfg.VIPID_PORT), '--no-access-log', '--no-proxy-headers'],

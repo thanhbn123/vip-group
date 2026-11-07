@@ -28,7 +28,7 @@ Mỗi lượt in SHA đang chạy của VIP ID và CRM (`+dirty` nếu working t
 |---|---|---|
 | `MODE` | `mock` | `mock` \| `real` |
 | `START` | `1` | `0`: dùng stack đang chạy sẵn; các kiểm cần bật/tắt server sẽ chuyển PENDING |
-| `BASE` | `http://khach.localhost:8890` | gốc host khách công khai |
+| `BASE` | host dangnhap (multi) / `http://khach.localhost:8890` (single) | gốc trang tài khoản khách |
 | `VIPID_REPO`, `PY` | `~/code/vip-group-id-khach`, `~/code/vip-group-id/.venv/bin/python` | |
 | `CRM_REPO`, `CRM_DB`, `CRM_PORT` | `~/Projects/vip-group-khoqctq`, `vipcrm5_e2e_portal`, `5195` | DB bắt buộc có tiền tố `vipcrm5_` |
 | `CRM_STAFF_URL` | `http://127.0.0.1:$CRM_PORT` | API nhân viên CRM (`/api/auth/login`, `/api/portal/signups/*`) |
@@ -37,7 +37,8 @@ Mỗi lượt in SHA đang chạy của VIP ID và CRM (`+dirty` nếu working t
 | `STRICT_BROWSER=1` | tắt | tắt vá tạm Origin (xem FLOW-00) |
 | `KEEP=1` | tắt | giữ thư mục tạm và DB CRM để điều tra |
 | `VERBOSE=1` | tắt | in từng điều kiện đã đạt |
-| `TOPO` | `multi` (mock) / `single` (real) | §15: `multi` = `dangky.localhost` (đăng ký) · `dangnhap.localhost` (đăng nhập, tài khoản, API nội bộ) · `khachhang.localhost` (CRM `/portal`); `single` = một host `khach.localhost` (CRM chưa có §15) |
+| `TOPO` | `multi` (mock) / `single` (real) | §15: `multi` = `dangky.<HOST_SUFFIX>` (đăng ký) · `dangnhap.<HOST_SUFFIX>` (đăng nhập, tài khoản, API nội bộ) · `khachhang.<HOST_SUFFIX>` (CRM `/portal`); `single` = một host `khach.localhost`. Real mode với CRM có §15: đặt `TOPO=multi` |
+| `HOST_SUFFIX` | `vipgroup.localhost` | Ba host cùng một site, giống `*.vipgroup.com.vn`. Với `localhost` trần, mỗi `*.localhost` là một site riêng: cookie `vg_portal` (SameSite=Strict) bị bỏ trên chuỗi chuyển hướng dangnhap → khachhang, nên cổng lặp về trang đăng nhập |
 | `CODE_RULE` | `v2` | `v2`: VG1001, VG1002… (`^VG[1-9]\d{3,8}$`); `v1`: VG000001 |
 | `CRM_SKIP_VERIFY_PHONE=1` | tắt | bỏ gọi `verify-phone` trước approve/link (khi CRM bỏ bước này) |
 | `CRM_RESET_LINK_ROUTE` | chưa đặt | route nhân viên CRM cấp link đặt lại, vd `/api/portal/customers/:id/reset-link` (`:id` = customers.id, body `{reason}`); chưa đặt thì gọi thẳng VIP ID `tao-link-dat-lai` bằng HMAC và FLOW-11b là PENDING |

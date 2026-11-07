@@ -551,10 +551,12 @@ async function main() {
     const K2 = P.K2;
     t.eq((await crm.lock(K2.subject, 'khoa')).status, 200, 'khoá cổng K2');
     try {
+      t.ok(await waitFor(() => account(cfg, 'subject=?', [K2.subject])[0].status === 'tam_khoa', 30_000), 'VIP ID nhận khoá (tam_khoa) trước khi mở lại');
       const lk = await crm.resetLink(K2.subject);
       t.ok(lk.status === 409 && lk.code === 'CUSTOMER_INACTIVE', `khách đang khoá → ${lk.status} ${lk.code || ''}`);
     } finally {
       t.eq((await crm.lock(K2.subject, 'mo_khoa')).status, 200, 'mở lại cổng K2');
+      t.ok(await waitFor(() => account(cfg, 'subject=?', [K2.subject])[0].status === 'hoat_dong', 30_000), 'VIP ID nhận mở khoá (hoat_dong)');
     }
   });
 
@@ -1507,7 +1509,10 @@ async function main() {
         `K3 (có ở VIP ID, không có ở CRM) → login ${l3.status}, launch ${la3.status}, không cấp phiên, audit PILOT_NOT_ALLOWED=${aud}`);
       // Rút phía CRM: bỏ K1 khỏi tệp CRM → phiên đang mở bị cắt (đọc lại ≤5 s)
       fs.writeFileSync(crmFile, '# rỗng\n');
-      t.ok(await waitFor(async () => (await papi(c1, '/portal/api/me')).status === 401, 12_000), 'CRM: bỏ K1 khỏi tệp pilot → phiên cổng đang mở bị cắt');
+      let st1 = 0;
+      t.ok(await waitFor(async () => [401, 403].includes(st1 = (await papi(c1, '/portal/api/me')).status), 12_000), `CRM: bỏ K1 khỏi tệp pilot → phiên cổng đang mở bị chặn (${st1})`);
+      const pg1 = await pget(cfg.H.portal, '/portal/', { cookie: `vg_portal=${c1.jar.vg_portal}` });
+      t.ok(pg1.status === 302 && /tai-khoan\/dang-nhap/.test(pg1.headers.location || ''), `… trang cổng → ${pg1.status} về đăng nhập`);
       fs.writeFileSync(crmFile, `${K1.code}\n`);
       await new Promise((r) => setTimeout(r, 5500));
       const c1b = await portalClient(K1);

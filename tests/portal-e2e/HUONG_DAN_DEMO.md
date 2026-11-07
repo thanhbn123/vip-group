@@ -14,24 +14,29 @@ node tests/portal-e2e/demo.mjs stop      # tắt demo và xoá toàn bộ dữ l
 
 Khi chạy `start`, công cụ sẽ:
 
-1. Lấy bản CRM mới nhất (nhánh `main`) để chạy riêng. Repo CRM gốc không bị đụng tới.
+1. Lấy bản CRM mới nhất (nhánh `main`) và bản VIP ID đã commit mới nhất để chạy riêng. Repo gốc không bị đụng tới.
 2. Tạo cơ sở dữ liệu thử `vipcrm5_demo_portal`.
 3. Bật VIP ID, CRM và cổng khách. Các dịch vụ này chạy nền, đóng Terminal vẫn không tắt.
 4. Tạo sẵn khách mẫu bằng đúng quy trình thật: khách đăng ký, rồi nhân viên duyệt.
 
-Muốn dùng một phiên bản CRM cụ thể, đặt mã phiên bản trước lệnh, ví dụ: `CRM_SHA=580efe1 node tests/portal-e2e/demo.mjs start`.
+Muốn dùng một phiên bản cụ thể, đặt mã phiên bản trước lệnh, ví dụ: `CRM_SHA=66e3470 VIPID_SHA=c3d848f node tests/portal-e2e/demo.mjs start`.
 
 Dùng xong, nhớ chạy `stop`. Lệnh này tắt đúng các dịch vụ của demo, xoá cơ sở dữ liệu demo và xoá tệp mật khẩu.
 
 ## 2. Địa chỉ
 
-| Dùng cho | Địa chỉ |
-|---|---|
-| Khách đăng nhập | http://khach.localhost:8890/tai-khoan/dang-nhap |
-| Khách đăng ký mới | http://khach.localhost:8890/tai-khoan/dang-ky |
-| Nhân viên (CRM) | http://127.0.0.1:5195/ → menu **"Đăng ký khách (cổng)"** |
+Demo chạy giống sơ đồ tên miền thật (§15): mỗi việc một địa chỉ riêng.
 
-Mở các địa chỉ trên bằng Chrome, Firefox hoặc Safari. Tên `khach.localhost` chạy được ngay, không cần cài đặt gì.
+| Dùng cho | Địa chỉ | Tương ứng khi chạy thật |
+|---|---|---|
+| Khách đăng ký mới | http://dangky.vipgroup.localhost:8890/tai-khoan/dang-ky | dangky.vipgroup.com.vn |
+| Khách đăng nhập, hồ sơ, đổi mật khẩu | http://dangnhap.vipgroup.localhost:8890/tai-khoan/dang-nhap | dangnhap.vipgroup.com.vn |
+| Cổng khách (kiện hàng, tra cứu, kho) | http://khachhang.vipgroup.localhost:8890/ | khachhang.vipgroup.com.vn |
+| Nhân viên (CRM) | http://127.0.0.1:5195/ → menu **"Đăng ký khách (cổng)"** | crm.vipgroup.com.vn |
+
+Mở các địa chỉ trên bằng Chrome, Firefox hoặc Safari. Tên `*.localhost` chạy được ngay, không cần cài đặt gì. Mở thẳng địa chỉ cổng khách khi chưa đăng nhập, hệ thống tự chuyển sang trang đăng nhập rồi quay lại cổng sau khi đăng nhập xong.
+
+Muốn chạy kiểu cũ (một địa chỉ `khach.localhost:8890` cho tất cả), bật demo bằng `TOPO=single node tests/portal-e2e/demo.mjs start`.
 
 ## 3. Tài khoản demo
 
