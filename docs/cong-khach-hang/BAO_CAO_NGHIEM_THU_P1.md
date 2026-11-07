@@ -8,7 +8,7 @@ Ngày 07/11/2026 · Website Controller.
 
 | Hệ thống | Repo / nhánh | SHA | Kiểm thử riêng |
 |---|---|---|---|
-| VIP ID (danh tính khách) | `vip-group-id` · `feature/khach-p1` (chưa push) | `6030e14` | 229/229 |
+| VIP ID (danh tính khách) | `vip-group-id` · `feature/khach-p1` (chưa push) | `ab940df` (verifier cuối chạy trên `6030e14`; `ab940df` chỉ thêm sửa P2-b) | 230/230 |
 | ONE VIP GROUP CRM (dữ liệu khách, mã VG, kiện, duyệt, đại lý, API, cổng khách `/portal`) | `vip-group-khoqctq` · `main` (local, chưa deploy) | `5007252` | 528/528 |
 | Website vipgroup.com.vn | `vip-group` · `main` | `ce289ca` (**đã phát hành production 07/11**, cổng khách đang tắt) | 183/183 |
 
@@ -84,7 +84,7 @@ Ngày 07/11/2026 · Website Controller.
 | P1-b | Chặn production (hoặc owner ký chấp nhận rủi ro) | CRM | Cách ly ở tầng DB còn phụ thuộc code ứng dụng: kết nối dùng chung vẫn đổi được phạm vi khách | Dùng `PORTAL_DATABASE_URL` với role đăng nhập riêng cho cổng |
 | P1-c | Tài liệu | Website | Gói triển khai cũ | Đang viết lại theo SHA hiện tại |
 | P2-a | Thấp | CRM | Request dạng absolute-URL lọt bộ chặn Host (vẫn bị chặn ở phiên) | Đã gửi CRM |
-| P2-b | Thấp | VIP ID | Ghi sai số phiên bản schema khi nâng cấp lỗi (phần khách vẫn tắt an toàn) | Đang sửa |
+| P2-b | Thấp | VIP ID | Ghi sai số phiên bản schema khi nâng cấp lỗi | ✅ Đã sửa (`ab940df`) |
 | P2-c | Quyết định | CRM | Màn duyệt vẫn yêu cầu tích "đã xác minh SĐT" | Chờ owner xác nhận trực tiếp |
 
 ## 6. Bản demo nghiệm thu (local, dữ liệu giả)
