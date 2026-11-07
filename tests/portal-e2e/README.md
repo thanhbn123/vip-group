@@ -39,7 +39,7 @@ Mỗi lượt in SHA đang chạy của VIP ID và CRM (`+dirty` nếu working t
 | `VERBOSE=1` | tắt | in từng điều kiện đã đạt |
 | `CODE_RULE` | `v2` | `v2`: VG1001, VG1002… (`^VG[1-9]\d{3,8}$`); `v1`: VG000001 |
 | `CRM_SKIP_VERIFY_PHONE=1` | tắt | bỏ gọi `verify-phone` trước approve/link (khi CRM bỏ bước này) |
-| `CRM_RESET_LINK_ROUTE` | chưa đặt | route nhân viên CRM cấp link đặt lại (`:subject` được thay); chưa đặt thì gọi thẳng VIP ID `tao-link-dat-lai` bằng HMAC và FLOW-11b là PENDING |
+| `CRM_RESET_LINK_ROUTE` | chưa đặt | route nhân viên CRM cấp link đặt lại, vd `/api/portal/customers/:id/reset-link` (`:id` = customers.id, body `{reason}`); chưa đặt thì gọi thẳng VIP ID `tao-link-dat-lai` bằng HMAC và FLOW-11b là PENDING |
 
 ## Real mode dùng gì từ CRM
 

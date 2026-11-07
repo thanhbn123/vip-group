@@ -61,8 +61,7 @@ Mỗi khách có thêm một kiện "chưa rõ chủ" dạng `E2E-VG100x-PENDING
 
 Đăng nhập CRM bằng `vip.admin`, vào **"Đăng ký khách (cổng)"**.
 
-- **Duyệt** (thử với K4 hoặc khách anh/chị vừa đăng ký): bấm **"Đã gọi xác minh SĐT"** (sau khi đã gọi cho khách), rồi bấm **"Duyệt · cấp mã"**. Hệ thống cấp mã kế tiếp (VG1004, VG1005…). Khoảng 15 giây sau, khách đăng nhập được.
-  - *Hiện tại* CRM vẫn bắt buộc bấm "Đã gọi xác minh SĐT". Bước này sẽ được bỏ khi chủ dự án xác nhận.
+- **Duyệt** (thử với K4 hoặc khách anh/chị vừa đăng ký): bấm **"Duyệt · cấp mã"**. Hệ thống cấp mã kế tiếp (VG1004, VG1005…). Khoảng 15 giây sau, khách đăng nhập được. Từ quyết định của chủ dự án ngày 07/11, nhân viên **không bắt buộc** gọi xác minh SĐT trước khi duyệt. Nút "Đã gọi xác minh SĐT" vẫn còn để ghi chú nếu đã gọi.
 - **Liên kết hồ sơ có sẵn:** dùng khi SĐT đăng ký trùng một khách đã có trong CRM, như trường hợp của K3. Hệ thống không bao giờ tự liên kết. Nút "Duyệt" sẽ bị khoá, nhân viên phải chủ động chọn liên kết. Khách giữ mã nội bộ cũ và được cấp thêm mã VG để đăng nhập.
 - **Từ chối:** cần ghi lý do. SĐT đó được giải phóng để chủ thật có thể đăng ký lại.
 - **Khoá cổng / mở cổng của một khách:** CRM chưa có nút cho việc này. Tạm thời dùng lệnh:
@@ -78,15 +77,16 @@ Trang "Quên mật khẩu" chỉ hiện số hotline/Zalo. Quy trình như sau:
 
 1. Khách gọi hotline.
 2. Nhân viên xác nhận đúng người.
-3. Nhân viên cấp một liên kết đặt lại mật khẩu và gửi cho khách qua Zalo. Liên kết chỉ dùng được một lần, hết hạn sau 30 phút.
+3. Trong CRM, vào **"Đăng ký khách (cổng)"**, tìm khách đã duyệt, bấm **"Cấp link đặt lại mật khẩu"**, nhập lý do rồi bấm **"Cấp link"**.
+4. Gửi liên kết cho khách qua Zalo. Liên kết chỉ hiện **một lần**, CRM không lưu lại, dùng được một lần và hết hạn sau 30 phút. Cấp liên kết mới thì liên kết cũ hết hiệu lực. Khách đang bị khoá cổng thì không cấp được liên kết.
 
-CRM chưa có nút "cấp link đặt lại". Tạm thời nhân viên dùng lệnh:
+Khi khách mở liên kết, trang hiện ô nhập mật khẩu mới. Đặt mật khẩu xong, mọi phiên đăng nhập cũ (VIP ID và cổng) đều bị đăng xuất.
+
+Cũng có thể cấp liên kết bằng lệnh (đi qua đúng API của CRM):
 
 ```sh
 node tests/portal-e2e/demo.mjs reset-link 0900000011     # hoặc: reset-link VG1001
 ```
-
-Lệnh in ra liên kết. Khi khách mở liên kết, trang hiện ô nhập mật khẩu mới. Đặt mật khẩu xong, mọi phiên đăng nhập cũ đều bị đăng xuất. Nếu nhân viên cấp liên kết mới, liên kết cũ hết hiệu lực.
 
 ## 7. Khi có trục trặc
 

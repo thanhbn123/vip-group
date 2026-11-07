@@ -237,6 +237,10 @@ async function main() {
     const r = await crm.approve({ phone: K1.phone, subject: K1.subject, portalCode: K1.code });
     noteBlocked(r);
     t.ok(r.ok, `duyệt thành công ${r.out ? `(${r.out.slice(0, 120)})` : ''}`);
+    if (MODE === 'real' && process.env.CRM_SKIP_VERIFY_PHONE === '1') {
+      const sg = await crm.findSignup(K1.subject);
+      t.ok(!sg.phone_verified_at && !sg.phone_verified_by, 'duyệt KHÔNG qua verify-phone (CRM_SKIP_VERIFY_PHONE=1): signup không có phone_verified_*');
+    }
     K1.code = r.portalCode || K1.code;
     const acc = account(cfg, 'subject=?', [K1.subject])[0];
     t.eq(acc.status, 'hoat_dong', 'VIP ID: hoat_dong');
@@ -442,9 +446,9 @@ async function main() {
     const qpost = await new KhachClient(cfg).req('POST', '/tai-khoan/quen-mat-khau', { form: { dinh_danh: K1.phone } });
     t.eq(qpost.status, 404, 'POST /tai-khoan/quen-mat-khau → 404 (khôi phục tự phục vụ tắt)');
     // Nhân viên (CRM) xác nhận danh tính qua điện thoại rồi cấp link
-    const l1 = await crm.resetLink(K1.subject);
-    t.ok(l1.ok && l1.url.startsWith(`${BASE}/tai-khoan/dat-lai?t=`), `nhân viên cấp link đặt lại (${l1.via})`);
-    const l2 = await crm.resetLink(K1.subject);
+    const l1 = await crm.resetLink(K1.subject, { direct: true });
+    t.ok(l1.ok && l1.url.startsWith(`${BASE}/tai-khoan/dat-lai?t=`), `cấp link qua VIP ID tao-link-dat-lai (HMAC như CRM gọi; đường CRM kiểm ở FLOW-11b) (${l1.status})`);
+    const l2 = await crm.resetLink(K1.subject, { direct: true });
     t.ok(l2.ok && l2.url !== l1.url, 'cấp link lần 2 → link mới');
     const r1 = await page.goto(l1.url);
     t.eq(r1.status(), 400, 'link cũ bị vô hiệu khi nhân viên cấp link mới');
@@ -475,6 +479,13 @@ async function main() {
     await pb.close();
     const reuse = await page.goto(link);
     t.eq(reuse.status(), 400, 'dùng lại link đặt lại → 400');
+    // (owner) sau đặt lại: đăng xuất rồi đăng nhập lại bằng mật khẩu MỚI
+    const s1 = await portalClient(K1, PW2);
+    const lo1 = await s1.logout();
+    t.ok(lo1.post?.status === 303 && !(await s1.hasSession()), 'đăng xuất sau khi đặt lại');
+    const s2 = await portalClient(K1, PW2);
+    t.ok(await s2.hasSession(), 'đăng nhập LẠI bằng mật khẩu mới sau khi đăng xuất → có phiên, launch được');
+    if (MODE === 'real') t.eq((await papi(s2, '/portal/api/me')).status, 200, '… vào cổng (/portal/api/me 200)');
     await inspect(page, '17-dat-lai-link-cu', { expectStatus: 400 });
     if (MODE === 'mock') t.ok(await waitFor(() => crm.revokesReceived(K1.subject).some((x) => x.reason === 'dat_lai_mat_khau'), 5000), 'CRM nhận thu-hoi reason=dat_lai_mat_khau');
     // tao-link-dat-lai là API nội bộ: ký sai / thiếu requested_by / subject lạ / qua host công khai đều bị từ chối
@@ -485,10 +496,60 @@ async function main() {
     t.eq((await raw({ port: cfg.PROXY_PORT, method: 'POST', path: P_, hostHeader: cfg.KHACH_HOST, headers: { 'content-type': 'application/json' }, body: '{}' })).status, 404, 'qua host công khai → 404');
   });
 
-  await check('FLOW-11b', 'Nút/API "cấp link đặt lại mật khẩu" trên CRM nhân viên (CRM gọi VIP ID tao-link-dat-lai)', 'real', async (t) => {
-    if (!process.env.CRM_RESET_LINK_ROUTE) t.pending('CRM chưa có nút/API nhân viên cấp link đặt lại — FLOW-11 đã gọi VIP ID /api/internal/khach/tao-link-dat-lai trực tiếp bằng HMAC như CRM sẽ gọi. Đặt CRM_RESET_LINK_ROUTE khi CRM có route');
+  await check('FLOW-11b', 'Nhân viên cấp link đặt lại qua CRM (POST /api/portal/customers/:id/reset-link) → khách đặt lại ở /dat-lai; khoá cổng → 409; link không lưu trong DB/audit CRM', 'real', async (t) => {
+    if (!process.env.CRM_RESET_LINK_ROUTE) t.pending('CRM_RESET_LINK_ROUTE chưa đặt (CRM chưa có route nhân viên cấp link đặt lại)');
+    const before = await portalClient(K1);
+    t.eq((await papi(before, '/portal/api/me')).status, 200, 'thiết bị đang dùng: có phiên cổng');
+    const noReason = await crm.resetLink(K1.subject, { reason: null });
+    t.ok(noReason.status === 400, `thiếu lý do → ${noReason.status} ${noReason.code || ''}`);
     const l = await crm.resetLink(K1.subject);
-    t.ok(l.ok && l.url.startsWith(`${BASE}/tai-khoan/dat-lai?t=`), `CRM cấp link qua ${l.via} (${l.status})`);
+    if (l.status === 502 && l.code === 'VIPID_UNAVAILABLE') {
+      throw new Error('CRM bug: POST /api/portal/customers/:id/reset-link → 502 VIPID_UNAVAILABLE dù VIP ID trả 200 — review.js đọc r.json.url, nhưng VIP ID trả {ok:true,data:{url,expires_at}} (phải đọc r.json.data.url). Hệ quả phụ: VIP ID ĐÃ cấp link mới (link cũ của khách bị huỷ) mà nhân viên không nhận được link; audit portal.customer.reset_link ghi outcome=denied, vipid_status=200');
+    }
+    t.ok(l.ok, `CRM cấp link (${l.status} ${l.code || ''})`);
+    t.ok(l.url.startsWith(`${BASE}/tai-khoan/dat-lai?t=`), 'url trỏ về host khách công khai /tai-khoan/dat-lai?t=');
+    t.eq(l.portal_code, K1.code, 'phản hồi kèm đúng portal_code');
+    t.ok(/no-store/.test(l.headers['cache-control'] || ''), `Cache-Control: no-store (${l.headers['cache-control']})`);
+    const tok = new URL(l.url).searchParams.get('t');
+    const dump = spawnSync('pg_dump', ['-a', '-d', cfg.CRM_DB], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+    t.ok(dump.status === 0 && !dump.stdout.includes(tok) && !dump.stdout.includes(l.url), 'token/url KHÔNG có trong DB CRM (pg_dump -a, gồm audit_log)');
+    const logTxt = ['crm.log'].map((f) => { try { return fs.readFileSync(path.join(cfg.runDir, f), 'utf8'); } catch { return ''; } }).join('');
+    t.ok(!logTxt.includes(tok), 'token không có trong log CRM');
+    const c = new KhachClient(cfg);
+    const g = await c.req('GET', `/tai-khoan/dat-lai?t=${tok}`);
+    t.ok(g.status === 200 && formField(g.body, 't') === tok, 'GET /dat-lai hiện form (không tiêu)');
+    const neu = 'Dat-Lai-Qua-CRM-2026&e';
+    const p = await c.req('POST', '/tai-khoan/dat-lai', { form: { _csrf: formField(g.body, '_csrf'), t: tok, mat_khau: neu, mat_khau_2: neu } });
+    t.ok(p.status === 200 && p.body.includes('Đã đặt mật khẩu mới'), 'POST /dat-lai → đã đặt mật khẩu mới');
+    const oldPw = K1.pw; K1.pw = neu;
+    t.eq((await new KhachClient(cfg).login(K1.phone, oldPw)).status, 401, 'mật khẩu cũ → 401');
+    const ok = await new KhachClient(cfg).login(K1.phone, neu);
+    t.ok(ok.status === 303 && /\/portal\/auth\/launch/.test(ok.headers.location || ''), 'mật khẩu mới → đăng nhập được');
+    t.ok(!(await before.hasSession()), 'phiên VIP ID cũ bị thu hồi');
+    t.ok(await waitFor(async () => (await papi(before, '/portal/api/me')).status === 401, 15_000), 'phiên cổng CRM cũ bị thu hồi');
+    t.eq((await c.req('GET', `/tai-khoan/dat-lai?t=${tok}`)).status, 400, 'dùng lại link → 400');
+    // (owner) sau đặt lại: đăng xuất rồi đăng nhập lại bằng mật khẩu MỚI
+    const s1 = await portalClient(K1, neu);
+    t.eq((await papi(s1, '/portal/api/me')).status, 200, 'đăng nhập bằng mật khẩu mới → vào cổng');
+    const lo = await s1.logout();
+    t.ok(lo.post?.status === 303 && !(await s1.hasSession()), 'đăng xuất (trang xác nhận VIP ID)');
+    const s2 = await portalClient(K1, neu);
+    t.eq((await papi(s2, '/portal/api/me')).status, 200, 'đăng nhập LẠI bằng mật khẩu mới sau khi đăng xuất → vào cổng');
+  });
+
+  await check('FLOW-11c', 'CRM từ chối cấp link đặt lại khi khách đang bị khoá cổng (409 CUSTOMER_INACTIVE); thiếu lý do → 400', 'real', async (t) => {
+    if (!process.env.CRM_RESET_LINK_ROUTE) t.pending('CRM_RESET_LINK_ROUTE chưa đặt');
+    await ensureSeed(t);
+    const nr = await crm.resetLink(P.K2.subject, { reason: null });
+    t.ok(nr.status === 400, `thiếu lý do → ${nr.status} ${nr.code || ''}`);
+    const K2 = P.K2;
+    t.eq((await crm.lock(K2.subject, 'khoa')).status, 200, 'khoá cổng K2');
+    try {
+      const lk = await crm.resetLink(K2.subject);
+      t.ok(lk.status === 409 && lk.code === 'CUSTOMER_INACTIVE', `khách đang khoá → ${lk.status} ${lk.code || ''}`);
+    } finally {
+      t.eq((await crm.lock(K2.subject, 'mo_khoa')).status, 200, 'mở lại cổng K2');
+    }
   });
 
   await check('FLOW-14', 'Trang hồ sơ /tai-khoan/ho-so: tên, mã VG, SĐT che bớt (390px)', 'both', async (t) => {
@@ -816,6 +877,10 @@ async function main() {
     t.eq(onPortalHost.status, 404, 'CRM trực tiếp, Host cổng: /api/me (route nhân viên) → 404');
     const sig = await raw({ port: cfg.CRM_PORT, method: 'POST', path: '/api/internal/portal/signups', hostHeader: cfg.KHACH_HOST, headers: { 'content-type': 'application/json' }, body: '{}' });
     t.eq(sig.status, 404, 'CRM trực tiếp, Host cổng: /api/internal/portal/* → 404');
+    for (const target of [`http://${cfg.KHACH_HOST}/api/me`, `http://127.0.0.1:${cfg.CRM_PORT}/api/me`, `http://${cfg.KHACH_HOST}/api/internal/portal/signups`]) {
+      const ab = await raw({ port: cfg.CRM_PORT, path: target, hostHeader: cfg.KHACH_HOST, headers: { authorization: `Bearer ${staffTok}` } });
+      t.eq(ab.status, 404, `Host cổng + request-target tuyệt đối ${target} → 404`);
+    }
     const portalOnStaff = await raw({ port: cfg.CRM_PORT, path: '/portal/api/me', hostHeader: `127.0.0.1:${cfg.CRM_PORT}`, headers: { cookie: `vg_portal=${vp}` } });
     t.eq(portalOnStaff.status, 404, 'host nhân viên CRM: /portal/api/me (kể cả có vg_portal) → 404');
     const launchOnStaff = await raw({ port: cfg.CRM_PORT, path: '/portal/auth/launch?token=x', hostHeader: `127.0.0.1:${cfg.CRM_PORT}` });
@@ -1065,6 +1130,159 @@ async function main() {
     const dead = await waitFor(async () => (await papi(c, '/portal/api/me')).status === 401, 15_000);
     if (!dead) throw new Error('INTEROP: phiên cổng tạo trong cùng giây với đăng xuất KHÔNG bị huỷ — VIP ID gửi revoked_at = int(time.time()) (làm tròn XUỐNG giây), CRM chỉ huỷ phiên created_at < revoked_at ⇒ phiên mới tạo trong giây đó sống tiếp tới TTL 2 h dù khách đã đăng xuất. Sửa: VIP ID gửi revoked_at làm tròn LÊN (hoặc ms), hoặc CRM so created_at < revoked_at + 1 s');
     t.ok(true, 'phiên cổng bị huỷ');
+  });
+
+  // ─── Owner: đăng ký đồng thời ───
+  await check('SEC-10a', 'Đăng ký đồng thời: 10 lượt song song CÙNG một SĐT mới → đúng 1 tài khoản, 1 đăng ký ở CRM, 10 phản hồi giống hệt', 'both', async (t) => {
+    const u = synth(RUN, 60);
+    const rs = await Promise.all(Array.from({ length: 10 }, (_, i) => new KhachClient(cfg).register({ name: `Khách Đồng Thời ${i}`, phone: u.phoneLocal, email: '' })));
+    const sig = new Set(rs.map((r) => `${r.status} ${r.headers.location}`));
+    t.ok(sig.size === 1 && [...sig][0] === '303 /tai-khoan/cho-duyet', `10 phản hồi giống hệt (${[...sig].join(' | ')})`);
+    const accs = sqlRead(cfg, 'SELECT subject, phone_conflict_count FROM customer_accounts WHERE phone_e164=?', [u.phone]);
+    t.eq(accs.length, 1, 'VIP ID: đúng 1 tài khoản cho SĐT');
+    t.note(`phone_conflict_count = ${accs[0].phone_conflict_count} (9 lượt sau bị coi là trùng)`);
+    t.ok(await waitFor(async () => (await crm.signupsReceived(accs[0].subject)).length > 0, 15_000), 'CRM nhận signup');
+    await new Promise((r) => setTimeout(r, 6000)); // cho vòng gửi 5 s chạy hết
+    if (MODE === 'real') {
+      t.eq(crmSql(cfg, `SELECT count(*) FROM portal_signups WHERE phone_e164='${u.phone}'`)[0], '1', 'CRM: đúng 1 dòng portal_signups cho SĐT');
+    } else {
+      const subs = new Set(stack.mockCrmCalls().filter((c) => c.path === '/api/internal/portal/signups' && c.body.phone_e164 === u.phone).map((c) => c.body.subject));
+      t.eq(subs.size, 1, 'CRM giả: mọi signup cho SĐT này cùng 1 subject');
+    }
+  });
+
+  await check('SEC-10b', 'Đồng thời: 10 đăng ký SĐT khác nhau song song + 10 lượt duyệt song song (API CRM) → 10 mã VG khác nhau, tăng dần', 'real', async (t) => {
+    const us = Array.from({ length: 10 }, (_, i) => mk(`P${i}`, 70 + i, `Khách Song Song ${i}`));
+    const rs = await Promise.all(us.map((u) => new KhachClient(cfg).register({ name: u.name, phone: u.phoneLocal, email: '' })));
+    t.ok(rs.every((r) => r.status === 303 && r.headers.location === '/tai-khoan/cho-duyet'), '10 đăng ký song song → 303 chờ duyệt');
+    for (const u of us) u.subject = account(cfg, 'phone_e164=?', [u.phone])[0]?.subject;
+    t.ok(us.every((u) => u.subject), 'VIP ID: 10 tài khoản');
+    t.ok(await waitFor(async () => (await Promise.all(us.map((u) => crm.findSignup(u.subject)))).every(Boolean), 20_000), 'CRM nhận đủ 10 signup');
+    const before = Math.max(...crmSql(cfg, 'SELECT portal_code FROM customers WHERE portal_code IS NOT NULL').map(codeNum));
+    const ap = await Promise.all(us.map((u) => crm.approve({ subject: u.subject })));
+    const codes = ap.map((r) => r.portalCode);
+    t.ok(ap.every((r) => r.ok), `10 lượt duyệt song song thành công (${ap.filter((r) => !r.ok).map((r) => r.out).join(' | ')})`);
+    t.eq(new Set(codes).size, 10, `10 mã khác nhau: ${codes.join(',')}`);
+    t.ok(codes.every((c) => CODE_RE.test(c) && codeNum(c) > before), 'đúng quy tắc VG1001… và lớn hơn mọi mã cũ');
+    t.eq(new Set(us.map((u) => account(cfg, 'subject=?', [u.subject])[0].portal_code)).size, 10, 'VIP ID nhận đủ 10 mã khác nhau');
+  });
+
+  // ─── Owner: chức năng nội bộ CRM (API nhân viên) ───
+  const staffGet = async (tok, p) => crm.api('GET', p, undefined, { token: tok });
+  const custIdOf = (u) => crm.customerIdOf(u.subject);
+  const searchHas = async (tok, q, u) => {
+    const r = await staffGet(tok, `/api/crm/customers?q=${encodeURIComponent(q)}`);
+    return { status: r.status, found: (r.json?.items || []).some((c) => c.id === custIdOf(u)), n: r.json?.total };
+  };
+  for (const [id, label, qf] of [['STAFF-01a', 'mã VG', (u) => u.code], ['STAFF-01b', 'tên (một phần)', (u) => u.name.split(' ').slice(-2).join(' ')],
+    ['STAFF-01c', 'SĐT dạng +84', (u) => u.phone], ['STAFF-01d', 'SĐT dạng 0…', (u) => u.phoneLocal], ['STAFF-01e', 'SĐT dạng 0… có khoảng trắng', (u) => `${u.phoneLocal.slice(0, 4)} ${u.phoneLocal.slice(4, 7)} ${u.phoneLocal.slice(7)}`]]) {
+    await check(id, `Nhân viên tìm khách cổng theo ${label} (GET /api/crm/customers?q=) — vip.admin thấy K1, a1.admin không thấy K1 (tenant VIP)`, 'real', async (t) => {
+      const vip = await crm.login();
+      const q = qf(K1);
+      const r = await searchHas(vip, q, K1);
+      t.ok(r.status === 200 && r.found, `vip.admin q="${q}" → ${r.status}, thấy K1: ${r.found}`);
+      const a1 = await crm.loginAs('a1.admin');
+      const r2 = await searchHas(a1, q, K1);
+      t.ok(r2.status === 200 && !r2.found, `a1.admin q="${q}" → ${r2.status}, KHÔNG thấy K1 (khác tenant)`);
+    });
+  }
+
+  await check('STAFF-02', 'Hồ sơ khách: xem/sửa trong phạm vi quyền; không sửa trạng thái cổng qua API chung; đại lý không đụng khách tenant khác', 'real', async (t) => {
+    const vip = await crm.login();
+    const a1 = await crm.loginAs('a1.admin');
+    const b = await crm.loginAs('b.admin');
+    const k1 = custIdOf(K1); const k3 = custIdOf(P.K3);
+    const v = await staffGet(vip, `/api/crm/customers/${k1}`);
+    t.ok(v.status === 200 && v.json.code === K1.code, `vip.admin xem hồ sơ K1 → ${v.status} (code ${v.json?.code})`);
+    const up = await crm.api('PATCH', `/api/crm/customers/${k1}`, { address: 'Số 1 Đường Tổng Hợp, Hà Nội', reason: 'E2E' }, { token: vip });
+    t.ok(up.status === 200 && up.json.address === 'Số 1 Đường Tổng Hợp, Hà Nội', `vip.admin sửa địa chỉ K1 → ${up.status}`);
+    const act = await crm.api('PATCH', `/api/crm/customers/${k1}`, { active: false, reason: 'E2E' }, { token: vip });
+    t.ok(act.status === 409 && act.json?.error?.code === 'USE_PORTAL_LOCK', `đổi active khách cổng qua API chung → ${act.status} ${act.json?.error?.code || ''} (phải dùng khoá cổng)`);
+    const pc = await crm.api('PATCH', `/api/crm/customers/${k1}`, { portal_code: 'VG9999', reason: 'E2E' }, { token: vip });
+    t.eq(crmSql(cfg, `SELECT portal_code FROM customers WHERE id='${k1}'`)[0], K1.code, `portal_code không sửa được qua API (${pc.status})`);
+    const a3 = await staffGet(a1, `/api/crm/customers/${k3}`);
+    t.ok(a3.status === 200 && a3.json.code === 'K3-A1', `a1.admin xem K3 (đại lý A1) → ${a3.status}`);
+    const a3u = await crm.api('PATCH', `/api/crm/customers/${k3}`, { address: 'Địa chỉ đại lý A1 (E2E)', reason: 'E2E' }, { token: a1 });
+    t.eq(a3u.status, 200, 'a1.admin sửa địa chỉ K3 (trong quyền) → 200');
+    const a3a = await crm.api('PATCH', `/api/crm/customers/${k3}`, { active: false, reason: 'E2E' }, { token: a1 });
+    t.ok(a3a.status === 409 || a3a.status === 403, `a1.admin khoá K3 qua API chung → ${a3a.status} ${a3a.json?.error?.code || ''}`);
+    const a3c = await crm.api('PATCH', `/api/crm/customers/${k3}`, { code: 'DOI-MA', reason: 'E2E' }, { token: a1 });
+    t.note(`a1.admin đổi mã nội bộ K3 → ${a3c.status} ${a3c.json?.error?.code || ''}`);
+    if (a3c.status === 200) await crm.api('PATCH', `/api/crm/customers/${k3}`, { code: 'K3-A1', reason: 'E2E hoàn tác' }, { token: a1 });
+    t.eq(crmSql(cfg, `SELECT portal_code FROM customers WHERE id='${k3}'`)[0], P.K3.code, 'portal_code K3 không đổi');
+    const a1k1 = await staffGet(a1, `/api/crm/customers/${k1}`);
+    t.ok(a1k1.status === 404 || a1k1.status === 403, `a1.admin xem K1 (tenant VIP) → ${a1k1.status}`);
+    const a1k1u = await crm.api('PATCH', `/api/crm/customers/${k1}`, { address: 'x', reason: 'E2E' }, { token: a1 });
+    t.ok(a1k1u.status === 404 || a1k1u.status === 403, `a1.admin sửa K1 → ${a1k1u.status}`);
+    const bk3 = await staffGet(b, `/api/crm/customers/${k3}`);
+    t.ok(bk3.status === 404 || bk3.status === 403, `b.admin (đại lý B) xem K3 (A1) → ${bk3.status}`);
+  });
+
+  await check('STAFF-03', 'Quản lý trạng thái: khoá cổng (POST /api/portal/customers/:id/lock) → VIP ID tam_khoa, khách không đăng nhập/launch được, phiên cổng bị huỷ; mở lại → dùng được; đại lý không khoá được', 'real', async (t) => {
+    const K2 = P.K2;
+    const live = await portalClient(K2);
+    t.eq((await papi(live, '/portal/api/me')).status, 200, 'K2 đang có phiên cổng');
+    const pending = await new KhachClient(cfg).login(K2.phone, K2.pw || PW_STRONG); // launch token cấp TRƯỚC khi khoá
+    const a1 = await crm.loginAs('a1.admin');
+    const den = await crm.api('POST', `/api/portal/customers/${custIdOf(K2)}/lock`, { action: 'khoa', reason: 'E2E đại lý' }, { token: a1 });
+    t.ok(den.status === 403, `a1.admin khoá cổng K2 → ${den.status}`);
+    t.eq((await crm.lock(K2.subject, 'khoa')).status, 200, 'vip.admin khoá cổng K2 → 200');
+    try {
+      t.ok(await waitFor(() => account(cfg, 'subject=?', [K2.subject])[0].status === 'tam_khoa', 30_000), 'VIP ID nhận tam-khoa → tam_khoa');
+      t.ok(await waitFor(async () => (await papi(live, '/portal/api/me')).status === 401, 10_000), 'phiên cổng đang mở bị huỷ');
+      const lg = await new KhachClient(cfg).login(K2.phone, K2.pw || PW_STRONG);
+      t.ok(lg.status === 403 && !/portal\/auth\/launch/.test(lg.headers.location || ''), `đăng nhập khi bị khoá → ${lg.status} (không launch)`);
+      const loc = new URL(pending.headers.location, BASE);
+      const la = await raw({ port: cfg.PROXY_PORT, path: loc.pathname + loc.search, hostHeader: cfg.KHACH_HOST });
+      t.ok(la.status >= 400 && !(la.setCookies || []).some((x) => x.startsWith('vg_portal=')), `launch token cấp trước khi khoá → ${la.status}, không cấp phiên`);
+    } finally {
+      t.eq((await crm.lock(K2.subject, 'mo_khoa')).status, 200, 'vip.admin mở cổng K2 → 200');
+    }
+    t.ok(await waitFor(() => account(cfg, 'subject=?', [K2.subject])[0].status === 'hoat_dong', 30_000), 'VIP ID → hoat_dong');
+    const again = await portalClient(K2);
+    t.eq((await papi(again, '/portal/api/me')).status, 200, 'sau mở khoá: K2 đăng nhập + vào cổng được');
+  });
+
+  await check('STAFF-04', 'Lịch sử kiện / vận đơn theo khách (GET /api/inventory/parcels?q=, /:id/movements) trong phạm vi quyền', 'real', async (t) => {
+    const seed = await ensureSeed(t);
+    const vip = await crm.login();
+    const a1 = await crm.loginAs('a1.admin');
+    const r = await staffGet(vip, `/api/inventory/parcels?q=${encodeURIComponent(`E2E-${K1.code}-`)}`);
+    const trks = (r.json?.items || []).map((p) => p.tracking_no);
+    t.ok(r.status === 200 && seed.K1.every((x) => trks.includes(x)), `vip.admin thấy đủ kiện K1 (${trks.length})`);
+    const one = (r.json?.items || []).find((p) => p.tracking_no === seed.K1[0]);
+    t.ok(one && (one.customer_code === K1.code || one.customer_id === custIdOf(K1) || JSON.stringify(one).includes(K1.code)), 'kiện gắn đúng khách K1');
+    const mv = await staffGet(vip, `/api/inventory/parcels/${one.id}/movements`);
+    t.eq(mv.status, 200, `lịch sử di chuyển kiện → 200 (${(mv.json?.items || mv.json || []).length ?? '?'} dòng)`);
+    const det = await staffGet(vip, `/api/inventory/parcels/${one.id}`);
+    t.ok(det.status === 200 && det.json.tracking_no === seed.K1[0], 'chi tiết kiện → 200');
+    const ra = await staffGet(a1, `/api/inventory/parcels?q=${encodeURIComponent(`E2E-${K1.code}-`)}`);
+    t.ok(ra.status === 200 && !(ra.json?.items || []).length, `a1.admin tìm kiện K1 (tenant VIP) → ${(ra.json?.items || []).length} kiện`);
+    const rd = await staffGet(a1, `/api/inventory/parcels/${one.id}`);
+    t.ok(rd.status === 404 || rd.status === 403, `a1.admin mở chi tiết kiện K1 → ${rd.status}`);
+    const r3 = await staffGet(a1, `/api/inventory/parcels?q=${encodeURIComponent(`E2E-${P.K3.code}-`)}`);
+    t.ok(r3.status === 200 && (r3.json?.items || []).length >= 2, `a1.admin thấy kiện của khách đại lý mình K3 (${(r3.json?.items || []).length})`);
+  });
+
+  await check('STAFF-05', 'Audit CRM: approve / link / reset_link / lock / unlock có actor (vip.admin), không chứa link/token', 'real', async (t) => {
+    const vip = await crm.login();
+    const want = ['portal.signup.approve', 'portal.signup.link', 'portal.customer.reset_link', 'portal.customer.lock', 'portal.customer.unlock'];
+    for (const a of want) {
+      const r = await staffGet(vip, `/api/reports/audit?action=${encodeURIComponent(a)}&limit=200`);
+      const rows = (r.json?.items || []).filter((x) => x.action === a);
+      t.ok(r.status === 200 && rows.length > 0 && rows.every((x) => x.actor_username === 'vip.admin'), `${a}: ${rows.length} dòng, actor ${[...new Set(rows.map((x) => x.actor_username))].join(',')}`);
+      if (a === 'portal.customer.reset_link') t.ok(!JSON.stringify(rows).includes('/tai-khoan/dat-lai?t='), 'audit reset_link không chứa url/token');
+    }
+  });
+
+  await check('STAFF-06', 'Cấp link đặt lại: đại lý (a1.admin, a1.nv) bị từ chối, kể cả với khách của chính đại lý', 'real', async (t) => {
+    for (const user of ['a1.admin', 'a1.nv']) {
+      const tok = await crm.loginAs(user);
+      for (const u of [P.K3, K1]) {
+        const r = await crm.resetLink(u.subject, { token: tok });
+        t.ok(r.status === 403, `${user} cấp link cho ${u.key} → ${r.status} ${r.code || ''}`);
+      }
+    }
   });
 
   await check('SEC-09', 'Trình duyệt 390px: mọi trang khách không tràn ngang, không console error, không vi phạm CSP', 'both', async (t) => {

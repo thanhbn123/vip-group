@@ -227,3 +227,26 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
    - Email signup là tuỳ chọn: `null`, thiếu hoặc rỗng đều lưu NULL.
    - `/portal/api/me` trả thêm `email` (string|null) và `agent` ({code,name}|null).
    - CRM có thêm `POST /api/portal/outbox/:id/abandon` cho sự kiện thất bại vĩnh viễn.
+
+## 15. Bốn tên miền chính thức (OWNER DIRECTIVE "DOMAIN & COWORK INTEGRATION", 07/11/2026)
+
+| Tên miền | Ứng dụng | Phục vụ | `/` |
+|---|---|---|---|
+| `dangky.vipgroup.com.vn` | **VIP ID**, realm khách | Chỉ trang đăng ký và trang "chờ duyệt" | → form đăng ký |
+| `dangnhap.vipgroup.com.vn` | **VIP ID**, realm khách | Đăng nhập (SĐT là chính, mã VG phụ), đăng xuất, hồ sơ tài khoản, đổi mật khẩu, quên mật khẩu (hotline), đặt lại (`/dat-lai?t=`), `vao-cong` | → form đăng nhập |
+| `khachhang.vipgroup.com.vn` | **CRM** portal | `/portal/*`, `/portal/api/*`, `/portal/auth/launch`. Chưa có phiên → **302 sang dangnhap** kèm `tiep=` | → `/portal/` |
+| `cowork.vipgroup.com.vn` | **VIP ID** realm nhân viên (COWORK) | Thêm **module "CRM"** cho nhân viên có quyền: COWORK ký launch token `cowork-launch/1` và chuyển sang CRM nhân viên | (giữ nguyên) |
+| `crm.vipgroup.com.vn` | **CRM** nhân viên (đã có trong kế hoạch deploy CRM) | Toàn bộ CRM nội bộ. **Chỉ vào qua COWORK** (SSO); khách bị từ chối (C0) | (CRM) |
+
+**Quy tắc chung**
+1. **Cookie host-only cho từng tên miền.** Không bao giờ đặt `Domain=.vipgroup.com.vn`. Phiên VIP ID khách (`vg_khach`) chỉ ở dangnhap; phiên portal (`vg_portal`) chỉ ở khachhang; phiên COWORK chỉ ở cowork; phiên CRM chỉ ở crm.
+2. **Chuyển hướng sau đăng nhập.** Tham số `tiep` chỉ chấp nhận URL tuyệt đối `https://khachhang.vipgroup.com.vn/portal…`, khớp danh sách cấu hình `COWORK_KHACH_TIEP_CHO_PHEP`. Không khớp thì bỏ qua và về `vao-cong`. Mọi đường về khachhang đều đi qua launch token một lần (60 giây, nonce, aud `vip-crm-portal`).
+3. **Gọi nội bộ CRM ↔ VIP ID** đi qua mạng docker. CRM gửi `Host: dangnhap.vipgroup.com.vn` (biến mới phía CRM: `VIPID_PORTAL_HOST`) khi gọi `/api/internal/khach/*`. VIP ID gửi Host phù hợp CRM. `/api/internal/*` trả **404 trên mọi tên miền công khai**.
+4. **CSRF.** Form VIP ID post cùng origin (dangky→dangky, dangnhap→dangnhap). Portal gọi API cùng origin khachhang. Đăng xuất từ portal: `POST /portal/api/logout` rồi chuyển `https://dangnhap…/tai-khoan/dang-xuat` (trang xác nhận + POST có CSRF).
+5. **Turnstile.** Widget riêng cho `dangky` và `dangnhap` (hostname kiểm tại server).
+6. **COWORK → CRM.**
+   - Module `crm` hiện với vai trò có quyền `crm.open`.
+   - COWORK ký `{ver:1, aud:'vip-crm', sub:<id nhân viên COWORK>, tenant_code, iat, exp≤60s, nonce}` bằng `COWORK_SHARED_SECRET` rồi chuyển hướng `https://crm.vipgroup.com.vn/api/auth/cowork/launch?token=`.
+   - CRM ánh xạ `sub` → `users.vip_subject` (`kind='staff'`).
+   - Nhân viên CRM phải được admin liên kết `vip_subject` trước.
+7. **DNS cần thêm:** `dangky`, `dangnhap` (A → 160.22.170.20). `khachhang` đã có. `crm`: kiểm.

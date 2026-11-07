@@ -29,6 +29,11 @@ const STATE = path.join(DEMO_DIR, 'state.json');
 const CRM_SRC = process.env.CRM_SRC || '/Users/viporder/Projects/vip-group-khoqctq';
 const CLONE = path.join(DEMO_DIR, 'crm-clone');
 const DB = 'vipcrm5_demo_portal';
+// Owner 07/11 (CRM d5666fc): duyệt không cần "đã gọi xác minh SĐT"; nhân viên cấp link đặt lại qua CRM.
+// Fallback cho CRM cũ: verify-phone khi CRM đòi (PHONE_NOT_VERIFIED); HMAC thẳng VIP ID khi CRM chưa có route (404).
+process.env.CRM_SKIP_VERIFY_PHONE ??= '1';
+process.env.CRM_VERIFY_FALLBACK ??= '1';
+process.env.CRM_RESET_LINK_ROUTE ??= '/api/portal/customers/:id/reset-link';
 
 function config() {
   const cfg = stackConfig({
@@ -237,9 +242,16 @@ async function resetLink(ident) {
   const phone = /^0\d{9}$/.test(raw_) ? '+84' + raw_.slice(1) : raw_;
   const acc = account(cfg, 'phone_e164=? OR portal_code=?', [phone, raw_.toUpperCase()])[0];
   if (!acc) throw new Error('Không có khách với SĐT / mã này');
-  const r = await internalPost(cfg, '/api/internal/khach/tao-link-dat-lai', { subject: acc.subject, requested_by: 'demo-nhan-vien', n: crypto.randomUUID() });
-  if (r.status !== 200) throw new Error(`tao-link-dat-lai → ${r.status} ${r.body.slice(0, 120)}`);
-  console.log(`Link đặt lại mật khẩu (dùng 1 lần, hết hạn ${r.json.data.expires_at}) — gửi cho khách qua Zalo:\n${r.json.data.url}`);
+  const crm = new RealCrm(cfg, null);
+  let r = await crm.resetLink(acc.subject, { reason: 'Demo: khách gọi hotline, nhân viên đã xác nhận danh tính' });
+  // CRM chưa có route (404) hoặc bản d5666fc đọc sai thân phản hồi VIP ID (502 VIPID_UNAVAILABLE) → gọi thẳng VIP ID
+  if ((r.status === 404 && r.code !== 'NOT_FOUND_CUSTOMER') || (r.status === 502 && r.code === 'VIPID_UNAVAILABLE')) {
+    // CRM chưa có route nhân viên → ký HMAC như CRM, gọi thẳng VIP ID
+    const x = await internalPost(cfg, '/api/internal/khach/tao-link-dat-lai', { subject: acc.subject, requested_by: 'demo-nhan-vien', n: crypto.randomUUID() });
+    r = { ok: x.status === 200, status: x.status, url: x.json?.data?.url, expires_at: x.json?.data?.expires_at, via: `HMAC thẳng VIP ID (CRM trả ${r.status} ${r.code || ''})`, code: x.json?.loi?.ma };
+  }
+  if (!r.ok) throw new Error(`cấp link → ${r.status} ${r.code || ''}`);
+  console.log(`Link đặt lại mật khẩu (${r.via}; dùng 1 lần, hết hạn ${r.expires_at}) — gửi cho khách qua Zalo:\n${r.url}`);
 }
 
 async function lock(code, action) {
