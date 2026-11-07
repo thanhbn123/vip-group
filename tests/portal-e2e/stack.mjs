@@ -39,11 +39,18 @@ export function stackConfig(env = process.env) {
   for (const p of [PROXY_PORT, VIPID_PORT, CRM_PORT]) {
     if (forbidden.includes(p)) throw new Error(`Cổng ${p} bị cấm dùng cho bộ test`);
   }
+  // §15: TOPO=multi — dangky.localhost (đăng ký) · dangnhap.localhost (đăng nhập/tài khoản + API nội bộ) · khachhang.localhost (CRM /portal)
+  //      TOPO=single — một host khach.localhost (cấu hình cũ; mặc định ở real mode tới khi CRM có §15)
+  const TOPO = (env.TOPO || (MODE === 'real' ? 'single' : 'multi')).toLowerCase();
+  const H = TOPO === 'multi'
+    ? { dangky: `dangky.localhost:${PROXY_PORT}`, dangnhap: `dangnhap.localhost:${PROXY_PORT}`, portal: `khachhang.localhost:${PROXY_PORT}` }
+    : { dangky: `khach.localhost:${PROXY_PORT}`, dangnhap: `khach.localhost:${PROXY_PORT}`, portal: `khach.localhost:${PROXY_PORT}` };
   return {
+    TOPO, H,
     MODE, VIPID_REPO, PY, PROXY_PORT, VIPID_PORT, CRM_PORT, START, runDir, dataDir, dbPath, CRM_REPO, CRM_DB,
     CRM_DATABASE_URL: `postgres:///${CRM_DB}`,
-    KHACH_HOST: `khach.localhost:${PROXY_PORT}`,
-    KHACH_HOST_DIRECT: `khach.localhost:${VIPID_PORT}`,
+    KHACH_HOST: H.dangnhap, // host mặc định cho trang /tai-khoan/* (single: khach.localhost)
+    KHACH_HOST_DIRECT: TOPO === 'multi' ? `dangnhap.localhost:${VIPID_PORT}` : `khach.localhost:${VIPID_PORT}`, // gọi thẳng VIP ID (API nội bộ)
     STAFF_HOST: env.VIPID_STAFF_HOST || '127.0.0.1:8899', // chỉ là giá trị header Host; KHÔNG nghe cổng 8899
     secretFile: env.VIPID_PORTAL_SECRET_FILE || path.join(dataDir, 'portal_secret.key'),
     mockLog: runDir ? path.join(runDir, 'mock-crm.log') : null,
@@ -63,11 +70,16 @@ export function vipidEnv(cfg, extra = {}) {
     COWORK_BRAIN_ENABLED: '0',
     COWORK_COOKIE_SECURE: '0',
     COWORK_KHACH_ENABLED: '1',
-    COWORK_KHACH_HOSTS: `${cfg.KHACH_HOST},${cfg.KHACH_HOST_DIRECT}`,
+    ...(cfg.TOPO === 'multi' ? {
+      COWORK_KHACH_HOSTS: '',
+      COWORK_KHACH_HOST_DANGKY: 'dangky.localhost', COWORK_KHACH_HOST_DANGNHAP: 'dangnhap.localhost', // không cổng ⇒ khớp mọi cổng (proxy 8890 + gọi thẳng 8898)
+      COWORK_KHACH_DANGKY_URL: `http://${cfg.H.dangky}`, COWORK_KHACH_DANGNHAP_URL: `http://${cfg.H.dangnhap}`,
+      COWORK_KHACH_TIEP_CHO_PHEP: `http://${cfg.H.portal}/portal`,
+    } : { COWORK_KHACH_HOSTS: `${cfg.KHACH_HOST},${cfg.KHACH_HOST_DIRECT}` }),
     COWORK_STAFF_HOSTS: cfg.STAFF_HOST,
     COWORK_KHACH_PUBLIC_URL: `http://${cfg.KHACH_HOST}`,
     CRM_PORTAL_INTERNAL_URL: `http://127.0.0.1:${cfg.CRM_PORT}`,
-    CRM_PORTAL_PUBLIC_URL: `http://${cfg.KHACH_HOST}`,
+    CRM_PORTAL_PUBLIC_URL: `http://${cfg.H.portal}`,
     COWORK_TIN_PROXY: '1',
     VIPID_PORTAL_SECRET_FILE: cfg.secretFile,
     COWORK_KHACH_SIGNUP_IP_PER_HOUR: process.env.COWORK_KHACH_SIGNUP_IP_PER_HOUR || '200',
@@ -85,11 +97,19 @@ export function crmEnv(cfg, extra = {}) {
     ...process.env,
     APP_ENV: 'local', HOST: '127.0.0.1', PORT: String(cfg.CRM_PORT),
     DATABASE_URL: cfg.CRM_DATABASE_URL,
-    PORTAL_ENABLED: '1', PORTAL_HOST: cfg.KHACH_HOST, PORTAL_PUBLIC_URL: `http://${cfg.KHACH_HOST}`,
+    PORTAL_ENABLED: '1', PORTAL_HOST: cfg.H.portal, PORTAL_PUBLIC_URL: `http://${cfg.H.portal}`,
+    // §15: Host CRM gửi khi gọi thẳng VIP ID (API nội bộ chỉ ở host dangnhap); CRM cũ dùng PORTAL_HOST
+    ...(cfg.TOPO === 'multi' ? { VIPID_PORTAL_HOST: cfg.KHACH_HOST_DIRECT } : {}),
     VIPID_PORTAL_URL: `http://127.0.0.1:${cfg.VIPID_PORT}`, VIPID_PORTAL_SECRET_FILE: cfg.secretFile,
     ...(st ? { STORAGE_DIR: path.join(st, 'docs'), BACKUP_DIR: path.join(st, 'backups') } : {}),
     ...extra,
   };
+}
+
+/** Env cho proxy dev (proxy.mjs): cổng + sơ đồ host. */
+export function proxyEnv(cfg) {
+  return { ...process.env, PROXY_PORT: String(cfg.PROXY_PORT), VIPID_PORT: String(cfg.VIPID_PORT), CRM_PORT: String(cfg.CRM_PORT),
+    PROXY_TOPO: cfg.TOPO, PROXY_HOST_DANGKY: cfg.H.dangky, PROXY_HOST_DANGNHAP: cfg.H.dangnhap, PROXY_HOST_PORTAL: cfg.H.portal };
 }
 
 /** Chạy script node của CRM (migrate, seed, portal-dev-seed) với DB E2E. */
@@ -160,7 +180,7 @@ export class Stack {
     if (c.MODE === 'real') { this.setupCrmDb(); await this.startCrm(); } else await this.startMockCrm();
     await this.startVipid();
     this.procs.proxy = this.spawnLogged('proxy', process.execPath, [path.join(HERE, 'proxy.mjs')], {
-      cwd: HERE, env: { ...process.env, PROXY_PORT: String(c.PROXY_PORT), VIPID_PORT: String(c.VIPID_PORT), CRM_PORT: String(c.CRM_PORT) },
+      cwd: HERE, env: proxyEnv(c),
     });
     await waitHttp(c.PROXY_PORT);
     return this;

@@ -7,6 +7,7 @@
 //   node tests/portal-e2e/demo.mjs reset-link <SĐT|VGxxxx> # nhân viên cấp link đặt lại mật khẩu (thay nút CRM, tới khi CRM có)
 //   node tests/portal-e2e/demo.mjs lock <VGxxxx> | unlock <VGxxxx>   # khoá / mở cổng của khách (API nhân viên CRM)
 //   node tests/portal-e2e/demo.mjs stop                   # tắt đúng các tiến trình của demo, dropdb, xoá bản clone CRM
+//   TOPO=multi …start   # §15: dangky / dangnhap / khachhang.localhost (cần CRM hỗ trợ §15); mặc định single (khach.localhost)
 //
 // Mật khẩu demo CHỈ ghi vào $DEMO_DIR/TAI_KHOAN_DEMO.txt (0600), không bao giờ in ra màn hình.
 import crypto from 'node:crypto';
@@ -15,7 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { stackConfig, vipidEnv, crmEnv, crmScript, crmSql, waitHttp } from './stack.mjs';
+import { stackConfig, vipidEnv, crmEnv, crmScript, crmSql, waitHttp, proxyEnv } from './stack.mjs';
 import { raw } from './http.mjs';
 import { KhachClient, account, internalPost } from './vipid.mjs';
 import { RealCrm, waitFor } from './crm.mjs';
@@ -28,6 +29,8 @@ const ACC_FILE = path.join(DEMO_DIR, 'TAI_KHOAN_DEMO.txt');
 const STATE = path.join(DEMO_DIR, 'state.json');
 const CRM_SRC = process.env.CRM_SRC || '/Users/viporder/Projects/vip-group-khoqctq';
 const CLONE = path.join(DEMO_DIR, 'crm-clone');
+const VIPID_SRC = process.env.VIPID_SRC || '/Users/viporder/code/vip-group-id-khach';
+const VIPID_CLONE = path.join(DEMO_DIR, 'vipid-clone');
 const DB = 'vipcrm5_demo_portal';
 // Owner 07/11 (CRM d5666fc): duyệt không cần "đã gọi xác minh SĐT"; nhân viên cấp link đặt lại qua CRM.
 // Fallback cho CRM cũ: verify-phone khi CRM đòi (PHONE_NOT_VERIFIED); HMAC thẳng VIP ID khi CRM chưa có route (404).
@@ -37,7 +40,7 @@ process.env.CRM_RESET_LINK_ROUTE ??= '/api/portal/customers/:id/reset-link';
 
 function config() {
   const cfg = stackConfig({
-    ...process.env, MODE: 'real', START: '0', CRM_REPO: CLONE, CRM_DB: DB,
+    ...process.env, MODE: 'real', START: '0', CRM_REPO: CLONE, CRM_DB: DB, VIPID_REPO: VIPID_CLONE,
     VIPID_DATA_DIR: path.join(DEMO_DIR, 'vipid-data'), VIPID_DB_PATH: path.join(DEMO_DIR, 'vipid.db'),
     VIPID_PORTAL_SECRET_FILE: path.join(DEMO_DIR, 'vipid-data', 'portal_secret.key'),
   });
@@ -97,7 +100,14 @@ async function start() {
   if (r.status !== 0) throw new Error(`git checkout ${sha}: ${r.stderr}`);
   fs.symlinkSync(path.join(CRM_SRC, 'node_modules'), path.join(CLONE, 'node_modules'));
   fs.appendFileSync(path.join(CLONE, '.git/info/exclude'), 'node_modules\n');
-  const vipSha = spawnSync('git', ['-C', cfg.VIPID_REPO, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).stdout.trim();
+  // VIP ID: clone tại VIPID_SHA (mặc định HEAD đã commit của worktree — không chạy thay đổi chưa commit đang làm dở)
+  const vipFull = process.env.VIPID_SHA || spawnSync('git', ['-C', VIPID_SRC, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim();
+  console.log(`• Clone VIP ID @ ${vipFull.slice(0, 7)} …`);
+  r = spawnSync('git', ['clone', '-q', '--no-hardlinks', VIPID_SRC, VIPID_CLONE], { encoding: 'utf8' });
+  if (r.status !== 0) throw new Error(`git clone VIP ID: ${r.stderr}`);
+  r = spawnSync('git', ['-C', VIPID_CLONE, 'checkout', '-q', vipFull], { encoding: 'utf8' });
+  if (r.status !== 0) throw new Error(`git checkout VIP ID ${vipFull}: ${r.stderr}`);
+  const vipSha = vipFull.slice(0, 7);
 
   // 2) DB CRM tổng hợp
   console.log(`• Tạo DB ${DB}, migrate + seed …`);
@@ -119,7 +129,7 @@ async function start() {
   pids.vipid = bg('vipid', cfg.PY, ['-m', 'uvicorn', 'cowork.main:app', '--host', '127.0.0.1', '--port', String(cfg.VIPID_PORT), '--no-access-log', '--no-proxy-headers'],
     { cwd: cfg.VIPID_REPO, env: demoVipidEnv(cfg) });
   pids.proxy = bg('proxy', process.execPath, [path.join(HERE, 'proxy.mjs')], {
-    cwd: HERE, env: { ...process.env, PROXY_PORT: String(cfg.PROXY_PORT), VIPID_PORT: String(cfg.VIPID_PORT), CRM_PORT: String(cfg.CRM_PORT) },
+    cwd: HERE, env: proxyEnv(cfg),
   });
   fs.writeFileSync(PIDS, JSON.stringify(pids, null, 1), { mode: 0o600 });
   await Promise.all([waitHttp(cfg.CRM_PORT), waitHttp(cfg.VIPID_PORT), waitHttp(cfg.PROXY_PORT)]);
@@ -164,7 +174,7 @@ async function start() {
     `Tạo lúc: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} · VIP ID ${vipSha} · CRM ${sha.slice(0, 7)}`,
     'KHÔNG chia sẻ tệp này. Xoá khi chạy "demo.mjs stop".',
     '',
-    `Cổng khách: http://${cfg.KHACH_HOST}/tai-khoan/dang-nhap   (đăng ký: http://${cfg.KHACH_HOST}/tai-khoan/dang-ky)`,
+    `Cổng khách: http://${cfg.H.dangnhap}/tai-khoan/dang-nhap   (đăng ký: http://${cfg.H.dangky}/tai-khoan/dang-ky)`,
     '',
     ...['K1', 'K2', 'K3'].map((k) => {
       const u = P[k];
@@ -185,9 +195,9 @@ async function start() {
   fs.writeFileSync(STATE, JSON.stringify({ crmSha: sha, vipidSha: vipSha, codes: Object.fromEntries(['K1', 'K2', 'K3'].map((k) => [k, P[k].code])), k1Phone: P.K1.phone }, null, 1), { mode: 0o600 });
 
   console.log(`
-Demo đã chạy nền (VIP ID ${vipSha} · CRM ${sha.slice(0, 7)} · DB ${DB}).
-  Cổng khách — đăng nhập : http://${cfg.KHACH_HOST}/tai-khoan/dang-nhap
-  Cổng khách — đăng ký   : http://${cfg.KHACH_HOST}/tai-khoan/dang-ky
+Demo đã chạy nền (VIP ID ${vipSha} · CRM ${sha.slice(0, 7)} · DB ${DB} · sơ đồ host ${cfg.TOPO}).
+  Cổng khách — đăng nhập : http://${cfg.H.dangnhap}/tai-khoan/dang-nhap
+  Cổng khách — đăng ký   : http://${cfg.H.dangky}/tai-khoan/dang-ky${cfg.TOPO === 'multi' ? `\n  Cổng khách — kiện hàng : http://${cfg.H.portal}/portal/` : ''}
   CRM nhân viên          : http://127.0.0.1:${cfg.CRM_PORT}/   (menu "Đăng ký khách (cổng)")
   Khách demo             : K1 ${P.K1.code} (5 kiện) · K2 ${P.K2.code} (3 kiện) · K3 ${P.K3.code} (đại lý A1, ${P.K3.agentCode}) · K4 chờ duyệt
   Tài khoản + mật khẩu   : ${ACC_FILE}  (chỉ chủ máy đọc được, 0600)
@@ -226,7 +236,7 @@ async function smoke() {
   const c = new KhachClient(cfg);
   const lr = await c.login(k1.phone, k1.pw);
   if (lr.status !== 303 || !/\/portal\/auth\/launch/.test(lr.headers.location || '')) throw new Error(`đăng nhập K1 → ${lr.status}`);
-  const loc = new URL(lr.headers.location, `http://${cfg.KHACH_HOST}`);
+  const loc = new URL(lr.headers.location, `http://${cfg.H.portal}`);
   await c.req('GET', loc.pathname + loc.search);
   const me = JSON.parse((await c.req('GET', '/portal/api/me')).body);
   const pr = await c.req('GET', '/portal/api/parcels');
@@ -245,7 +255,8 @@ async function resetLink(ident) {
   const crm = new RealCrm(cfg, null);
   let r = await crm.resetLink(acc.subject, { reason: 'Demo: khách gọi hotline, nhân viên đã xác nhận danh tính' });
   // CRM chưa có route (404) hoặc bản d5666fc đọc sai thân phản hồi VIP ID (502 VIPID_UNAVAILABLE) → gọi thẳng VIP ID
-  if ((r.status === 404 && r.code !== 'NOT_FOUND_CUSTOMER') || (r.status === 502 && r.code === 'VIPID_UNAVAILABLE')) {
+  // eab8425: CRM đòi url https — demo local là http ⇒ 502 VIPID_BAD_RESPONSE (VIP ID đã cấp link) → cũng gọi thẳng
+  if ((r.status === 404 && r.code !== 'NOT_FOUND_CUSTOMER') || (r.status === 502 && /^VIPID_(UNAVAILABLE|BAD_RESPONSE)$/.test(r.code || ''))) {
     // CRM chưa có route nhân viên → ký HMAC như CRM, gọi thẳng VIP ID
     const x = await internalPost(cfg, '/api/internal/khach/tao-link-dat-lai', { subject: acc.subject, requested_by: 'demo-nhan-vien', n: crypto.randomUUID() });
     r = { ok: x.status === 200, status: x.status, url: x.json?.data?.url, expires_at: x.json?.data?.expires_at, via: `HMAC thẳng VIP ID (CRM trả ${r.status} ${r.code || ''})`, code: x.json?.loi?.ma };
@@ -277,7 +288,7 @@ async function stop() {
   const d = spawnSync('dropdb', ['--if-exists', DB], { encoding: 'utf8' });
   console.log(`  dropdb ${DB}: ${d.status === 0 ? 'OK' : d.stderr.trim()}`);
   fs.rmSync(DEMO_DIR, { recursive: true, force: true });
-  console.log(`  đã xoá ${DEMO_DIR} (bản clone CRM, dữ liệu VIP ID, tệp tài khoản, log)`);
+  console.log(`  đã xoá ${DEMO_DIR} (bản clone CRM + VIP ID, dữ liệu VIP ID, tệp tài khoản, log)`);
 }
 
 const [cmd, arg] = process.argv.slice(2);

@@ -286,3 +286,11 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
   - `COWORK_KHACH_MAINTENANCE_FILE`.
 
 **DNS** (kiểm 07/11): `dangky`, `dangnhap`, `khachhang`, `crm`, `cowork` đều A → 160.22.170.20.
+
+### 15.7. Bổ sung sau vòng kiểm tra độc lập 9 (07/11/2026)
+- **Reason thu hồi mới: `rut_pilot`.** VIP ID gửi `rut_pilot` khi SĐT bị gỡ khỏi danh sách Pilot. Lúc gỡ, VIP ID huỷ phiên của tài khoản đó và gửi `thu-hoi` (có `revoked_at_ms`) sang CRM. CRM phải chấp nhận reason này.
+- **Tắt nhanh khi có sự cố: bật CẢ HAI công tắc.**
+  - File bảo trì VIP ID (`COWORK_KHACH_MAINTENANCE_FILE`) **không** đóng phiên portal CRM đang mở.
+  - Phải bật thêm `PORTAL_OFF_FILE` phía CRM.
+- **VIP ID nhánh khách:** `feature/khach-p1` @`a63b430`.
+- **VIP ID nhánh COWORK → CRM:** `feature/cowork-crm` (gộp sau `khach-p1`). Nhánh này giữ phần kiểm chéo: `VIPID_PORTAL_SECRET` phải khác `COWORK_CRM_LAUNCH_SECRET`.

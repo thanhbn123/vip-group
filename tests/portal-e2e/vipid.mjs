@@ -6,27 +6,45 @@ import { vipidCli, sqlRead } from './stack.mjs';
 
 export const PW_STRONG = 'Tong-Hop-E2E-2026!a';
 
-/** Client trình duyệt giả (HTTP thô) cho host khách qua proxy: jar cookie, tự gửi Origin same-origin. */
-export class KhachClient {
-  constructor(cfg, { ip } = {}) { this.cfg = cfg; this.jar = {}; this.ip = ip; }
-  get origin() { return `http://${this.cfg.KHACH_HOST}`; }
+/** Host công khai phục vụ một đường dẫn (§15): /portal* → khachhang, /tai-khoan/dang-ky → dangky, còn lại → dangnhap. */
+export function hostFor(cfg, path) {
+  const p = String(path).split('?')[0];
+  if (p === '/portal' || p.startsWith('/portal/')) return cfg.H.portal;
+  if (p === '/tai-khoan/dang-ky') return cfg.H.dangky;
+  return cfg.H.dangnhap;
+}
 
-  async req(method, path, { form, json, headers = {}, noOrigin = false } = {}) {
+/** Client trình duyệt giả (HTTP thô) qua proxy: cookie jar RIÊNG theo host (cookie host-only), tự gửi Origin same-origin.
+ *  `host` (tuỳ chọn) ép một host; mặc định chọn theo đường dẫn (hostFor). Location tuyệt đối → đi đúng host đó. */
+export class KhachClient {
+  constructor(cfg) { this.cfg = cfg; this.jars = {}; this.last = {}; }
+  /** Gộp mọi cookie (để kiểm / gửi sang host khác có chủ đích). */
+  get jar() { return Object.assign({}, ...Object.values(this.jars)); }
+  jarOf(host) { return (this.jars[host] ||= {}); }
+
+  async req(method, path, { form, json, headers = {}, noOrigin = false, host } = {}) {
+    let p = path;
+    let hh = host;
+    if (/^https?:\/\//.test(p)) { const u = new URL(p); hh = u.host; p = u.pathname + u.search; }
+    hh ||= hostFor(this.cfg, p);
+    const jar = this.jarOf(hh);
     const h = { ...headers };
-    if (Object.keys(this.jar).length) h.cookie = cookieHeader(this.jar);
+    if (Object.keys(jar).length) h.cookie = cookieHeader(jar);
+    const origin = `http://${hh}`;
     let body;
     if (form) {
       body = new URLSearchParams(form).toString();
       h['content-type'] = 'application/x-www-form-urlencoded';
-      if (!noOrigin) h.origin = this.origin;
+      if (!noOrigin) h.origin = origin;
     } else if (json !== undefined) {
       body = JSON.stringify(json);
       h['content-type'] = 'application/json';
       h['x-requested-with'] = 'XMLHttpRequest';
-      if (!noOrigin) h.origin = this.origin;
+      if (!noOrigin) h.origin = origin;
     }
-    const r = await raw({ port: this.cfg.PROXY_PORT, method, path, hostHeader: this.cfg.KHACH_HOST, headers: h, body });
-    absorb(this.jar, r.setCookies);
+    const r = await raw({ port: this.cfg.PROXY_PORT, method, path: p, hostHeader: hh, headers: h, body });
+    absorb(jar, r.setCookies);
+    r.host = hh;
     return r;
   }
 
@@ -40,19 +58,13 @@ export class KhachClient {
     return this.req('POST', '/tai-khoan/dang-ky', { form: { _csrf: csrf, ho_ten: name, sdt: phone, email, mat_khau: password, mat_khau_2: password, dong_y: '1' } });
   }
 
-  /** GET link xác minh (không tiêu) rồi POST xác nhận. Trả {get, post}. */
-  async verifyEmail(link) {
-    const u = new URL(link);
-    const get = await this.req('GET', u.pathname + u.search);
-    const csrf = formField(get.body, '_csrf');
-    const t = formField(get.body, 't');
-    const post = await this.req('POST', '/tai-khoan/xac-minh-email', { form: { _csrf: csrf || '', t: t || u.searchParams.get('t') } });
-    return { get, post };
-  }
-
-  async login(dinhDanh, password = PW_STRONG) {
-    const { csrf } = await this.csrfOf('/tai-khoan/dang-nhap');
-    return this.req('POST', '/tai-khoan/dang-nhap', { form: { _csrf: csrf, dinh_danh: dinhDanh, mat_khau: password } });
+  /** `tiep` (tuỳ chọn): như khi trình duyệt mở /tai-khoan/dang-nhap?tiep=… rồi gửi form (gửi nguyên giá trị, VIP ID tự kiểm). */
+  async login(dinhDanh, password = PW_STRONG, { tiep } = {}) {
+    const { r, csrf } = await this.csrfOf('/tai-khoan/dang-nhap' + (tiep !== undefined ? `?tiep=${encodeURIComponent(tiep)}` : ''));
+    this.lastLoginForm = r;
+    const form = { _csrf: csrf, dinh_danh: dinhDanh, mat_khau: password };
+    if (tiep !== undefined) form.tiep = tiep;
+    return this.req('POST', '/tai-khoan/dang-nhap', { form });
   }
 
   async logout() {

@@ -13,7 +13,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { stackConfig, Stack, vipidCli, sqlRead, crmSql } from './stack.mjs';
 import { raw, absorb, cookieHeader, formField } from './http.mjs';
-import { KhachClient, PW_STRONG, outbox, account, syncRows, internalPost, decodeLaunch, portalSecret, signV11, synth } from './vipid.mjs';
+import { KhachClient, hostFor, PW_STRONG, outbox, account, syncRows, internalPost, decodeLaunch, portalSecret, signV11, synth } from './vipid.mjs';
 import { MockCrm, RealCrm, waitFor } from './crm.mjs';
 import { launchBrowser, MOBILE, guard, overflow, shotPath } from './browser.mjs';
 
@@ -22,7 +22,9 @@ if (!['mock', 'real'].includes(MODE)) { console.error('MODE phải là mock ho�
 const SHOTS = path.resolve(process.argv[2] || '/tmp/portal-e2e-shots');
 fs.mkdirSync(SHOTS, { recursive: true });
 const cfg = stackConfig();
-const BASE = (process.env.BASE || `http://${cfg.KHACH_HOST}`).replace(/\/+$/, '');
+// §15: ba host công khai (TOPO=multi) hoặc một host khach.localhost (TOPO=single). BASE = host đăng nhập/tài khoản.
+const B = { dangky: `http://${cfg.H.dangky}`, dangnhap: `http://${cfg.H.dangnhap}`, portal: `http://${cfg.H.portal}` };
+const BASE = (process.env.BASE || B.dangnhap).replace(/\/+$/, '');
 const RUN = Date.now().toString(36).slice(-6);
 const PW2 = 'Mat-Khau-Moi-E2E-2026#b';
 const PW3 = 'Doi-Mat-Khau-E2E-2026$c';
@@ -88,10 +90,10 @@ async function newCtx() {
   const ctx = await browser.newContext(MOBILE);
   ctx._e2eEvents = await guard(ctx);
   if (workaround) {
-    const origin = new URL(BASE).origin;
-    await ctx.route((u) => u.origin === origin && u.pathname.startsWith('/tai-khoan/'), (route) => {
+    const origins = new Set([B.dangky, B.dangnhap].map((x) => new URL(x).origin));
+    await ctx.route((u) => origins.has(u.origin) && u.pathname.startsWith('/tai-khoan/'), (route) => {
       const req = route.request();
-      if (req.method() === 'POST' && req.headers().origin === 'null') return route.continue({ headers: { ...req.headers(), origin } });
+      if (req.method() === 'POST' && req.headers().origin === 'null') return route.continue({ headers: { ...req.headers(), origin: new URL(req.url()).origin } });
       return route.continue();
     });
   }
@@ -142,7 +144,7 @@ async function main() {
   SHAS.vipid = sha(cfg.VIPID_REPO); SHAS.crm = sha(cfg.CRM_REPO);
   console.log(`SHA: VIP ID ${SHAS.vipid} · CRM ${SHAS.crm}${MODE === 'mock' ? ' (CRM: chỉ dùng vipid-client.js/internal.js/web-portal để đối chiếu)' : ''}`);
   await stack.start();
-  console.log(`MODE=${MODE} START=${cfg.START ? 1 : 0} BASE=${BASE} run=${RUN}${cfg.runDir ? ` runDir=${cfg.runDir}` : ''}\nẢnh: ${SHOTS}\n`);
+  console.log(`MODE=${MODE} TOPO=${cfg.TOPO} START=${cfg.START ? 1 : 0} hosts=${Object.values(cfg.H).join(',')} run=${RUN}${cfg.runDir ? ` runDir=${cfg.runDir}` : ''}\nẢnh: ${SHOTS}\n`);
   browser = await launchBrowser();
 
   // ════════════ TIỀN KIỂM TRÌNH DUYỆT ════════════
@@ -178,7 +180,7 @@ async function main() {
 
   // ════════════ LUỒNG ĐẦY ĐỦ ════════════
   await check('FLOW-01', 'Đăng ký (trình duyệt 390px, không Turnstile ở dev) → ngay "chờ duyệt", signup sang CRM (không xác minh email)', 'both', async (t) => {
-    await page.goto(`${BASE}/tai-khoan/dang-ky`);
+    await page.goto(`${B.dangky}/tai-khoan/dang-ky`);
     t.ok(!(await page.content()).includes('challenges.cloudflare.com'), 'dev không cấu hình Turnstile: trang đăng ký không nạp script Cloudflare');
     await inspect(page, '01-dang-ky');
     await page.fill('input[name=ho_ten]', K1.name);
@@ -278,7 +280,7 @@ async function main() {
     await pg.waitForURL(/\/portal\/(#.*)?$/, { timeout: 15000 });
     await pg.waitForSelector('#portal-code', { timeout: 15000 });
     t.eq((await textOf(pg, '#portal-code')), who.code, 'cổng CRM hiển thị đúng mã VG');
-    const vp = (await ctx.cookies(BASE)).find((c) => c.name === 'vg_portal');
+    const vp = (await ctx.cookies(B.portal)).find((c) => c.name === 'vg_portal');
     t.ok(vp && vp.httpOnly && vp.path === '/' && !vp.domain.startsWith('.'), 'cookie vg_portal host-only, HttpOnly, Path=/');
     t.eq(vp.sameSite, 'Strict', 'vg_portal SameSite=Strict');
     await inspect(pg, shot);
@@ -314,7 +316,7 @@ async function main() {
     t.eq(lr.status, 303, 'đăng nhập HTTP thô → 303');
     const url = new URL(lr.headers.location, BASE);
     t.ok(url.pathname === '/portal/auth/launch', 'Location = /portal/auth/launch');
-    const go = (pathq) => raw({ port: cfg.PROXY_PORT, path: pathq, hostHeader: cfg.KHACH_HOST });
+    const go = (pathq) => raw({ port: cfg.PROXY_PORT, path: pathq, hostHeader: cfg.H.portal });
     const first = await go(url.pathname + url.search);
     t.ok(first.status === 200 || first.status === 303, `lần 1 chấp nhận (${first.status})`);
     const second = await go(url.pathname + url.search);
@@ -341,7 +343,7 @@ async function main() {
 
   await check('FLOW-08', 'Xem kiện của tôi trong CRM portal (#/kien-hang, /portal/api/parcels)', 'real', async (t) => {
     const seed = await ensureSeed(t);
-    await page.goto(`${BASE}/portal/#/kien-hang`);
+    await page.goto(`${B.portal}/portal/#/kien-hang`);
     await page.waitForSelector('#parcel-list article.parcel', { timeout: 15000 });
     const shown = await page.locator('#parcel-list article.parcel .trk').allTextContents();
     for (const trk of seed.K1) t.ok(shown.includes(trk), `hiện kiện ${trk}`);
@@ -349,7 +351,7 @@ async function main() {
     t.ok(!shown.includes(seed.K1_PENDING[0]), `không hiện kiện chưa xác nhận chủ ${seed.K1_PENDING[0]}`);
     t.eq(shown.length, seed.K1.length, 'số thẻ kiện = số kiện đã xác nhận của K1');
     await inspect(page, '09-kien-hang');
-    const api = await ctxA.request.get(`${BASE}/portal/api/parcels`);
+    const api = await ctxA.request.get(`${B.portal}/portal/api/parcels`);
     t.eq(api.status(), 200, '/portal/api/parcels 200');
     const items = (await api.json()).items.map((x) => x.tracking_no);
     t.ok(seed.K1.every((x) => items.includes(x)) && !seed.K2.some((x) => items.includes(x)), 'API chỉ trả kiện của K1');
@@ -357,26 +359,26 @@ async function main() {
 
   await check('FLOW-09', 'Tra cứu vận đơn (#/tra-cuu) — thấy kiện của mình', 'real', async (t) => {
     const seed = await ensureSeed(t);
-    await page.goto(`${BASE}/portal/#/tra-cuu`);
+    await page.goto(`${B.portal}/portal/#/tra-cuu`);
     await page.fill('#trk-q', seed.K1[0]);
     await page.click('#search-form button[type=submit]');
     await page.waitForSelector('#search-out article.parcel, #search-out .msg', { timeout: 10000 });
     const trk = await page.locator('#search-out article.parcel .trk').allTextContents();
     t.ok(trk.includes(seed.K1[0]), `tra cứu ${seed.K1[0]} hiện thẻ kiện (UI)`);
     await inspect(page, '10-tra-cuu');
-    const api = await ctxA.request.get(`${BASE}/portal/api/parcels/search?tracking=${encodeURIComponent(seed.K1[0])}`);
+    const api = await ctxA.request.get(`${B.portal}/portal/api/parcels/search?tracking=${encodeURIComponent(seed.K1[0])}`);
     t.eq(api.status(), 200, 'API search 200');
   });
 
   await check('FLOW-12', 'Danh mục kho trong cổng: 4 kho, XM/YW "Sắp mở" (planned), SZ/GZ hoạt động', 'real', async (t) => {
-    const r = await ctxA.request.get(`${BASE}/portal/api/warehouses`);
+    const r = await ctxA.request.get(`${B.portal}/portal/api/warehouses`);
     t.eq(r.status(), 200, '/portal/api/warehouses 200');
     const items = (await r.json()).items;
     t.eq(items.length, 4, '4 kho');
     const st = Object.fromEntries(items.map((w) => [w.code, w.status]));
     t.ok(st.SZ === 'active' && st.GZ === 'active', 'SZ, GZ active');
     t.ok(st.XM === 'planned' && st.YW === 'planned', 'XM, YW planned');
-    await page.goto(`${BASE}/portal/#/kho`);
+    await page.goto(`${B.portal}/portal/#/kho`);
     await page.waitForSelector('section.wh', { timeout: 10000 });
     t.eq(await page.locator('section.wh').count(), 4, 'UI hiện 4 thẻ kho');
     t.eq(await page.locator('section.wh .pill', { hasText: 'Sắp mở' }).count(), 2, 'UI: 2 kho "Sắp mở"');
@@ -391,12 +393,12 @@ async function main() {
       await Promise.all([page.waitForURL(/\/tai-khoan\/dang-nhap\?da_thoat=1$/), page.click('form[action="/tai-khoan/dang-xuat"] button[type=submit]')]);
     } else {
       // web-portal: POST /portal/api/logout (huỷ vg_portal) rồi sang GET /tai-khoan/dang-xuat (trang xác nhận của VIP ID)
-      await page.goto(`${BASE}/portal/#/tong-quan`);
+      await page.goto(`${B.portal}/portal/#/tong-quan`);
       await page.waitForSelector('#logout-form button', { state: 'visible', timeout: 10000 });
       const sawLogout = page.waitForRequest((r) => r.method() === 'POST' && r.url().endsWith('/portal/api/logout'), { timeout: 10000 });
       await Promise.all([page.waitForURL(/\/tai-khoan\/dang-xuat$/, { timeout: 15000 }), page.click('#logout-form button')]);
       t.ok(await sawLogout, 'cổng gọi POST /portal/api/logout trước khi chuyển trang');
-      const me = await ctxA.request.get(`${BASE}/portal/api/me`);
+      const me = await ctxA.request.get(`${B.portal}/portal/api/me`);
       t.eq(me.status(), 401, '/portal/api/me sau bước 1 → 401 (vg_portal đã huỷ)');
       t.eq(await textOf(page, 'h1'), 'Đăng xuất', 'đến trang xác nhận đăng xuất của VIP ID');
       await inspect(page, '11-dang-xuat-tu-cong');
@@ -473,7 +475,7 @@ async function main() {
     await pb.goto(`${BASE}/tai-khoan/vao-cong`);
     t.ok(/\/tai-khoan\/dang-nhap$/.test(pb.url()), 'phiên cũ ở thiết bị 2 bị thu hồi');
     if (MODE === 'real') {
-      const me = await ctxB.request.get(`${BASE}/portal/api/me`);
+      const me = await ctxB.request.get(`${B.portal}/portal/api/me`);
       t.eq(me.status(), 401, 'phiên CRM portal cũ ở thiết bị 2 bị thu hồi (thu-hoi)');
     }
     await pb.close();
@@ -503,6 +505,9 @@ async function main() {
     const noReason = await crm.resetLink(K1.subject, { reason: null });
     t.ok(noReason.status === 400, `thiếu lý do → ${noReason.status} ${noReason.code || ''}`);
     const l = await crm.resetLink(K1.subject);
+    if (l.status === 502 && l.code === 'VIPID_BAD_RESPONSE') {
+      throw new Error(`CRM: POST /api/portal/customers/:id/reset-link → 502 VIPID_BAD_RESPONSE — review.js chỉ nhận data.url bắt đầu "https://", nhưng VIP ID local/dev trả ${BASE}/tai-khoan/dat-lai?t=… (http) ⇒ môi trường dev/staging http không cấp link được; VIP ID ĐÃ tạo link (link cũ của khách bị huỷ) mà nhân viên không nhận được. Đề xuất: chỉ đòi https khi APP_ENV=production (hoặc theo scheme của PORTAL_PUBLIC_URL)`);
+    }
     if (l.status === 502 && l.code === 'VIPID_UNAVAILABLE') {
       throw new Error('CRM bug: POST /api/portal/customers/:id/reset-link → 502 VIPID_UNAVAILABLE dù VIP ID trả 200 — review.js đọc r.json.url, nhưng VIP ID trả {ok:true,data:{url,expires_at}} (phải đọc r.json.data.url). Hệ quả phụ: VIP ID ĐÃ cấp link mới (link cũ của khách bị huỷ) mà nhân viên không nhận được link; audit portal.customer.reset_link ghi outcome=denied, vipid_status=200');
     }
@@ -822,13 +827,13 @@ async function main() {
       ['Bearer nhân viên', { authorization: `Bearer ${staffTok}` }], ['token nhân viên làm vg_portal', { cookie: `vg_portal=${staffTok}` }], ['cookie VIP ID khách', { cookie: 'vg_khach=x' }]];
     for (const p of ['/portal/api/me', '/portal/api/parcels', '/portal/api/parcels/search?tracking=X', '/portal/api/warehouses']) {
       for (const [label, headers] of variants) {
-        const r = await raw({ port: cfg.PROXY_PORT, path: p, hostHeader: cfg.KHACH_HOST, headers });
+        const r = await raw({ port: cfg.PROXY_PORT, path: p, hostHeader: cfg.H.portal, headers });
         t.ok(r.status === 401, `${p} ${label} → ${r.status}`);
       }
     }
     const c1 = await portalClient(K1);
     const vp = c1.jar.vg_portal;
-    const lo = await raw({ port: cfg.PROXY_PORT, method: 'POST', path: '/portal/api/logout', hostHeader: cfg.KHACH_HOST, headers: { cookie: `vg_portal=${vp}`, 'content-type': 'text/plain', origin: 'https://evil.example' }, body: '{}' });
+    const lo = await raw({ port: cfg.PROXY_PORT, method: 'POST', path: '/portal/api/logout', hostHeader: cfg.H.portal, headers: { cookie: `vg_portal=${vp}`, 'content-type': 'text/plain', origin: 'https://evil.example' }, body: '{}' });
     t.eq(lo.status, 403, 'POST /portal/api/logout từ Origin lạ, không JSON/X-Requested-With → 403 (CSRF)');
     t.eq((await papi(c1, '/portal/api/me')).status, 200, '… phiên vẫn còn (không bị đăng xuất hộ)');
   });
@@ -850,7 +855,9 @@ async function main() {
     const kh = (p, cookie) => raw({ port: cfg.PROXY_PORT, path: p, hostHeader: cfg.KHACH_HOST, headers: cookie ? { cookie } : {} });
     for (const p of ['/', '/dang-nhap', '/ho-so', '/quan-tri']) {
       r = await kh(p, scookie);
-      t.ok(r.status === 404, `host khách: route nhân viên ${p} với cookie nhân viên → ${r.status}`);
+      // '/' trên host khách (§15) chuyển về trang đăng nhập khách — không phải trang nhân viên
+      const okRoot = p === '/' && [302, 303].includes(r.status) && /^(\/tai-khoan\/|https?:\/\/[^/]+\/tai-khoan\/)/.test(r.headers.location || '');
+      t.ok(r.status === 404 || okRoot, `host khách: route nhân viên ${p} với cookie nhân viên → ${r.status} ${r.headers.location || ''}`);
     }
     r = await kh('/tai-khoan/vao-cong', scookie);
     t.ok(r.status === 303 && r.headers.location === '/tai-khoan/dang-nhap', 'host khách: cookie nhân viên không mở phiên khách');
@@ -873,12 +880,12 @@ async function main() {
     }
     const staffTok = await crm.login();
     t.eq(await staffApi('/api/me', { authorization: `Bearer ${staffTok}` }), 200, 'đối chứng: Bearer nhân viên trên host nhân viên → 200');
-    const onPortalHost = await raw({ port: cfg.CRM_PORT, path: '/api/me', hostHeader: cfg.KHACH_HOST, headers: { authorization: `Bearer ${staffTok}` } });
+    const onPortalHost = await raw({ port: cfg.CRM_PORT, path: '/api/me', hostHeader: cfg.H.portal, headers: { authorization: `Bearer ${staffTok}` } });
     t.eq(onPortalHost.status, 404, 'CRM trực tiếp, Host cổng: /api/me (route nhân viên) → 404');
-    const sig = await raw({ port: cfg.CRM_PORT, method: 'POST', path: '/api/internal/portal/signups', hostHeader: cfg.KHACH_HOST, headers: { 'content-type': 'application/json' }, body: '{}' });
+    const sig = await raw({ port: cfg.CRM_PORT, method: 'POST', path: '/api/internal/portal/signups', hostHeader: cfg.H.portal, headers: { 'content-type': 'application/json' }, body: '{}' });
     t.eq(sig.status, 404, 'CRM trực tiếp, Host cổng: /api/internal/portal/* → 404');
-    for (const target of [`http://${cfg.KHACH_HOST}/api/me`, `http://127.0.0.1:${cfg.CRM_PORT}/api/me`, `http://${cfg.KHACH_HOST}/api/internal/portal/signups`]) {
-      const ab = await raw({ port: cfg.CRM_PORT, path: target, hostHeader: cfg.KHACH_HOST, headers: { authorization: `Bearer ${staffTok}` } });
+    for (const target of [`http://${cfg.H.portal}/api/me`, `http://127.0.0.1:${cfg.CRM_PORT}/api/me`, `http://${cfg.H.portal}/api/internal/portal/signups`]) {
+      const ab = await raw({ port: cfg.CRM_PORT, path: target, hostHeader: cfg.H.portal, headers: { authorization: `Bearer ${staffTok}` } });
       t.eq(ab.status, 404, `Host cổng + request-target tuyệt đối ${target} → 404`);
     }
     const portalOnStaff = await raw({ port: cfg.CRM_PORT, path: '/portal/api/me', hostHeader: `127.0.0.1:${cfg.CRM_PORT}`, headers: { cookie: `vg_portal=${vp}` } });
@@ -974,7 +981,7 @@ async function main() {
       t.ok(pg.status === 200 && pg.body.includes('Đã nhận đăng ký'), 'khách thấy "Đã nhận đăng ký, chờ duyệt"');
       t.ok(!/Traceback|ConnectError|Exception|127\.0\.0\.1|8897|5195|crm_sync|HTTP 5\d\d/i.test(reg.body + pg.body), 'không lộ chi tiết lỗi nội bộ');
       const bp = await browser.newPage(MOBILE);
-      await bp.setContent(pg.body.replace('<head>', `<head><base href="${BASE}/">`));
+      await bp.setContent(pg.body.replace('<head>', `<head><base href="${B.dangky}/">`));
       await bp.screenshot({ path: shotPath(SHOTS, '18-dang-ky-khi-crm-sap'), fullPage: true });
       await bp.close();
       K4.subject = account(cfg, 'phone_e164=?', [K4.phone])[0].subject;
@@ -1233,7 +1240,7 @@ async function main() {
       const lg = await new KhachClient(cfg).login(K2.phone, K2.pw || PW_STRONG);
       t.ok(lg.status === 403 && !/portal\/auth\/launch/.test(lg.headers.location || ''), `đăng nhập khi bị khoá → ${lg.status} (không launch)`);
       const loc = new URL(pending.headers.location, BASE);
-      const la = await raw({ port: cfg.PROXY_PORT, path: loc.pathname + loc.search, hostHeader: cfg.KHACH_HOST });
+      const la = await raw({ port: cfg.PROXY_PORT, path: loc.pathname + loc.search, hostHeader: cfg.H.portal });
       t.ok(la.status >= 400 && !(la.setCookies || []).some((x) => x.startsWith('vg_portal=')), `launch token cấp trước khi khoá → ${la.status}, không cấp phiên`);
     } finally {
       t.eq((await crm.lock(K2.subject, 'mo_khoa')).status, 200, 'vip.admin mở cổng K2 → 200');
@@ -1285,6 +1292,124 @@ async function main() {
     }
   });
 
+  // ─── §15: nhiều host (dangky / dangnhap / khachhang) ───
+  const multi = cfg.TOPO === 'multi';
+  const needMulti = (t) => { if (!multi) t.pending('TOPO=single (CRM chưa có §15) — chạy TOPO=multi khi CRM hỗ trợ'); };
+  const pget = (host, p, headers = {}) => raw({ port: cfg.PROXY_PORT, path: p, hostHeader: host, headers });
+
+  await check('HOST-01', '§15 tách host: dangky chỉ đăng ký, dangnhap không có đăng ký, khachhang chỉ /portal; /api/internal/* 404 mọi host; host lạ 421', 'both', async (t) => {
+    needMulti(t);
+    const H = cfg.H;
+    t.eq((await pget(H.dangky, '/tai-khoan/dang-ky')).status, 200, 'dangky: /tai-khoan/dang-ky 200');
+    t.eq((await pget(H.dangky, '/tai-khoan/cho-duyet')).status, 200, 'dangky: /tai-khoan/cho-duyet 200');
+    for (const p of ['/tai-khoan/dang-nhap', '/tai-khoan/ho-so', '/tai-khoan/dat-lai?t=x', '/tai-khoan/vao-cong', '/tai-khoan/quen-mat-khau', '/tai-khoan/doi-mat-khau']) {
+      t.eq((await pget(H.dangky, p)).status, 404, `dangky: ${p} → 404`);
+    }
+    const rk = await pget(H.dangky, '/');
+    t.ok([200, 302, 303].includes(rk.status) && (!rk.headers.location || /dang-ky/.test(rk.headers.location)), `dangky: / → ${rk.status} ${rk.headers.location || ''}`);
+    t.eq((await pget(H.dangnhap, '/tai-khoan/dang-nhap')).status, 200, 'dangnhap: /tai-khoan/dang-nhap 200');
+    t.eq((await pget(H.dangnhap, '/tai-khoan/dang-ky')).status, 404, 'dangnhap: /tai-khoan/dang-ky → 404');
+    const rn = await pget(H.dangnhap, '/');
+    t.ok([200, 302, 303].includes(rn.status), `dangnhap: / → ${rn.status} ${rn.headers.location || ''}`);
+    const dn = await pget(H.dangnhap, '/tai-khoan/dang-nhap');
+    t.ok(dn.body.includes(`${B.dangky}/tai-khoan/dang-ky`), 'trang đăng nhập liên kết sang dangky (URL tuyệt đối)');
+    const dk = await pget(H.dangky, '/tai-khoan/dang-ky');
+    t.ok(dk.body.includes(`${B.dangnhap}/tai-khoan/dang-nhap`), 'trang đăng ký liên kết sang dangnhap (URL tuyệt đối)');
+    const rp = await pget(H.portal, '/');
+    t.ok(rp.status === 302 && rp.headers.location === '/portal/', `khachhang: / → ${rp.status} ${rp.headers.location || ''}`);
+    for (const p of ['/tai-khoan/dang-nhap', '/tai-khoan/dang-ky', '/api/me']) t.eq((await pget(H.portal, p)).status, 404, `khachhang: ${p} → 404`);
+    for (const h of [H.dangky, H.dangnhap, H.portal]) {
+      for (const p of ['/api/internal/khach/thu-hoi', '/api/internal/portal/signups', '/api/internal/khach/tao-link-dat-lai']) {
+        const r = await raw({ port: cfg.PROXY_PORT, method: 'POST', path: p, hostHeader: h, headers: { 'content-type': 'application/json' }, body: '{}' });
+        t.eq(r.status, 404, `${h} POST ${p} → 404`);
+      }
+    }
+    t.eq((await pget('khach.localhost:8890', '/tai-khoan/dang-nhap')).status, 421, 'host cũ khach.localhost (không còn cấu hình) → 421');
+    t.eq((await raw({ port: cfg.VIPID_PORT, path: '/tai-khoan/dang-nhap', hostHeader: H.portal })).status, 421, 'VIP ID trực tiếp với Host khachhang → 421');
+  });
+
+  await check('HOST-02', '§15 cookie host-only (không Domain) trên từng host; cookie của host này không gửi sang host kia', 'both', async (t) => {
+    needMulti(t);
+    const c = new KhachClient(cfg);
+    const g = await c.req('GET', '/tai-khoan/dang-ky');
+    const lr = await c.login(K1.phone, K1.pw);
+    t.ok(lr.status === 303, `đăng nhập K1 (${lr.status})`);
+    const all = [...g.setCookies.map((x) => ['dangky', x]), ...c.lastLoginForm.setCookies.map((x) => ['dangnhap', x]), ...lr.setCookies.map((x) => ['dangnhap', x])];
+    t.ok(all.length >= 3, `bắt được ${all.length} Set-Cookie`);
+    for (const [h, sc] of all) t.ok(!/;\s*domain=/i.test(sc), `${h}: ${sc.split('=')[0]} không có Domain`);
+    t.ok(Object.keys(c.jarOf(cfg.H.dangky)).length >= 1 && !('vg_khach' in c.jarOf(cfg.H.dangky)), 'vg_khach chỉ ở dangnhap, không có ở dangky');
+    // trình duyệt thật: cookie gắn đúng host
+    const ctx = await newCtx(); extraEvents.push(ctx._e2eEvents);
+    try {
+      const pg = await ctx.newPage();
+      await pg.goto(`${B.dangky}/tai-khoan/dang-ky`);
+      await loginBrowser(pg, K1.phoneLocal, K1.pw);
+      const ck = await ctx.cookies();
+      const byName = (n) => ck.filter((x) => x.name === n).map((x) => x.domain);
+      t.ok(byName('vg_khach').every((d) => d === 'dangnhap.localhost') && byName('vg_khach').length === 1, `vg_khach domain = ${byName('vg_khach').join(',')}`);
+      t.ok(ck.every((x) => !x.domain.startsWith('.')), 'không cookie nào là domain cookie (".localhost")');
+      t.eq((await ctx.cookies(B.dangky)).filter((x) => x.name === 'vg_khach').length, 0, 'dangky không nhận vg_khach');
+      t.eq((await ctx.cookies(`${B.portal}/portal/`)).filter((x) => x.name.startsWith('vg_khach')).length, 0, 'khachhang không nhận cookie VIP ID');
+    } finally { await closeCtx(ctx); }
+  });
+
+  await check('HOST-03', '§15 tiep sau đăng nhập: tiep hợp lệ (khachhang/portal/…) được mang sang launch; open-redirect bị bỏ qua', 'both', async (t) => {
+    needMulti(t);
+    const ok = `${B.portal}/portal/kien-hang`;
+    const c = new KhachClient(cfg);
+    const lr = await c.login(K1.phone, K1.pw, { tiep: ok });
+    t.ok(formField(c.lastLoginForm.body, 'tiep') === ok, 'form đăng nhập giữ tiep hợp lệ (input ẩn)');
+    const loc = new URL(lr.headers.location || 'http://x/');
+    t.ok(lr.status === 303 && loc.host === cfg.H.portal && loc.pathname === '/portal/auth/launch' && loc.searchParams.get('tiep') === '/portal/kien-hang', `launch mang tiep=/portal/kien-hang (${lr.headers.location?.replace(/token=[^&]+/, 'token=…')})`);
+    const vc = await c.req('GET', `/tai-khoan/vao-cong?tiep=${encodeURIComponent(`${B.portal}/portal/tra-cuu`)}`);
+    t.ok(new URL(vc.headers.location).searchParams.get('tiep') === '/portal/tra-cuu', 'vao-cong?tiep=… cũng mang tiep');
+    const bad = ['https://evil.example/portal', `http://${cfg.H.portal}.evil.example/portal`, `http://evil@${cfg.H.portal}/portal`, '//evil.example/portal',
+      `http://${cfg.H.portal}/portal/../tai-khoan/dang-nhap`, `http://${cfg.H.portal}/portalx`, `http://${cfg.H.portal}/portal/%2e%2e/x`, `http://${cfg.H.portal}/portal//evil.example`,
+      'javascript:alert(1)', `http://khachhang.localhost:${cfg.PROXY_PORT + 1}/portal`, `http://${cfg.H.dangnhap}/tai-khoan/ho-so`, `https://${cfg.H.portal}/portal`,
+      `http://${cfg.H.portal}/portal/\\evil`, `http://${cfg.H.portal}/portal/%5cevil`, '/portal/kien-hang'];
+    for (const b of bad) {
+      const cx = new KhachClient(cfg);
+      const r = await cx.login(K1.phone, K1.pw, { tiep: b });
+      const l = r.headers.location || '';
+      const u = l ? new URL(l) : null;
+      t.ok(r.status === 303 && u && u.host === cfg.H.portal && u.pathname === '/portal/auth/launch' && !u.searchParams.has('tiep') && !formField(cx.lastLoginForm.body, 'tiep'),
+        `tiep="${b}" bị bỏ qua (launch không có tiep, form không giữ)`);
+    }
+    if (MODE === 'real') {
+      t.pending('real: kiểm trình duyệt tới đúng /portal/kien-hang sau launch — chờ CRM §15 (launch đọc tiep)');
+    }
+  });
+
+  await check('HOST-04', '§15 cổng không có phiên → chuyển sang dangnhap kèm tiep; đăng nhập xong quay lại đúng trang cổng', 'real', async (t) => {
+    needMulti(t);
+    const ctx = await newCtx(); extraEvents.push(ctx._e2eEvents);
+    try {
+      const pg = await ctx.newPage();
+      await pg.goto(`${B.portal}/portal/#/kien-hang`);
+      await pg.waitForURL((u) => u.host === cfg.H.dangnhap && u.pathname === '/tai-khoan/dang-nhap', { timeout: 15000 });
+      const tiep = new URL(pg.url()).searchParams.get('tiep') || '';
+      t.ok(tiep.startsWith(`${B.portal}/portal`), `chuyển tới dangnhap với tiep=${tiep}`);
+      await pg.fill('input[name=dinh_danh]', K1.phoneLocal); await pg.fill('input[name=mat_khau]', K1.pw);
+      await Promise.all([pg.waitForURL((u) => u.host === cfg.H.portal && u.pathname.startsWith('/portal/') && !u.pathname.includes('/auth/'), { timeout: 15000 }), pg.click('form[action="/tai-khoan/dang-nhap"] button[type=submit]')]);
+      t.ok(true, `quay lại ${pg.url()}`);
+    } finally { await closeCtx(ctx); }
+  });
+
+  await check('HOST-05', 'API nội bộ VIP ID từ chối request mang header proxy công khai (X-Forwarded-For / X-Real-IP / Forwarded / Via) → 404, kể cả chữ ký đúng', 'both', async (t) => {
+    const D = P.D2 || P.D3;
+    t.ok(D, 'có tài khoản D để thử');
+    for (const [k, v] of [['x-forwarded-for', '203.0.113.9'], ['x-real-ip', '203.0.113.9'], ['forwarded', 'for=203.0.113.9'], ['via', '1.1 caddy']]) {
+      const r = await internalPost(cfg, '/api/internal/khach/thu-hoi', { subject: D.subject, reason: `hdr-${k}` }, { headers: { [k]: v } });
+      t.eq(r.status, 404, `${k} → 404`);
+    }
+    const ok = await internalPost(cfg, '/api/internal/khach/thu-hoi', { subject: D.subject, reason: 'khong-header' });
+    t.eq(ok.status, 200, `đối chứng: không header proxy, Host ${cfg.KHACH_HOST_DIRECT} → 200`);
+    if (multi) {
+      const dk = await internalPost(cfg, '/api/internal/khach/thu-hoi', { subject: D.subject, reason: 'host-dangky' }, { hostHeader: `dangky.localhost:${cfg.VIPID_PORT}` });
+      t.eq(dk.status, 404, 'API nội bộ trên host dangky → 404 (chỉ ở dangnhap)');
+    }
+  });
+
   await check('SEC-09', 'Trình duyệt 390px: mọi trang khách không tràn ngang, không console error, không vi phạm CSP', 'both', async (t) => {
     const ctxS = await newCtx();
     const evS = ctxS._e2eEvents;
@@ -1294,7 +1419,7 @@ async function main() {
       t.ok(resp.status() === expectStatus, `${name}: HTTP ${resp.status()}`);
       await inspect(ps, `sweep-${name}`, { expectStatus });
     };
-    await visit('dang-ky', `${BASE}/tai-khoan/dang-ky`);
+    await visit('dang-ky', `${B.dangky}/tai-khoan/dang-ky`);
     await ps.fill('input[name=ho_ten]', 'A'); await ps.fill('input[name=sdt]', '123'); await ps.fill('input[name=email]', 'x');
     await ps.click('form[action="/tai-khoan/dang-ky"] button[type=submit]'); await ps.waitForLoadState('load');
     await inspect(ps, 'sweep-dang-ky-loi', { expectStatus: 400 });
@@ -1318,7 +1443,7 @@ async function main() {
     await visit('dang-xuat-co-phien', `${BASE}/tai-khoan/dang-xuat`);
     if (MODE === 'real') {
       for (const r of ['tong-quan', 'kien-hang', 'tra-cuu', 'kho']) {
-        await ps.goto(`${BASE}/portal/#/${r}`);
+        await ps.goto(`${B.portal}/portal/#/${r}`);
         await ps.waitForSelector('#main:not([aria-busy="true"])', { timeout: 10000 }).catch(() => {});
         await inspect(ps, `sweep-portal-${r}`);
       }
@@ -1326,7 +1451,7 @@ async function main() {
     await closeCtx(ctxS);
     for (const ev of [evS, ...extraEvents]) events.push(...ev);
     // Header CSP phải có trên tài liệu của trang khách (nếu thiếu thì "không vi phạm CSP" là vô nghĩa)
-    const cspOf = async (p) => (await raw({ port: cfg.PROXY_PORT, path: p, hostHeader: cfg.KHACH_HOST })).headers['content-security-policy'] || '';
+    const cspOf = async (p) => (await raw({ port: cfg.PROXY_PORT, path: p, hostHeader: hostFor(cfg, p) })).headers['content-security-policy'] || '';
     for (const p of ['/tai-khoan/dang-nhap', ...(MODE === 'real' ? ['/portal/', '/portal/app.js'] : [])]) {
       const c = await cspOf(p);
       t.ok(/default-src 'none'/.test(c) && !/unsafe-inline|unsafe-eval/.test(c), `${p}: có CSP chặt (${c.slice(0, 60)}…)`);
