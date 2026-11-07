@@ -16,7 +16,7 @@ Mục tiêu: một bộ dữ liệu chung để phiên CRM, phiên VIP ID và QA
 | Họ tên | `Khách Thử K<n>` (có dấu, để thử UTF-8 trong chữ ký) | `Khách Thử K1` |
 | Mật khẩu (chỉ VIP ID) | ≥ 12 ký tự, giả | `Khach!Passw0rd-12` |
 | subject | do VIP ID sinh: `cust:kh_` + 26 ký tự `[a-z0-9]` (`khach.py:600,608`). **Không** đặt tay | `cust:kh_jejlgbq89md1ir211edsn4mzwm` |
-| portal_code | CRM cấp bằng `next_portal_code()` khi duyệt (`700_portal.sql:26-29`). DB dev mới thì lần lượt `VG000001`… | `VG000001` |
+| portal_code | CRM cấp bằng `next_portal_code()` khi duyệt (`700_portal.sql:26-29`). DB dev mới thì lần lượt `VG1001`, `VG1002`… (bỏ qua mã đã có) | `VG1001` |
 | Mã vận đơn | `KIT-<KHO>-<KHÁCH>-<NN>`, chỉ chữ hoa, số và gạch ngang, ≤ 32 ký tự. Tiền tố `KIT-` để nhận ra và lọc dữ liệu giả | `KIT-SZ-K1-01` |
 | Kho | Chỉ `SZ` (Thâm Quyến) và `GZ` (Quảng Châu). `XM`, `YW` chỉ có dòng danh mục `planned` | — |
 
@@ -42,9 +42,9 @@ Mục tiêu: một bộ dữ liệu chung để phiên CRM, phiên VIP ID và QA
 
 | Khách | Tenant | Hồ sơ CRM trước khi thử | Đăng ký VIP ID | Kết quả mong đợi |
 |---|---|---|---|---|
-| **K1** | VIP | Chưa có | `Khách Thử K1`, `+84900000001`, `k1@example.test` | Nhân viên gọi xác minh rồi **duyệt (approve)**, tạo khách mới `code = portal_code = VG000001`. Đăng nhập được bằng `0900000001` hoặc `VG000001` |
-| **K2** | VIP | Chưa có | `Khách Thử K2`, `+84900000002`, `k2@example.test` | Duyệt, nhận `VG000002`. Dùng để thử chống xem chéo với K1 |
-| **K3** | **A1** (đại lý) | **Đã có**: `customers(tenant=A1, code='A1-KH-0003', name='Khách Thử K3', phone='0900 000 003', phone_e164=NULL, portal_code=NULL, user_id=NULL, active=true)` | `Khách Thử K3`, `+84900000003`, `k3@example.test` (người thật của hồ sơ A1) | Màn duyệt phải hiện trùng SĐT với `A1-KH-0003` (`findDuplicates`, `review.js:53-68`, so cả `phone` tự do lẫn `phone_e164`). **Approve phải bị chặn** (`409 DUPLICATE_CUSTOMER`, `review.js:132-134`). Nhân viên gọi xác minh, rồi chọn **liên kết (link)** có audit: giữ `code='A1-KH-0003'`, cấp thêm `portal_code=VG000003`, `phone_e164='+84900000003'`. Không bao giờ tự liên kết |
+| **K1** | VIP | Chưa có | `Khách Thử K1`, `+84900000001`, `k1@example.test` | Nhân viên gọi xác minh rồi **duyệt (approve)**, tạo khách mới `code = portal_code = VG1001`. Đăng nhập được bằng `0900000001` hoặc `VG1001` |
+| **K2** | VIP | Chưa có | `Khách Thử K2`, `+84900000002`, `k2@example.test` | Duyệt, nhận `VG1002`. Dùng để thử chống xem chéo với K1 |
+| **K3** | **A1** (đại lý) | **Đã có**: `customers(tenant=A1, code='A1-KH-0003', name='Khách Thử K3', phone='0900 000 003', phone_e164=NULL, portal_code=NULL, user_id=NULL, active=true)` | `Khách Thử K3`, `+84900000003`, `k3@example.test` (người thật của hồ sơ A1) | Màn duyệt phải hiện trùng SĐT với `A1-KH-0003` (`findDuplicates`, `review.js:53-68`, so cả `phone` tự do lẫn `phone_e164`). **Approve phải bị chặn** (`409 DUPLICATE_CUSTOMER`, `review.js:132-134`). Nhân viên gọi xác minh, rồi chọn **liên kết (link)** có audit: giữ `code='A1-KH-0003'`, cấp thêm `portal_code=VG1003`, `phone_e164='+84900000003'`. Không bao giờ tự liên kết |
 
 Thứ tự tạo khuyến nghị: K1 → K2 → K3. Như vậy mã VG ứng với số thứ tự, nếu DB dev mới và không có lần duyệt nào bị rollback.
 
@@ -58,7 +58,7 @@ Thứ tự tạo khuyến nghị: K1 → K2 → K3. Như vậy mã VG ứng vớ
 5. Kiểm từng bước:
    - (a) `approve` → 409 `DUPLICATE_CUSTOMER`;
    - (b) `link` khi chưa xác minh SĐT → 409 `PHONE_NOT_VERIFIED`;
-   - (c) `link` với `phone_verified=true` → 200. Kết quả: `ket-qua-duyet` approved với `crm_customer_id` = id hồ sơ A1, `portal_code=VG000003`, `customer_code='A1-KH-0003'`;
+   - (c) `link` với `phone_verified=true` → 200. Kết quả: `ket-qua-duyet` approved với `crm_customer_id` = id hồ sơ A1, `portal_code=VG1003`, `customer_code='A1-KH-0003'`;
    - (d) K3 đăng nhập và chỉ thấy kiện của chính hồ sơ A1.
 
 ### 4.2. Giữ chỗ SĐT trên VIP ID (cờ `phone_conflict`)
@@ -67,7 +67,7 @@ Thứ tự tạo khuyến nghị: K1 → K2 → K3. Như vậy mã VG ứng vớ
 3. CRM: **cùng một dòng** S5 hiện cờ xung đột, số lần là 1 và được xếp lên đầu danh sách.
 4. Nhân viên gọi `+84900000005`. Người nghe máy không xác nhận được email `ke-gia@example.test` ⇒ **từ chối** (lý do: "SĐT không khớp chủ đăng ký").
 5. VIP ID giải phóng SĐT và email của S5 (`khach.py:1110-1112`). Chủ thật đăng ký lại ⇒ VIP ID sinh **subject mới S5'**. CRM nhận signup S5' như một đăng ký mới (dòng mới; dòng S5 giữ trạng thái `tu_choi`).
-6. Duyệt S5' ⇒ `VG00000x` tiếp theo.
+6. Duyệt S5' ⇒ `VG100x` tiếp theo.
 
 Kiểm bằng máy: `contract-test.mjs crm` các dòng C13/C14 (cần `KIT_CRM_ADMIN_TOKEN_FILE`), và ở VIP ID là test `test_p1_3_xung_dot_sdt_bao_crm_va_tu_choi_giai_phong` (`tests/test_khach_p1.py:1000-1038`).
 

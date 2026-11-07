@@ -168,7 +168,7 @@ Base URL nội bộ VIP ID với `Host:` hợp lệ (mục 4). Cả ba endpoint 
 | `subject` | string `cust:…` | bắt buộc | bắt buộc |
 | `decision` | `"approved"` \| `"rejected"` | | |
 | `crm_customer_id` | string `^[A-Za-z0-9_-]{1,64}$` (UUID của CRM hợp lệ) | bắt buộc | bỏ qua (gửi `null` được) |
-| `portal_code` | `^VG\d{6}$`; VIP ID trim và viết hoa trước khi kiểm (`khach.py:428-430`) | bắt buộc, **unique toàn hệ thống** (`schema.py:257`) | bỏ qua |
+| `portal_code` | `^VG[0-9]{4,9}$`, số ≥ 1001 (owner 07/11); VIP ID trim và viết hoa trước khi kiểm (`khach.py:428-430`) | bắt buộc, **unique toàn hệ thống** (`schema.py:257`) | bỏ qua |
 | `customer_code` | string ≤ 40, tuỳ chọn (mã cũ của đại lý khi link) | tuỳ chọn | bỏ qua |
 | `phone_verified_by` | string 1–120 (id nhân viên đã gọi) | bắt buộc | bỏ qua |
 | `reason` | string | — | tuỳ chọn, ghi audit ≤ 200 |
@@ -286,7 +286,7 @@ VIPID_PORTAL_URL=http://127.0.0.1:8898    # gọi THẲNG VIP ID, không qua pro
   - header **đúng** `{"alg":"HS256","typ":"JWT"}`;
   - payload là JSON gọn, thứ tự khoá cố định:
   ```json
-  {"ver":1,"aud":"vip-crm-portal","sub":"cust:kh_…","crm_customer_id":"<id CRM đã gửi>","portal_code":"VG000001","iat":1794043532,"exp":1794043592,"nonce":"<24 ký tự base64url>"}
+  {"ver":1,"aud":"vip-crm-portal","sub":"cust:kh_…","crm_customer_id":"<id CRM đã gửi>","portal_code":"VG1001","iat":1794043532,"exp":1794043592,"nonce":"<24 ký tự base64url>"}
   ```
   - `exp = iat + max(1, COWORK_KHACH_LAUNCH_TTL)`, TTL ≤ 60 (`config.py:146`);
   - `nonce = secrets.token_urlsafe(18)`, 24 ký tự (`security.py:63-64`);
@@ -333,7 +333,7 @@ KIT_SECRET_FILE=…/data/khach-dev/portal_secret.key \
 KIT_CRM_URL=http://127.0.0.1:5175 \
 KIT_CRM_PORTAL_HOST=khach.localhost:8890 \        # khi CRM đặt PORTAL_HOST (không đặt ⇒ launch 404)
 KIT_CRM_ADMIN_TOKEN_FILE=…/vip_admin.token \      # tuỳ chọn: Bearer vip_admin để đọc GET /api/portal/signups (C13b/C14b)
-KIT_LAUNCH_SUB=cust:kh_… KIT_LAUNCH_CRM_ID=<uuid> KIT_LAUNCH_PORTAL_CODE=VG000001 \  # tuỳ chọn: khách đã duyệt (L08–L11)
+KIT_LAUNCH_SUB=cust:kh_… KIT_LAUNCH_CRM_ID=<uuid> KIT_LAUNCH_PORTAL_CODE=VG1001 \  # tuỳ chọn: khách đã duyệt (L08–L11)
 node kit/contract-test.mjs crm
 #    KIT_DESTRUCTIVE=1 thêm L12 (gửi thu-hoi "dang_xuat" cho KIT_LAUNCH_SUB) — CRM hiện sẽ KHOÁ user đó.
 

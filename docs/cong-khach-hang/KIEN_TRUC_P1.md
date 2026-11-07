@@ -11,7 +11,7 @@ Căn cứ: OWNER DIRECTIVE — CUSTOMER PORTAL P1 (07/11/2026). **Production NO-
 | A2 | CRM quản lý khách, mã khách, kiện, vận đơn | Hồ sơ khách, mã VG, kiện và trạng thái **chỉ ở CRM**. VIP ID chỉ giữ liên kết `crm_customer_id` và mã khách để hiển thị |
 | A4 | `khachhang.vipgroup.com.vn` | Một host, chia theo đường dẫn (mục 3) |
 | A5 | Nhân viên duyệt trước khi cấp mã | Bảng `portal_signups` trong CRM; chỉ khi duyệt mới tạo `customers` và `users` |
-| A6 | Mã tự động VG000001 | Sinh trong CRM bằng `SEQUENCE` Postgres; `UNIQUE (tenant_id, code)` đã có |
+| A6 | Mã tự động **VG1001, VG1002…** (owner 07/11, thay VG000001) | CRM sinh khi duyệt: sequence bắt đầu 1001, bỏ qua mã đã tồn tại, UNIQUE toàn cục, cấp đồng thời không trùng (§12) |
 | A7 | Đăng nhập bằng SĐT **đã xác minh** | Định danh đăng nhập là SĐT chuẩn E.164 (+84…). Chỉ đăng nhập được khi `phone_verified_at` có giá trị (mục 5.2) |
 | A8 | Email dùng để kích hoạt và khôi phục; chỉ phát hành khi xác minh và khôi phục đã an toàn | Link một lần đã băm, TTL 30 phút. **Production chặn** cho tới khi có kênh gửi email thật (SMTP hoặc API) và đã kiểm thử |
 | A9 | Mật khẩu ≥ 12 ký tự, băm an toàn, chống dò mật khẩu | scrypt (hàm sẵn có của VIP ID: `security.bam_mat_khau`); khoá theo tài khoản và theo IP; dùng hàm băm giả khi tài khoản không tồn tại để không lộ qua thời gian phản hồi |
@@ -154,10 +154,10 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
 
 1. **Tên đăng nhập.** Chỉ thị owner gửi Controller (A7) ghi "SĐT đã xác minh". Chỉ thị owner gửi phiên CRM (Q-P6) ghi "mã khách làm tên đăng nhập chính". Cách giải: VIP ID **nhận cả hai**, mỗi định danh trỏ duy nhất tới một tài khoản:
    - SĐT E.164 đã xác minh, **hoặc**
-   - `portal_code` (VG + 6 số).
+   - `portal_code` (VG + số ≥ 1001, không đệm 0: VG1001…).
 
    Owner chốt định danh chính ở hồ sơ nghiệm thu.
-2. **`portal_code`.** `ket-qua-duyet` và launch token có thêm trường `portal_code` (VGxxxxxx, **unique toàn hệ thống**). CRM đối chiếu thêm `portal_code` với hồ sơ khách.
+2. **`portal_code`.** `ket-qua-duyet` và launch token có thêm trường `portal_code` (VG1001…, **unique toàn hệ thống**). CRM đối chiếu thêm `portal_code` với hồ sơ khách.
 3. **Khách cũ được liên kết.** Giữ mã nội bộ cũ (chỉ unique theo tenant) và **cấp thêm** `customers.portal_code` loại VG. Thay thế câu "giữ nguyên mã cũ" ở §8.
 4. **`portal_outbox` của CRM.** CRM dùng bảng này để thử lại `ket-qua-duyet` và `thu-hoi`, idempotent theo (subject, event).
 5. **C0 (CRM).** Đường đăng nhập VIP ID của nhân viên phải **từ chối** `kind='customer'` (`adapters.js:38`). Sửa trước khi có tài khoản khách đầu tiên.
@@ -174,3 +174,17 @@ Phiên CRM portal: cookie `vg_portal` (host-only, `Path=/`), TTL 2 giờ, kiểm
 
    Body tối đa 10 KB; kiểm `Content-Length` trước khi đọc.
 9. **Host.** Khi bật realm khách, VIP ID chỉ nhận Host nằm trong danh sách host khách hoặc host nhân viên; host lạ trả 421/404. Caddy phải **giữ nguyên Host gốc**.
+
+## 12. Quy tắc mã khách (owner 07/11/2026, thay quy tắc VG000001)
+
+1. Mã bắt đầu **VG1001**, tăng dần VG1002, VG1003… Không đệm số 0; sau VG9999 là VG10000.
+2. Chỉ cấp khi nhân viên **duyệt** hoặc **liên kết**. Đăng ký chờ duyệt hay bị từ chối không giữ mã.
+3. **Không trùng:** nếu mã kế tiếp đã tồn tại (ở bất kỳ khách nào, toàn hệ thống), lấy mã hợp lệ chưa dùng kế tiếp theo thứ tự tăng.
+4. **Cấp đồng thời:** sequence Postgres + `UNIQUE(portal_code)` toàn cục + thử lại khi xung đột, tất cả trong giao dịch duyệt.
+5. **Định dạng chung cho VIP ID ⇄ CRM ⇄ cổng:** `^VG[0-9]{4,9}$`, phần số ≥ 1001, không có số 0 đứng đầu. Khách nhập chữ thường vẫn được nhận; hệ thống lưu chữ hoa.
+6. **Kiểm thử bắt buộc:**
+   - mã đầu tiên là VG1001;
+   - đã có VG1001 và VG1002 thì cấp VG1003;
+   - duyệt song song thì các mã khác nhau;
+   - VG999, VG01001, VG000001 bị từ chối;
+   - đăng nhập bằng `vg1001` được.

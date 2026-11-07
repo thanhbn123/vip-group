@@ -563,7 +563,7 @@ Owner đã yêu cầu không có dữ liệu giả ở production (HĐ A10, `KIE
 - **Một tài khoản thật**: một nhân viên (hoặc owner) đăng ký bằng SĐT thật và email thật của chính mình, với tư cách **khách thật** của VIP GROUP. Owner ghi tên trước vào biên bản.
 - Đi đúng quy trình: đăng ký → nhận email (kiểm SPF/DKIM/DMARC PASS trong "Show original") → xác minh → nhân viên **gọi xác minh** theo checklist (VIPID `docs/KHACH-DUYET-CHECKLIST.md`) → duyệt → nhận mã VG → đăng nhập bằng SĐT **và** bằng mã VG → thấy danh sách kiện (trống, hoặc kiện thật nếu là khách thật) → tra một mã vận đơn không thuộc mình → **404** → đăng xuất → quên mật khẩu → đặt lại → các phiên cũ bị thu hồi.
 - **Hệ quả owner phải chấp nhận:**
-  - mã `VG000001` (hoặc mã đầu tiên) thuộc về tài khoản này. Sequence không lùi, không tái sử dụng (CRM `VIP_CRM_V6_CUSTOMER_PORTAL_P1.md:60`);
+  - mã `VG1001` (hoặc mã đầu tiên) thuộc về tài khoản này. Sequence không lùi, không tái sử dụng (CRM `VIP_CRM_V6_CUSTOMER_PORTAL_P1.md:60`);
   - bản ghi `customers` và `users(kind='customer')` tồn tại vĩnh viễn, vì audit chỉ ghi thêm;
   - nếu không giữ tài khoản, kết thúc bằng **tạm khoá** từ CRM (`portal.customer.lock` → VIP ID `khach.tam_khoa`), không xoá.
 - Kiểm hai chiều HMAC: duyệt sinh `ket-qua-duyet` (CRM → VIP ID); đăng xuất sinh `thu-hoi` (VIP ID → CRM). Sau đó `crm_sync_pending` và `portal_outbox` đều không còn mục treo.

@@ -108,7 +108,7 @@ export function verifyLaunch(secret, token, nonces) {
   if (!Number.isInteger(c.iat) || !Number.isInteger(c.exp) || c.exp <= c.iat || c.exp - c.iat > 60) return { error: 'TOKEN_TTL' };
   if (c.exp <= now()) return { error: 'TOKEN_EXPIRED' };
   if (c.iat - now() > 30) return { error: 'TOKEN_IAT_FUTURE' };
-  if (typeof c.sub !== 'string' || !c.sub.startsWith('cust:') || !/^VG\d{6}$/.test(String(c.portal_code)) || !c.nonce) return { error: 'TOKEN_CLAIMS' };
+  if (typeof c.sub !== 'string' || !c.sub.startsWith('cust:') || !/^VG[1-9]\d{3,8}$/.test(String(c.portal_code)) || !c.nonce) return { error: 'TOKEN_CLAIMS' };
   if (nonces) { if (nonces.has(c.nonce)) return { error: 'TOKEN_REPLAYED' }; nonces.add(c.nonce); }
   return { claims: c };
 }
@@ -426,7 +426,7 @@ async function modeReceiver() {
       if (d.decision === 'approved') {
         const cid = String(d.crm_customer_id ?? '').trim(); const code = String(d.portal_code ?? '').trim().toUpperCase();
         const nv = String(d.phone_verified_by ?? '').trim(); const cc = String(d.customer_code ?? '').trim();
-        if (!/^[A-Za-z0-9_-]{1,64}$/.test(cid) || !/^VG\d{6}$/.test(code) || !nv || nv.length > 120 || cc.length > 40) return [400, 'DU_LIEU_SAI'];
+        if (!/^[A-Za-z0-9_-]{1,64}$/.test(cid) || !/^VG[1-9]\d{3,8}$/.test(code) || !nv || nv.length > 120 || cc.length > 40) return [400, 'DU_LIEU_SAI'];
         if ((a.status === 'hoat_dong' || a.status === 'tam_khoa') && a.crm_customer_id) {
           return a.crm_customer_id === cid && a.portal_code === code ? [200, { subject: d.subject, status: a.status, idempotent: true }] : [409, 'XUNG_DOT'];
         }
