@@ -71,9 +71,11 @@ const pending = (sample?: string): Fact => ({ value: null, source: null, sample 
  * "VIP GROUP nhận hàng trực tiếp tại 4 địa điểm ở Trung Quốc" + địa chỉ tiếng Trung NGUYÊN VĂN.
  * - KHÔNG viết "kho của VIP GROUP" / "thuộc sở hữu": chưa có chứng cứ sở hữu pháp lý.
  * - KHÔNG công khai tên người nhận, SĐT kho, mã khách hàng (owner yêu cầu).
- * - Bảng giá chung (pricing.ts) CHƯA được xác nhận áp dụng cho từng kho → `priceApplies` pending.
+ * - Bảng giá chung (pricing.ts) ÁP DỤNG cho cả 4 kho — owner directive 07/11/2026 (`priceApplies`, nguồn SRC_OWNER_PRICE).
  * - `context` / `goods` là kiến thức địa lý – thương mại chung về thành phố, không phải cam kết dịch vụ.
  */
+/** Owner directive 07/11/2026 (Final Local Acceptance): giá theo từng kiện + bảng giá chung cho 4 kho. */
+export const SRC_OWNER_PRICE = 'Owner directive 07/11/2026 — chính sách giá đã chốt';
 export const SRC_OWNER_WAREHOUSES = 'Owner xác nhận 06/11/2026 (Project Controller — SEO Multi-Warehouse V2)';
 const owner = (value: string): Fact => ({ value, source: SRC_OWNER_WAREHOUSES });
 
@@ -98,7 +100,7 @@ const pickupBase: PickupBase[] = [
     deliveryNotesZh: ['送货点位于新钢物流园三期2栋，请写全“三期2栋”，以免送错楼栋。', '区域：宝安区福海街道海洋新城。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
     transitTime: pending('[MẪU] 2–3 ngày về Hà Nội'),
-    priceApplies: pending('[MẪU] Áp dụng bảng giá chung'),
+    priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
       q: 'Kho Thâm Quyến ở trang này có liên quan tới Shopee không?',
@@ -123,7 +125,7 @@ const pickupBase: PickupBase[] = [
     deliveryNotesZh: ['送货点为嘉功物流2号库3号仓（囷瑶路），请写全库号与仓号。', '区域：福建省厦门市海沧区。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
     transitTime: pending('[MẪU] 3–5 ngày về Hà Nội'),
-    priceApplies: pending('[MẪU] Áp dụng bảng giá chung'),
+    priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
       q: 'Nên gửi hàng về kho Hạ Môn hay kho Quảng Châu?',
@@ -148,7 +150,7 @@ const pickupBase: PickupBase[] = [
     deliveryNotesZh: ['地址位于广州北部白云区钟落潭镇虎塘村凤岗路26号。', '请将客户提供的收货人及联系电话一并告知司机，便于到达时联系。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
     transitTime: pending('[MẪU] 3–5 ngày về Hà Nội'),
-    priceApplies: pending('[MẪU] Áp dụng bảng giá chung'),
+    priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
       q: 'Đặt hàng 1688, Taobao có giao về kho Quảng Châu được không?',
@@ -173,7 +175,7 @@ const pickupBase: PickupBase[] = [
     deliveryNotesZh: ['送货点：北苑三期秋实路121号6号楼10-12库。', '请从西门进入，靠5号货梯卸货。'],
     receivingHours: pending('[MẪU] 08:30–17:30, thứ Hai – thứ Bảy'),
     transitTime: pending('[MẪU] 5–7 ngày về Hà Nội'),
-    priceApplies: pending('[MẪU] Áp dụng bảng giá chung'),
+    priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
       q: 'Giao hàng tới kho Nghĩa Ô cần lưu ý gì?',
@@ -280,11 +282,11 @@ export const faqs: FaqItem[] = [
   },
   {
     q: 'Bảng giá vận chuyển Trung Quốc – Việt Nam bao nhiêu một kg?',
-    a: 'Đơn giá theo khối lượng: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Mức giá áp dụng theo tổng khối lượng tính cước của cả lô hàng. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
+    a: 'Đơn giá theo khối lượng: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá xác định theo trọng lượng tính cước của từng kiện, không gộp cả lô; áp dụng chung cho 4 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
   },
   {
     q: 'Cước vận chuyển tính theo cân nặng hay theo khối?',
-    a: 'Cước tính theo số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao theo cm ÷ 6000). Mức giá theo kg áp dụng theo tổng khối lượng tính cước của cả lô hàng trong một lần gửi.',
+    a: 'Cước tính theo số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao theo cm ÷ 6000). Bậc giá theo kg xác định theo trọng lượng tính cước của từng kiện (không cộng gộp các kiện trong lô).',
   },
   {
     q: 'Hàng về Bắc Ninh mất bao lâu?',

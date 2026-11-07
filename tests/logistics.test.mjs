@@ -214,17 +214,17 @@ test('V2: trang tuyến — nội dung riêng, liên kết mạng lưới, phầ
     }
     // Lưu ý giao hàng riêng từng kho (diễn giải từ địa chỉ owner) — phần nội dung không lặp giữa các tuyến.
     assert.match(t, /Lưu ý khi giao hàng tới kho/, `${p}: thiếu lưu ý giao hàng riêng`);
-    // Không gắn bảng giá chung cho tuyến cụ thể khi owner chưa xác nhận (priceApplies pending).
-    assert.doesNotMatch(t, /(?:20|16|15|14|12)\.000\s*đ/, `${p}: không hiện đơn giá chung trên trang tuyến`);
-    assert.doesNotMatch(html, /"offers"/, `${p}: không khai Offer trên trang tuyến`);
+    // Owner 07/11/2026: bảng giá chung ÁP DỤNG cho 4 kho → trang tuyến hiện 5 bậc + Offer (chi tiết: pricing-policy.test.mjs).
+    assert.match(t, /20\.000\s*đ\/kg/, `${p}: phải hiện bảng giá chung`);
+    assert.match(html, /"offers"/, `${p}: phải khai Offer`);
     // Không công khai SĐT nội bộ (di động TQ) hay số khác ngoài hotline.
     assert.doesNotMatch(t, /(?<!\d)1[3-9]\d{9}(?!\d)|\+86|(?<!\d)0\d{2,3}-\d{7,8}(?!\d)/, `${p}: lộ số điện thoại Trung Quốc`);
     for (const m of t.matchAll(/0\d{2,3}[\s.]?\d{3}[\s.]?\d{3,4}/g)) assert.equal(m[0].replace(/\D/g, ''), '0961102655', `${p}: số lạ ${m[0]}`);
   }
   assert.equal(h1s.size, ROUTES.length, 'H1 mỗi tuyến phải khác nhau');
-  // Trang mạng lưới cũng không gắn đơn giá chung cho các kho.
+  // Trang mạng lưới: nêu bảng giá chung cho 4 kho + bậc theo từng kiện (owner 07/11/2026).
   const net = text(read('/logistics/kho-trung-quoc/'));
-  assert.doesNotMatch(net, /(?:20|16|15|14|12)\.000\s*đ/, 'mạng lưới: không hiện đơn giá chung');
+  assert.match(net, /Cả 4 kho áp dụng chung bảng giá/, 'mạng lưới: phải nêu bảng giá chung');
   // FAQPage không trùng câu giữa trang mạng lưới và trang Hỏi đáp.
   const names = (path) => (ldAll(read(path)).find((d) => d['@type'] === 'FAQPage')?.mainEntity ?? []).map((q) => q.name);
   const dup = names('/logistics/kho-trung-quoc/').filter((n) => names('/logistics/cau-hoi-thuong-gap/').includes(n));
@@ -259,7 +259,7 @@ test('FAQPage chỉ chứa câu trả lời đã có căn cứ', () => {
   for (const n of names) assert.ok(text(html).includes(n), `câu hỏi trong schema không hiển thị: ${n}`);
 });
 
-test('bảng giá chi tiết: đúng 5 mức owner, áp theo cả lô, quy đổi 6000, form thu lead chọn sẵn "báo giá"', () => {
+test('bảng giá chi tiết: đúng 5 mức owner, bậc theo từng kiện, quy đổi 6000, form thu lead chọn sẵn "báo giá"', () => {
   const html = read('/logistics/bang-gia/');
   const t = text(html).replace(/\s+/g, ' ');
   for (const [label, price] of [['0–5 kg', '20.000'], ['Trên 5 đến dưới 100 kg', '16.000'], ['Từ 100 đến dưới 500 kg', '15.000'], ['Từ 500 đến 1.000 kg', '14.000'], ['Trên 1.000 kg', '12.000']]) {
@@ -267,7 +267,7 @@ test('bảng giá chi tiết: đúng 5 mức owner, áp theo cả lô, quy đổ
   }
   assert.match(t, /Đơn vị tính: VNĐ\/kg/);
   assert.match(t, /Phụ phí và thuế \(nếu có\) sẽ được xác nhận trước khi báo giá chính thức/);
-  assert.match(t, /theo tổng khối lượng tính cước của cả lô hàng/, 'owner: áp giá theo tổng cả lô');
+  assert.match(t, /theo trọng lượng tính cước của từng kiện, không cộng gộp cả lô/, 'owner 07/11/2026: bậc giá theo từng kiện');
   assert.match(html, /data-calc data-divisor="6000"/, 'owner: quy đổi hệ số 6000');
   assert.doesNotMatch(t, /\bMẪU\b/);
   const start = html.indexOf('<form '); const form = html.slice(start, html.indexOf('</form>', start));

@@ -1,4 +1,5 @@
 ---
+import { priceOffers } from '../lib/pricing';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SectorGrid from '../components/SectorGrid.astro';
 import MemberGrid from '../components/MemberGrid.astro';
@@ -19,19 +20,7 @@ const priceLd = {
   url: new URL('/#bang-gia', site).href,
   brand: { '@id': new URL('/#organization', site).href },
   areaServed: { '@type': 'Country', name: 'Việt Nam' },
-  offers: pricing.tiers.map((t) => ({
-    '@type': 'Offer',
-    name: t.label,
-    priceCurrency: 'VND',
-    priceSpecification: {
-      '@type': 'UnitPriceSpecification',
-      price: t.price,
-      priceCurrency: 'VND',
-      unitCode: 'KGM',
-      unitText: 'kg',
-      eligibleQuantity: { '@type': 'QuantitativeValue', minValue: t.min, ...(t.max !== null ? { maxValue: t.max } : {}), unitCode: 'KGM' },
-    },
-  })),
+  offers: priceOffers(pricing.tiers),
 };
 const sloganParts = company.slogan.split(' - ').map((s) => s.trim());
 const sloganLast = sloganParts.pop();

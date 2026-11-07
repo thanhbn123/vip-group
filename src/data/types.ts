@@ -126,7 +126,7 @@ export interface ShippingPricing {
   note: string;
   noteZh: string;
   tiers: PriceTier[];
-  /** Cách áp mức giá (owner xác nhận) — vd. theo tổng khối lượng cả lô. */
+  /** Cách áp mức giá (owner chốt 07/11/2026): theo trọng lượng tính cước từng kiện. */
   basis: string;
   basisZh: string;
   /** Nguồn — owner chốt. */

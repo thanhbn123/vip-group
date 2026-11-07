@@ -1,8 +1,8 @@
 ---
 /**
- * Công cụ tính số khối (m³) và cân nặng quy đổi.
- * Phép tính thể tích là toán học thuần. Hệ số quy đổi (cm³/kg) của VIPORDER CHƯA được owner cung cấp:
- * production chỉ tính m³; DEMO dùng hệ số MẪU có nhãn.
+ * Công cụ tính số khối, cân quy đổi và CƯỚC ƯỚC TÍNH theo chính sách owner 07/11/2026:
+ * bậc giá theo trọng lượng tính cước TỪNG KIỆN (max(cân thực, dài×rộng×cao÷6000)), không gộp lô.
+ * Logic dùng chung với test: src/lib/pricing.ts. Không làm tròn khối lượng (owner chưa quy định cách làm tròn).
  */
 import { volumetricDivisor } from '../../data/vi/logistics';
 import { shown } from '../../lib/logistics';
@@ -25,8 +25,15 @@ const { value: divisor, isSample } = shown(volumetricDivisor);
       <dd data-out="dim">{divisor ? '—' : 'Hệ số quy đổi được báo theo từng lô hàng'}</dd>
     </div>
   </dl>
+  {divisor && (
+    <dl class="calc-out calc-price" aria-live="polite">
+      <div><dt>Trọng lượng tính cước / kiện</dt><dd data-out="charge">—</dd></div>
+      <div><dt>Bậc giá áp dụng (theo kiện)</dt><dd data-out="tier">—</dd></div>
+      <div><dt>Cước ước tính</dt><dd data-out="cost">—</dd><dd class="sub" data-out="cost-per"></dd></div>
+    </dl>
+  )}
   <p class="calc-note">
-    Kết quả chỉ để tham khảo khi chuẩn bị báo giá{divisor ? <> (hệ số {isSample ? 'mẫu' : ''} {divisor} cm³/kg)</> : null}. Cước thực tế được báo theo từng lô hàng.
+    Ước tính cho các kiện giống nhau: mỗi kiện tra bậc giá theo trọng lượng tính cước của chính kiện đó (số lớn hơn giữa cân thực và cân quy đổi, hệ số {divisor ?? '—'}). Chưa gồm phụ phí và thuế (nếu có); cước chính thức theo báo giá.
   </p>
 </div>
 <style>
@@ -42,10 +49,14 @@ const { value: divisor, isSample } = shown(volumetricDivisor);
   .calc-out div { padding: 14px 16px; border-radius: var(--radius-sm); background: var(--bg-alt); }
   dt { font-size: 13px; color: var(--muted); }
   dd { margin: 4px 0 0; font-weight: 800; font-size: 20px; color: var(--text); }
+  .calc-price dd { color: var(--brand-ink); }
+  .calc-out dd.sub { font-size: 13px; font-weight: 600; color: var(--muted); }
   .calc-note { margin: 0; font-size: 14px; color: var(--muted); }
   .sample-tag { display: inline-block; padding: 1px 6px; border-radius: 6px; font-size: 11px; font-weight: 800; color: #fff; background: #6b4e00; }
 </style>
 <script>
+  import { estimate } from '../../lib/pricing';
+  import { pricing } from '../../data/vi/pricing';
   const box = document.querySelector<HTMLElement>('[data-calc]');
   if (box) {
     const num = (id: string) => Math.max(0, Number((box.querySelector<HTMLInputElement>(`#${id}`)?.value ?? '0').replace(',', '.')) || 0);
@@ -60,6 +71,13 @@ const { value: divisor, isSample } = shown(volumetricDivisor);
       out('m3')!.textContent = `${fmt(m3, 3)} m³`;
       out('kg')!.textContent = `${fmt(kg, 1)} kg`;
       if (divisor) out('dim')!.textContent = `${fmt(cm3 / divisor, 1)} kg`;
+      if (divisor && out('charge')) {
+        const e = estimate(pricing.tiers, { lCm: num('vc-l'), wCm: num('vc-w'), hCm: num('vc-h'), kg: num('vc-kg'), count: n }, divisor);
+        out('charge')!.textContent = `${fmt(e.chargeablePerPackage, 2)} kg`;
+        out('tier')!.textContent = `${e.tier.price.toLocaleString('vi-VN')} đ/kg (${e.tier.label})`;
+        out('cost')!.textContent = `${Math.round(e.total).toLocaleString('vi-VN')} đ`;
+        out('cost-per')!.textContent = `${Math.round(e.perPackage).toLocaleString('vi-VN')} đ/kiện × ${e.count}`;
+      }
     };
     box.addEventListener('input', calc);
     calc();
