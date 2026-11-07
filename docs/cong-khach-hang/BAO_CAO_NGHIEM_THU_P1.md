@@ -143,7 +143,7 @@ Chi tiết trong `GOI_TRIEN_KHAI_P1.md`.
 | Hệ thống | SHA | Kiểm thử |
 |---|---|---|
 | VIP ID (realm khách 2 tên miền + module CRM trong COWORK) | `feature/cowork-crm` @`c3d848f` (gồm `feature/khach-p1` @`a63b430`) | 329/329; verifier độc lập 9 vòng: GO |
-| CRM | `main` @`36cd80c` | 537/537; portal UI 22/22 |
+| CRM | `main` @`13b3ca1` (verifier chạy trên `36cd80c`; `13b3ca1` thêm 3 sửa P2) | 538/538 |
 | E2E thật, 5 tên miền | dangky / dangnhap / khachhang / cowork / crm | **57 PASS / 0 FAIL / 1 PENDING** (chỉ chạy ở mock) |
 
 **Verifier độc lập toàn hệ thống cuối: READY cho Production Pilot có kiểm soát (phía code), 0 P0/P1.** Đã kiểm thực tế các điều kiện 1–6, 8, 9, 10 của owner. Điều kiện 7 (NTP) do CRM xác nhận trên VPS.
