@@ -7,7 +7,7 @@ Phiên tiếp theo (DeepSeek trong Orca) **được code**, theo đúng các quy
 | Hệ thống | Địa chỉ | Phiên bản |
 |---|---|---|
 | Website | https://www.vipgroup.com.vn | repo này, `main` @`5a7274e`. Header có nút Đăng nhập / Đăng ký |
-| Đăng ký khách (VIP ID) | https://dangky.vipgroup.com.vn | `vip-group-id` `main` @`8ea72bd`. Realm khách bật, đăng ký mở (pilot = 0), Turnstile thật |
+| Đăng ký khách (VIP ID) | https://dangky.vipgroup.com.vn | `vip-group-id` `main` @`ff8d8b0` (09/11; cờ `COWORK_KHACH_TU_DONG`=0). Realm khách bật, đăng ký mở (pilot = 0), Turnstile thật |
 | Đăng nhập khách (VIP ID) | https://dangnhap.vipgroup.com.vn | như trên |
 | Cổng khách (CRM) | https://khachhang.vipgroup.com.vn | CRM `vip-group-khoqctq`, production theo phiên CRM: V6.1 `fb8ca2a` |
 | CRM nội bộ | https://crm.vipgroup.com.vn | duyệt khách: menu "Đăng ký khách (cổng)" |
@@ -15,21 +15,19 @@ Phiên tiếp theo (DeepSeek trong Orca) **được code**, theo đúng các quy
 
 Luồng hiện tại trên production: khách đăng ký → **nhân viên duyệt** → mã VG (bắt đầu VG1001) → đăng nhập → cổng khách.
 
-## 2. Đang chờ owner duyệt (tính năng TỰ KÍCH HOẠT, bỏ nhân viên duyệt)
+## 2. Tự kích hoạt (owner đã duyệt 09/11; đang triển khai dở — xem §8)
 
+- **Trạng thái 09/11:** owner đã gửi `DUYỆT TỰ KÍCH HOẠT`. Website/VIP ID đã backup, merge PR #4 (`ff8d8b0`), deploy với cờ =0. Đang chờ CRM bật `PORTAL_AUTO_APPROVE` để làm bước 5–7.
 - **Đề án và hợp đồng:** `docs/cong-khach-hang/DE_XUAT_TU_DONG_DUYET.md`. Owner đã chốt Q1–Q4.
 - **Code đã xong và kiểm xong:**
-  - VIP ID: PR #4 (`feature/khach-tu-dong` @`2635b03`), cờ `COWORK_KHACH_TU_DONG` mặc định tắt. Verifier độc lập vòng 13: GO.
-  - CRM: RC `14e6da7`, đã chạy staging, cờ `PORTAL_AUTO_APPROVE`.
-  - E2E thật: 10/10, 1 pending. Khi tắt cờ: 57/0.
-- **Owner cần gửi:**
-  1. `I_APPROVE_UPDATE_14e6da7` → **trực tiếp** cho phiên CRM (vip-group-khoqctq).
-  2. `DUYỆT TỰ KÍCH HOẠT` → cho phiên Website/VIP ID (Claude).
-- **Thứ tự phát hành:**
-  1. CRM với cờ = 0.
-  2. Backup VIP ID → merge PR #4 → deploy VIP ID với cờ = 0.
-  3. Bật cờ CRM rồi cờ VIP ID. Sau mỗi lần tạo lại container VIP ID: `docker network connect vipcrm6-prod_edge cowork-staging`.
-  4. `node scripts/portal-auto-approve-pending.js --as <vip_admin>`: chạy thử (dry-run) trước, rồi `--apply`.
+  - VIP ID: PR #4 đã merge → `main` `ff8d8b0`; cờ `COWORK_KHACH_TU_DONG` mặc định tắt. Verifier độc lập vòng 13: GO.
+  - CRM: RC `14e6da7` đã lên production (xác minh 09/11); cờ `PORTAL_AUTO_APPROVE` đang = 0.
+  - E2E thật: 10/10, 1 pending. Khi tắt cờ: 57/0; mock 09/11: 29 PASS / 0 FAIL / 29 PENDING.
+- **Còn lại của phát hành (bước 1–2 đã xong, xem §8):**
+  1. ~~CRM `14e6da7` với cờ = 0~~ — xong.
+  2. ~~Backup VIP ID → merge PR #4 → deploy VIP ID với cờ = 0~~ — xong.
+  3. CRM bật `PORTAL_AUTO_APPROVE=1`, rồi VIP ID bật `COWORK_KHACH_TU_DONG=1`. Sau mỗi lần tạo lại container VIP ID: `docker network connect vipcrm6-prod_edge cowork-staging`.
+  4. CRM chạy `node scripts/portal-auto-approve-pending.js --as <vip_admin>`: dry-run trước, rồi `--apply`.
   5. Smoke.
 
 ## 3. Việc owner còn tồn
@@ -104,3 +102,12 @@ Bật **cả hai** file:
   - **Đã làm theo §7.2/§7.7:** 6 commit bàn giao của phiên trước (2 tài liệu + `tests/portal-e2e/run.mjs` nhóm TUDONG) trước chỉ nằm local → đã đẩy lên nhánh `docs/vipg-web-027-ghi-chu-ban-giao` và mở **PR #51** vào `develop` (chỉ tài liệu + test, không đổi site).
   - **Lưu ý cho phiên sau:** `node_modules` (symlink) và `.git` thật của website đều nằm ngoài workspace (`~/code/vip-group/…`) → sandbox của harness phải mở rộng quyền thì `astro check` / `npm test` / lệnh git ghi mới chạy được (lần đầu rc=1 chỉ vì `EPERM .vite/deps`, không phải lỗi mã). CRM `14e6da7` đã nằm trong HEAD nhánh `v6.3/customer-flat-price` — khi phát hành phải dùng đúng bản RC, không lẫn V6.4.
   - **Sẵn sàng §7.5** ngay khi owner gửi `DUYỆT TỰ KÍCH HOẠT` và CRM đã lên `14e6da7`.
+- **09/11/2026 (tiếp) — PHÁT HÀNH §7.5, bước 1–4 XONG; bước 5–7 DỪNG chờ CRM.** Owner gửi `DUYỆT TỰ KÍCH HOẠT`.
+  - **Xác minh trước:** CRM production `vipcrm6-prod:14e6da7` (healthy, schema `818_portal_auto_approve.sql`), `PORTAL_AUTO_APPROVE=0`; VIP ID `main` `8ea72bd` → merge PR #4 = **`ff8d8b0`**; PR #4 mergeable, pytest 388/388 trên `2635b03`.
+  - **Backup P-02:** sqlite backup API trong container → `deploy/vps/data/backups/cowork-pre-tudong-20261109-224140.db` (569 344 byte, `integrity_check=ok`, 28 bảng, audit 324 dòng, **0600**). Chép `.env.staging` → `.env.staging.bak-before-tudong-20261109-224140` (0600). Image cũ giữ ở tag `cowork-staging:pre-tudong-20261109`.
+  - **Deploy:** VPS `git pull --ff-only` → `ff8d8b0`; build image `5d24bf0d540d`; container tạm kiểm `kiem_cau_hinh()` = `CAU_HINH_OK` với cờ 0 **và** với cờ 1 (mạng edge); VIP ID → CRM `http://vipcrm6-prod-app-1:5175/api/health` = 200. Thêm `COWORK_KHACH_TU_DONG=0` (dòng 42) → `up -d` (healthy sau ~6 s) → `docker network connect vipcrm6-prod_edge cowork-staging`.
+  - **Kiểm sau deploy:** health nội bộ 200, Host lạ 421; cowork `/` = 303 → `/dang-nhap` 200; audit không có `khach.migration.loi`; cột `tu_dong_loai` + bảng `customer_handoff` có; 11 nhân viên, 20 tài khoản khách. Công khai: dangky/dangnhap `/tai-khoan/...` 200, trang đăng ký vẫn luồng chờ duyệt (Turnstile, không có màn "thành công"), website 200. **Không tạo khách giả.**
+  - **Kiểm đóng gói (§7.6):** md5 `cowork/khach.py`, `khach_web.py`, `config.py` **trong container** = đúng cây `2635b03`/`ff8d8b0`.
+  - **Dừng theo owner (chọn "CRM để sau"):** CRM chưa bật `PORTAL_AUTO_APPROVE`, nên VIP ID giữ cờ **0** — hành vi y như trước, cổng khách đang chạy thật bình thường.
+  - **Khi tiếp (còn 3 bước):** (1) CRM đặt `PORTAL_AUTO_APPROVE=1` + tạo lại app, xác nhận; (2) VIP ID: sửa `COWORK_KHACH_TU_DONG=1` trong `deploy/vps/.env.staging` → `docker compose -f deploy/vps/docker-compose.yml up -d` → `docker network connect vipcrm6-prod_edge cowork-staging` → kiểm health/cấu hình; (3) CRM chạy `node scripts/portal-auto-approve-pending.js --as <vip_admin>` dry-run rồi `--apply`, sau đó smoke thật.
+  - **Ghi nhận vận hành:** quanh thời điểm deploy có lưu lượng thật (9 đăng ký, 9 duyệt, 20 launch trong 10 phút) và **15 lượt đăng nhập sai + 1 khoá IP** ở realm khách — nên xem lại nếu tiếp diễn.
