@@ -60,7 +60,7 @@ Bật **cả hai** file:
 - Không deploy production, không đổi DNS, Caddy hay secret khi owner chưa duyệt cụ thể.
 - Mỗi repo chỉ một người ghi.
   - Phiên CRM: duy nhất ghi repo CRM, nhận phê duyệt **trực tiếp** từ owner.
-  - Website + VIP ID: phiên Claude này.
+  - Website + VIP ID: phiên đang làm (Claude hoặc DeepSeek), **mỗi lúc chỉ một phiên**. Xem §7.
 - Không bao giờ yêu cầu gửi mật khẩu hay secret qua chat.
 
 ## 7. Quy tắc cho phiên code tiếp theo (BẮT BUỘC)
