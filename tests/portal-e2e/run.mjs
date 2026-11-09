@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
-import { stackConfig, Stack, vipidCli, sqlRead, crmSql, runtime, coworkSecretFile } from './stack.mjs';
+import { stackConfig, Stack, vipidCli, sqlRead, crmSql, crmScript, runtime, coworkSecretFile } from './stack.mjs';
 import { raw, absorb, cookieHeader, formField } from './http.mjs';
 import { KhachClient, hostFor, PW_STRONG, outbox, account, syncRows, internalPost, decodeLaunch, portalSecret, signV11, synth } from './vipid.mjs';
 import { MockCrm, RealCrm, waitFor } from './crm.mjs';
@@ -39,6 +39,13 @@ class Pending extends Error {}
 class XFail extends Error {}
 class Blocked extends Error {}
 const SHAS = {};
+// §16 đăng ký tự kích hoạt: TUDONG=1 ⇒ bật cờ hai phía (VIP ID COWORK_KHACH_TU_DONG, CRM PORTAL_AUTO_APPROVE) và chạy nhóm TUDONG-*.
+// Bộ đầy đủ cũ (luồng duyệt) chạy với cờ TẮT ⇒ đó cũng là kiểm (10) "tắt cờ hai phía vẫn chạy luồng cũ".
+const TUDONG = process.env.TUDONG === '1';
+if (TUDONG) {
+  runtime.vipidExtra = { COWORK_KHACH_TU_DONG: '1', COWORK_KHACH_HANDOFF_TTL: '10' };
+  runtime.crmExtra = { PORTAL_AUTO_APPROVE: '1' };
+}
 let crmBlocked = null; // lý do: CRM chưa cấp mã theo quy tắc mới (VG1001…)
 const results = [];
 const pages = []; // {name, url, overflow, status}
@@ -126,6 +133,28 @@ function noteBlocked(r) {
   crmBlocked = `CRM cấp ${r.portalCode}, VIP ID yêu cầu ${CODE_RE} — outbox: ${r.outboxError || '?'}`;
   throw new Blocked(`blocked by CRM VG1001: ${crmBlocked}`);
 }
+/**
+ * Tra cứu mã của NGƯỜI KHÁC từ phiên khách `c`. Hai hợp đồng CRM:
+ *  - cũ (§5.3): 404 giống hệt mã không tồn tại;
+ *  - V6.1 addendum 2 (CRM 5670f12, "tìm mọi thứ"): 200 có `results[]`; mã của khách khác → kind 'other_owner' CHỈ gồm
+ *    tracking + kho (không lộ danh tính / dữ liệu kiện), chưa có chủ → 'unowned', không có → 'not_found'.
+ * Trả {contract, ok, detail}.
+ */
+const OTHER_OWNER_KEYS = new Set(['query', 'kind', 'kind_label', 'tracking_no', 'warehouse_code', 'can_add']);
+async function probeOthers(c, trk, { forbid = [] } = {}) {
+  const a = await papi(c, `/portal/api/parcels/search?tracking=${encodeURIComponent(trk)}`);
+  if (a.status === 404 || !a.json?.results) {
+    const z = await papi(c, `/portal/api/parcels/search?tracking=E2E-KHONG-TON-TAI-${RUN}`);
+    return { contract: 'uniform-404', ok: a.status === 404 && a.body === z.body, detail: `${a.status}${a.body === z.body ? ', thân giống mã không tồn tại' : ', THÂN KHÁC'}` };
+  }
+  const rows = (a.json.results || []).filter((r) => r.tracking_no === trk);
+  const bodyNoQuery = a.body.split(trk).join(''); // mã vận đơn do chính người tra gõ (seed E2E-<VG>-… chứa mã VG)
+  const leak = forbid.filter((x) => x && bodyNoQuery.includes(x));
+  const extra = rows.flatMap((r) => Object.keys(r).filter((k) => !OTHER_OWNER_KEYS.has(k)));
+  const items = (a.json.items || []).length;
+  return { contract: 'structured', kind: rows[0]?.kind, ok: rows.length >= 1 && rows.every((r) => r.kind === 'other_owner') && !extra.length && !leak.length && items === 0,
+    detail: `kind=${rows.map((r) => r.kind).join(',')} khoá thừa=[${[...new Set(extra)].join(',')}] lộ=[${leak.join(',')}] items=${items}` };
+}
 const needsStart = (t) => { if (!cfg.START) t.pending('cần START=1 (stack do bộ test quản lý)'); };
 
 // ───────── chạy ─────────
@@ -178,6 +207,8 @@ async function main() {
   let seedCache = null;
   const pget = (host, p, headers = {}) => raw({ port: cfg.PROXY_PORT, path: p, hostHeader: host, headers });
   let ctxB = null;
+
+  if (TUDONG) { await tudongSuite({ page, ctxA }); return; }
 
   // ════════════ LUỒNG ĐẦY ĐỦ ════════════
   await check('FLOW-01', 'Đăng ký (trình duyệt 390px, không Turnstile ở dev) → ngay "chờ duyệt", signup sang CRM (không xác minh email)', 'both', async (t) => {
@@ -643,21 +674,22 @@ async function main() {
     return u;
   }
 
-  await check('SEC-01', 'K1 không thấy kiện K2: danh sách + tra cứu mã K2/kiện chưa rõ chủ → 404 giống hệt mã không tồn tại (hai chiều)', 'real', async (t) => {
+  await check('SEC-01', 'K1 không thấy kiện K2: danh sách + tra cứu mã K2 không lộ chủ/dữ liệu kiện (HĐ cũ: 404 giống hệt; V6.1 addendum 2: chỉ other_owner + kho) + không nhận được kiện K2', 'real', async (t) => {
     const seed = await ensureSeed(t);
     const c1 = await portalClient(K1);
     const c2 = await portalClient(P.K2);
-    const sameNotFound = async (c, label, trk) => {
-      const a = await papi(c, `/portal/api/parcels/search?tracking=${encodeURIComponent(trk)}`);
-      const z = await papi(c, `/portal/api/parcels/search?tracking=E2E-KHONG-TON-TAI-${RUN}`);
-      t.eq(a.status, 404, `${label}: tra ${trk} → 404`);
-      t.eq(a.body, z.body, `${label}: thân 404 giống hệt mã không tồn tại`);
-      const h = (r) => JSON.stringify(Object.fromEntries(Object.entries(r.headers).filter(([k]) => !['date', 'content-length', 'x-request-id', 'connection', 'keep-alive'].includes(k)).sort()));
-      t.eq(h(a), h(z), `${label}: header 404 giống hệt (trừ date/request-id)`);
-    };
-    await sameNotFound(c1, 'K1→K2', seed.K2[0]);
-    await sameNotFound(c2, 'K2→K1', seed.K1[0]);
-    await sameNotFound(c1, 'K1→kiện chưa rõ chủ', seed.K1_PENDING[0]);
+    for (const [c, label, trk, forbid] of [[c1, 'K1→K2', seed.K2[0], [P.K2.code, P.K2.name, P.K2.phone]], [c2, 'K2→K1', seed.K1[0], [K1.code, K1.name, K1.phone]]]) {
+      const pr = await probeOthers(c, trk, { forbid });
+      t.ok(pr.ok, `${label}: tra mã của khách khác (${pr.contract}) — không lộ chủ/dữ liệu kiện: ${pr.detail}`);
+      if (pr.contract === 'structured') t.note(`${label}: hợp đồng mới (V6.1 addendum 2) cho biết mã TỒN TẠI ở kho + mã kho (other_owner) — khác HĐ §5.3 "404 giống hệt"; owner đã duyệt addendum`);
+    }
+    const pend = await papi(c1, `/portal/api/parcels/search?tracking=${encodeURIComponent(seed.K1_PENDING[0])}`);
+    t.ok(pend.status === 404 || (pend.json?.results || []).every((r) => ['unowned', 'not_found'].includes(r.kind) && !r.parcel), `K1→kiện chưa rõ chủ: ${pend.status} ${(pend.json?.results || []).map((r) => r.kind).join(',')} (không trả thẻ kiện)`);
+    // Thử "nhận" kiện đã xác nhận của K2 qua giỏ từ kết quả tìm — quyền sở hữu không được đổi
+    const claim = await papi(c1, '/portal/api/basket/from-search', { method: 'POST', json: { tracking: seed.K2[0] } });
+    t.note(`K1 thêm kiện của K2 vào giỏ → ${claim.status} ${String(claim.json?.error?.code || '')}`);
+    t.ok((await papi(c2, '/portal/api/parcels')).json.items.some((x) => x.tracking_no === seed.K2[0]), 'kiện K2 vẫn thuộc K2 sau khi K1 thử nhận');
+    t.ok(!(await papi(c1, '/portal/api/parcels')).json.items.some((x) => x.tracking_no === seed.K2[0]), 'kiện K2 không vào danh sách của K1');
     const own = await papi(c1, `/portal/api/parcels/search?tracking=${encodeURIComponent(seed.K1[0])}`);
     t.eq(own.status, 200, 'đối chứng: K1 tra kiện của mình → 200');
     const l1 = (await papi(c1, '/portal/api/parcels')).json.items.map((x) => x.tracking_no).sort();
@@ -703,7 +735,8 @@ async function main() {
     t.eq(JSON.stringify(l3), JSON.stringify([...t3].sort()), 'K3 chỉ thấy kiện của mình (không thấy kiện khách khác của A1 / tenant VIP)');
     const c1 = await portalClient(K1);
     for (const [c, who, trk] of [[c3, 'K3→K1', seed.K1[0]], [c3, 'K3→K2', seed.K2[0]], [c1, 'K1→K3', t3[0]]]) {
-      t.eq((await papi(c, `/portal/api/parcels/search?tracking=${encodeURIComponent(trk)}`)).status, 404, `${who}: tra ${trk} → 404`);
+      const pr = await probeOthers(c, trk);
+      t.ok(pr.ok, `${who}: tra ${trk} (${pr.contract}) — không lộ chủ/dữ liệu: ${pr.detail}`);
     }
     t.ok(!(await papi(c1, '/portal/api/parcels')).json.items.some((x) => t3.includes(x.tracking_no)), 'danh sách K1 không có kiện K3');
   });
@@ -1583,7 +1616,7 @@ async function main() {
     const now = Math.floor(Date.now() / 1000);
     const forge = (sub) => { const h = b64({ alg: 'HS256', typ: 'JWT' }); const pl = b64({ ver: 1, aud: 'vip-crm', sub, tenant_code: 'VIP', iat: now, exp: now + 30, nonce: crypto.randomUUID() }); return `${h}.${pl}.${crypto.createHmac('sha256', sec).update(`${h}.${pl}`).digest('base64url')}`; };
     const fk = await raw({ port: cfg.CRM_PORT, path: `/api/auth/cowork/launch?token=${forge(K1.subject)}`, hostHeader: `127.0.0.1:${cfg.CRM_PORT}` });
-    t.ok(fk.status === 403 && /CUSTOMER_ON_STAFF_PATH/.test(fk.body), `token COWORK (ký đúng) với sub khách ${K1.subject.slice(0, 12)}… → ${fk.status} CUSTOMER_ON_STAFF_PATH`);
+    t.ok([401, 403].includes(fk.status) && /CUSTOMER_ON_STAFF_PATH|SUBJECT_NAMESPACE/.test(fk.body) && !(fk.setCookies || []).some((x) => /^vip_session=[^;]+/.test(x) && !/^vip_session=;/.test(x)), `token COWORK (ký đúng) với sub khách ${K1.subject.slice(0, 12)}… → ${fk.status} ${fk.json?.error?.code || (/SUBJECT_NAMESPACE/.test(fk.body) ? 'SUBJECT_NAMESPACE' : 'CUSTOMER_ON_STAFF_PATH')}, không cấp phiên`);
     const fu = await raw({ port: cfg.CRM_PORT, path: `/api/auth/cowork/launch?token=${forge('cowork:khong-ton-tai')}`, hostHeader: `127.0.0.1:${cfg.CRM_PORT}` });
     t.ok(fu.status >= 401 && fu.status <= 403 && !(fu.setCookies || []).length, `token COWORK sub chưa ánh xạ → ${fu.status}, không cấp phiên`);
   });
@@ -1658,6 +1691,241 @@ async function main() {
 /** HS256 bằng bí mật portal (để thử token "ký đúng nhưng sai nội dung"). */
 function signHs(input) {
   return crypto.createHmac('sha256', portalSecret(cfg)).update(input).digest('base64url');
+}
+
+// ═══════════════ §16 — ĐĂNG KÝ TỰ KÍCH HOẠT (TUDONG=1, MODE=real) ═══════════════
+async function tudongSuite({ page, ctxA }) {
+  const scope = 'real'; // TUDONG-* chỉ có nghĩa với CRM thật
+  const pget = (host, p, headers = {}) => raw({ port: cfg.PROXY_PORT, path: p, hostHeader: host, headers });
+  const P = {};
+  const person = (key, i, name) => { P[key] = { key, name, pw: PW_STRONG, ...synth(RUN, i) }; return P[key]; };
+  const crmCustomersByPhone = (ph) => Number(crmSql(cfg, `SELECT count(*) FROM customers WHERE phone_e164='${ph}' OR regexp_replace(coalesce(phone,''),'\\D','','g') LIKE '%${ph.slice(-9)}'`)[0]);
+  const vipAccs = (ph) => sqlRead(cfg, 'SELECT subject, status, portal_code, crm_customer_id, phone_verified_method FROM customer_accounts WHERE phone_e164=?', [ph]);
+  const register = (u, { pw = u.pw, phone = u.phoneLocal, client = new KhachClient(cfg) } = {}) => client.register({ name: u.name, phone, email: '', password: pw });
+  const h1 = (html) => (/<h1>([^<]*)<\/h1>/.exec(html)?.[1] || '').trim();
+
+  await check('TUDONG-01', '§16 đăng ký SĐT mới → trang "Tạo tài khoản thành công · Mã VG", nút "Vào cổng khách hàng" (chuyển phiên dangky→dangnhap) → vào cổng đã đăng nhập (trình duyệt 390px)', scope, async (t) => {
+    const u = person('T1', 101, 'Khách Tự Đăng Ký Một');
+    await page.goto(`${B.dangky}/tai-khoan/dang-ky`);
+    await page.fill('input[name=ho_ten]', u.name); await page.fill('input[name=sdt]', u.phoneLocal);
+    await page.fill('input[name=mat_khau]', u.pw); await page.fill('input[name=mat_khau_2]', u.pw); await page.check('input[name=dong_y]');
+    const [resp] = await Promise.all([page.waitForResponse((r) => r.request().method() === 'POST' && r.url().endsWith('/tai-khoan/dang-ky')), page.click('form[action="/tai-khoan/dang-ky"] button[type=submit]')]);
+    await page.waitForLoadState('load');
+    t.eq(resp.status(), 201, 'POST đăng ký → 201');
+    t.eq(await textOf(page, 'h1'), 'Tạo tài khoản thành công', 'trang "Tạo tài khoản thành công"');
+    u.code = (await textOf(page, '.kh-ma b'));
+    t.ok(CODE_RE.test(u.code), `hiện mã khách ${u.code}`);
+    await inspect(page, 'td-01-thanh-cong');
+    const acc = vipAccs(u.phone)[0];
+    t.ok(acc && acc.status === 'hoat_dong' && acc.portal_code === u.code && acc.phone_verified_method === 'tu_dong' && acc.crm_customer_id, 'VIP ID: hoat_dong, phone_verified_method=tu_dong, đúng mã + crm_customer_id');
+    u.subject = acc.subject;
+    t.eq(crmCustomersByPhone(u.phone), 1, 'CRM: đúng 1 khách cho SĐT');
+    t.eq(crmSql(cfg, `SELECT c.portal_code FROM customers c JOIN users us ON us.id=c.user_id WHERE us.vip_subject='${u.subject}' AND us.kind='customer'`)[0], u.code, 'CRM: khách + user cổng gắn subject, cùng mã');
+    const form = page.locator(`form[action="${B.dangnhap}/tai-khoan/nhan-phien"]`);
+    t.eq(await form.count(), 1, 'nút "Vào cổng khách hàng" POST sang dangnhap /tai-khoan/nhan-phien');
+    await Promise.all([page.waitForURL((x) => x.host === cfg.H.portal && x.pathname.startsWith('/portal/') && !x.pathname.includes('/auth/'), { timeout: 15000 }), form.locator('button[type=submit]').click()]);
+    await page.waitForSelector('#portal-code', { timeout: 15000 });
+    t.eq(await textOf(page, '#portal-code'), u.code, 'vào cổng: hiện đúng mã VG (đã đăng nhập, không phải gõ lại)');
+    await inspect(page, 'td-01-vao-cong');
+    t.ok((await ctxA.cookies(`${B.dangnhap}/tai-khoan/`)).some((c) => c.name === 'vg_khach'), 'có phiên VIP ID trên dangnhap (vg_khach, Path=/tai-khoan)');
+    const lg = await new KhachClient(cfg).login(u.phone, u.pw);
+    t.ok(lg.status === 303 && /\/portal\/auth\/launch/.test(lg.headers.location || ''), 'lần sau đăng nhập bằng SĐT + mật khẩu vừa đặt');
+  });
+
+  await check('TUDONG-02', '§16 SĐT đã có tài khoản → trang "Số điện thoại này đã được đăng ký" + 3 nút; không tạo thêm (nhiều dạng nhập SĐT)', scope, async (t) => {
+    const u = P.T1;
+    t.ok(u?.subject, 'có T1');
+    for (const ph of [u.phoneLocal, u.phone, `+84 ${u.phone.slice(3, 6)} ${u.phone.slice(6)}`, `84${u.phone.slice(3)}`, `${u.phoneLocal.slice(0, 4)}.${u.phoneLocal.slice(4, 7)}.${u.phoneLocal.slice(7)}`]) {
+      const r = await register({ ...u, name: 'Người Khác' }, { phone: ph, pw: 'Mat-Khau-Khac-2026!z' });
+      const links = ['/tai-khoan/dang-ky', '/tai-khoan/dang-nhap', '/tai-khoan/quen-mat-khau'].filter((l) => r.body.includes(l));
+      t.ok(r.status === 409 && h1(r.body) === 'Số điện thoại này đã được đăng ký' && links.length === 3, `"${ph}" → ${r.status} "${h1(r.body)}" (${links.length}/3 nút)`);
+    }
+    t.ok(!/VG\d{4,}/.test((await register({ ...u, name: 'X' }, { pw: 'Mat-Khau-Khac-2026!z' })).body), 'trang trùng không lộ mã/tên khách');
+    t.eq(vipAccs(u.phone).length, 1, 'VIP ID vẫn 1 tài khoản');
+    t.eq(crmCustomersByPhone(u.phone), 1, 'CRM vẫn 1 khách');
+  });
+
+  await check('TUDONG-03', '§16 SĐT trùng hồ sơ khách cũ (đại lý) → trang "đã có hồ sơ" + hotline, chưa vào được; CRM có dòng chờ ho_so_cu; nhân viên Liên kết → mật khẩu người đăng ký bị thay (401) → nhân viên cấp link đặt lại → khách đặt mật khẩu mới và vào cổng', scope, async (t) => {
+    const u = person('T3', 103, 'Khách Hồ Sơ Cũ');
+    const ag = crm.agentCustomer(u.phone);
+    t.ok(ag.customer_id, `seed hồ sơ cũ đại lý A1 có SĐT ${u.phone.slice(0, 6)}…`);
+    const r = await register(u);
+    t.ok(r.status === 409 && /^Số này đã có hồ sơ (khách hàng )?tại VIP GROUP$/.test(h1(r.body)) && r.body.includes('0961 102 655') && r.body.includes('/tai-khoan/dang-ky'), `→ ${r.status} "${h1(r.body)}" + hotline + [Dùng số khác]`);
+    const parked = vipAccs(u.phone);
+    t.ok(parked.length === 0 || (parked.length === 1 && parked[0].status === 'cho_duyet' && !parked[0].portal_code), `VIP ID: không có tài khoản dùng được (${parked.map((x) => x.status).join(',') || 'không có'}${parked.length ? ' — đậu chờ Liên kết' : ''})`);
+    const pre = await new KhachClient(cfg).login(u.phone, u.pw);
+    t.ok(!/\/portal\/auth\/launch/.test(pre.headers.location || ''), `trước Liên kết: đăng nhập không vào cổng (${pre.status} ${pre.headers.location || ''})`);
+    const vip = await crm.login();
+    const rows = (await crm.api('GET', '/api/portal/signups?ket_qua=ho_so_cu', undefined, { token: vip })).json?.items || [];
+    const row = rows.find((x) => x.phone_e164 === u.phone);
+    t.ok(row && row.status === 'cho_duyet' && row.auto_result === 'ho_so_cu', `CRM: dòng chờ ho_so_cu cho nhân viên (${row?.status}/${row?.auto_result})`);
+    t.eq(crmSql(cfg, `SELECT count(*) FROM customers WHERE id='${ag.customer_id}' AND user_id IS NOT NULL`)[0], '0', 'CRM: KHÔNG tự nối hồ sơ cũ');
+    u.subject = row?.subject;
+    const ln = await crm.link({ subject: u.subject, customerId: ag.customer_id });
+    t.note(`Liên kết: ${ln.ok ? 'ok' : ln.out} — mã ${ln.portalCode || '-'}`);
+    t.ok(ln.portalCode, `nhân viên Liên kết hồ sơ cũ → CRM cấp mã ${ln.portalCode}`);
+    const ob = (await crm.api('GET', '/api/portal/outbox', undefined, { token: vip })).json?.items?.find((x) => x.subject === u.subject && x.event === 'ket_qua_duyet');
+    t.note(`outbox ket_qua_duyet: ${ob ? `${ob.status} attempts=${ob.attempts} ${ob.last_error || ''}` : 'không có'}`);
+    // R12-1 (VIP ID 2635b03): Liên kết vào tài khoản đậu ho_so_cu ⇒ thay mật khẩu người đăng ký bằng mật khẩu ngẫu nhiên
+    // + thu hồi phiên (người đăng ký chưa chắc là chủ hồ sơ). Chủ thật lấy mật khẩu qua nhân viên cấp link đặt lại.
+    t.ok(await waitFor(() => vipAccs(u.phone)[0]?.status === 'hoat_dong', 60_000), `VIP ID nhận kết quả Liên kết → hoat_dong (outbox: ${ob ? ob.status : '-'})`);
+    const acc = vipAccs(u.phone);
+    t.ok(acc.length === 1 && acc[0].portal_code === ln.portalCode && acc[0].subject === u.subject, `VIP ID: 1 tài khoản, mã ${ln.portalCode}, đúng subject dòng chờ`);
+    const lg = await new KhachClient(cfg).login(u.phone, u.pw);
+    t.eq(lg.status, 401, 'đăng nhập bằng mật khẩu người đăng ký → 401 (mật khẩu đã bị thay khi Liên kết)');
+    const l = await crm.resetLink(u.subject);
+    t.ok(l.ok && l.url.startsWith(`${B.dangnhap}/tai-khoan/dat-lai?t=`), `nhân viên cấp link đặt lại qua CRM (${l.status} ${l.code || ''})`);
+    const tok = new URL(l.url).searchParams.get('t');
+    const c = new KhachClient(cfg);
+    const g = await c.req('GET', `/tai-khoan/dat-lai?t=${tok}`);
+    const neu = 'Chu-Ho-So-Cu-2026^h';
+    const pr = await c.req('POST', '/tai-khoan/dat-lai', { form: { _csrf: formField(g.body, '_csrf'), t: tok, mat_khau: neu, mat_khau_2: neu } });
+    t.ok(pr.status === 200 && pr.body.includes('Đã đặt mật khẩu mới'), 'khách đặt mật khẩu mới qua link');
+    u.pw = neu;
+    const cl = await portalClient(u);
+    const me = await papi(cl, '/portal/api/me');
+    t.ok(me.status === 200 && me.json.portal_code === ln.portalCode && me.json.tenant_code === 'A1', `đăng nhập bằng mật khẩu mới + vào cổng: /me ${me.status} ${me.json?.portal_code} tenant ${me.json?.tenant_code}`);
+    t.eq(crmSql(cfg, `SELECT code FROM customers WHERE id='${ag.customer_id}'`)[0], ag.code, 'hồ sơ cũ giữ mã nội bộ');
+  });
+
+  await check('TUDONG-04', '§16 10 đăng ký song song CÙNG một SĐT mới → đúng 1 tài khoản VIP ID + 1 khách CRM (cùng mã), không mồ côi', scope, async (t) => {
+    const u = person('T4', 104, 'Khách Song Song');
+    const rs = await Promise.all(Array.from({ length: 10 }, (_, i) => register({ ...u, name: `${u.name} ${i}` })));
+    const dist = rs.reduce((m, r) => ({ ...m, [r.status]: (m[r.status] || 0) + 1 }), {});
+    t.note(`phân bố phản hồi: ${JSON.stringify(dist)}`);
+    t.ok(dist[201] === 1 && Object.keys(dist).every((k) => ['201', '409', '503'].includes(k)), 'đúng 1 lượt 201, còn lại 409 (đã đăng ký) / 503 (bận)');
+    const a = vipAccs(u.phone);
+    t.eq(a.length, 1, 'VIP ID: 1 tài khoản');
+    t.eq(crmCustomersByPhone(u.phone), 1, 'CRM: 1 khách');
+    t.eq(crmSql(cfg, `SELECT c.portal_code FROM customers c WHERE c.phone_e164='${u.phone}'`)[0], a[0].portal_code, 'mã VG ở hai phía khớp (không mồ côi)');
+  });
+
+  await check('TUDONG-05', '§16 CRM sập → "Hệ thống đang bận", không tạo gì; CRM lên → thử lại (cùng mật khẩu, trình duyệt khác) → kích hoạt, không mồ côi; mật khẩu khác khi đang chờ → "đang xử lý"', scope, async (t) => {
+    needsStart(t);
+    const u = person('T5', 105, 'Khách Lúc Sập');
+    await stack.stopCrm();
+    try {
+      const r = await register(u);
+      t.ok(r.status === 503 && r.body.includes('Hệ thống đang bận'), `CRM sập → ${r.status} "Hệ thống đang bận…" (form giữ lại)`);
+      t.note(`trang "bận" ${r.body.includes('0961 102 655') ? 'CÓ' : 'không có'} hotline`);
+      t.eq(vipAccs(u.phone).length, 0, 'VIP ID: không tạo tài khoản');
+      t.ok(!/Traceback|ConnectError|127\.0\.0\.1|5195/.test(r.body), 'không lộ chi tiết');
+    } finally { await stack.startCrm(); }
+    t.eq(crmCustomersByPhone(u.phone), 0, 'CRM: chưa có khách');
+    const other = await register(u, { pw: 'Mat-Khau-Khac-Ban-2026!y' });
+    t.ok(other.status === 503 && other.body.includes('Hệ thống đang xử lý đăng ký trước đó cho số này'), `(6) mật khẩu KHÁC khi đang chờ → ${other.status} "đang xử lý…" (không gọi CRM)`);
+    t.ok(other.body.includes('0961 102 655'), 'trang "đang xử lý" có hotline/Zalo (R12-2)');
+    t.eq(crmCustomersByPhone(u.phone), 0, '… CRM vẫn chưa có khách');
+    const ok = await register(u);
+    t.ok(ok.status === 201 && h1(ok.body) === 'Tạo tài khoản thành công', `thử lại cùng mật khẩu (trình duyệt khác) → ${ok.status} kích hoạt`);
+    t.eq(vipAccs(u.phone).length, 1, 'VIP ID: 1 tài khoản');
+    t.eq(crmCustomersByPhone(u.phone), 1, 'CRM: 1 khách (không mồ côi)');
+    t.eq(sqlRead(cfg, 'SELECT count(*) n FROM customer_tu_dong_cho WHERE phone_e164=?', [u.phone])[0]?.n ?? 0, 0, 'dòng chờ đã xoá sau khi thành công');
+  });
+
+  await check('TUDONG-06', '§16 CRM chết giữa chừng sau khi đã tạo khách (VIP ID quá hạn) → thử lại dùng lại subject, CRM idempotent trả lại đúng khách', scope, async (t) => {
+    t.pending('cần chèn độ trễ phía CRM (> 5 s) sau commit — không làm được với CRM thật không sửa mã; VIP ID có test đơn vị (b32c289)');
+  });
+
+  await check('TUDONG-07', '§16 Q4: đăng ký chờ theo luồng cũ (VIP ID tắt cờ) → scripts/portal-auto-approve-pending.js --as vip.admin chạy thử rồi --apply → VIP ID kích hoạt qua ket_qua_duyet', scope, async (t) => {
+    needsStart(t);
+    const u = person('T7', 107, 'Khách Chờ Duyệt Cũ');
+    runtime.vipidExtra = { ...runtime.vipidExtra, COWORK_KHACH_TU_DONG: '0' };
+    await stack.stopVipid(); await stack.startVipid();
+    try {
+      const r = await register(u);
+      t.ok(r.status === 303 && r.headers.location === '/tai-khoan/cho-duyet', `VIP ID tắt cờ: đăng ký kiểu cũ → ${r.status} chờ duyệt`);
+      u.subject = vipAccs(u.phone)[0]?.subject;
+      t.ok(await waitFor(async () => !!(await crm.findSignup(u.subject)), 20_000), 'CRM nhận signup chờ duyệt');
+    } finally {
+      runtime.vipidExtra = { ...runtime.vipidExtra, COWORK_KHACH_TU_DONG: '1' };
+      await stack.stopVipid(); await stack.startVipid();
+    }
+    const dry = crmScript(cfg, ['scripts/portal-auto-approve-pending.js', '--as', 'vip.admin']);
+    const dj = JSON.parse(dry.out || '{}');
+    t.ok(dry.code === 0 && dj.mode === 'dry-run' && dj.approved.some((x) => x.subject === u.subject && x.would_approve), `chạy thử: liệt kê ${u.subject.slice(0, 12)}… would_approve (pending=${dj.pending}, skipped=${dj.skipped?.length})`);
+    t.eq(vipAccs(u.phone)[0].status, 'cho_duyet', 'chạy thử không đổi gì');
+    const ap = crmScript(cfg, ['scripts/portal-auto-approve-pending.js', '--as', 'vip.admin', '--apply']);
+    const aj = JSON.parse(ap.out || '{}');
+    const mine = aj.approved?.find((x) => x.subject === u.subject);
+    t.ok(ap.code === 0 && mine?.portal_code, `--apply: duyệt ${mine?.portal_code} (approved=${aj.approved?.length}, skipped=${aj.skipped?.map((x) => x.reason).join(',') || 0}, errors=${aj.errors?.length})`);
+    t.ok(await waitFor(() => vipAccs(u.phone)[0]?.status === 'hoat_dong', 45_000), 'VIP ID nhận ket_qua_duyet → hoat_dong');
+    t.eq(vipAccs(u.phone)[0].portal_code, mine.portal_code, 'đúng mã');
+    t.ok((await new KhachClient(cfg).login(u.phone, u.pw)).status === 303, 'khách đăng nhập được');
+    const again = crmScript(cfg, ['scripts/portal-auto-approve-pending.js', '--as', 'vip.admin', '--apply']);
+    t.ok(!JSON.parse(again.out || '{}').approved?.some((x) => x.subject === u.subject), 'chạy lại không duyệt lần hai');
+  });
+
+  await check('TUDONG-08', '§16 màn nhân viên: GET /api/portal/signups?auto=1 liệt kê khách tự đăng ký (SĐT che, mã VG); Khoá cổng → khách không đăng nhập/launch được; mở lại → dùng được', scope, async (t) => {
+    const u = P.T1;
+    const vip = await crm.login();
+    const r = await crm.api('GET', '/api/portal/signups?auto=1', undefined, { token: vip });
+    const row = (r.json?.items || []).find((x) => x.subject === u.subject);
+    t.ok(r.status === 200 && row && row.auto === true, `?auto=1 → ${r.status}, có T1 (auto=${row?.auto})`);
+    t.note(`dòng T1: ${JSON.stringify({ phone: row?.phone_e164 ?? row?.phone_masked, code: row?.portal_code ?? row?.customer_portal_code, status: row?.status, auto_result: row?.auto_result }).slice(0, 200)}`);
+    t.ok(!(r.json?.items || []).some((x) => x.subject === P.T3?.subject), 'ho_so_cu không nằm trong danh sách tự đăng ký');
+    const live = await portalClient(u);
+    t.eq((await papi(live, '/portal/api/me')).status, 200, 'T1 đang có phiên cổng');
+    const pre = await new KhachClient(cfg).login(u.phone, u.pw); // launch token cấp trước khi khoá
+    t.eq((await crm.lock(u.subject, 'khoa')).status, 200, 'nhân viên khoá cổng T1');
+    try {
+      t.ok(await waitFor(() => vipAccs(u.phone)[0].status === 'tam_khoa', 60_000), 'VIP ID → tam_khoa (outbox CRM 15 s/lượt)');
+      t.ok(await waitFor(async () => (await papi(live, '/portal/api/me')).status === 401, 10_000), 'phiên cổng đang mở bị huỷ');
+      t.ok((await new KhachClient(cfg).login(u.phone, u.pw)).status === 403, 'đăng nhập khi bị khoá → 403');
+      const loc = new URL(pre.headers.location);
+      const la = await pget(cfg.H.portal, loc.pathname + loc.search);
+      t.ok(la.status >= 400 && !(la.setCookies || []).some((x) => x.startsWith('vg_portal=')), `launch token cấp trước khoá → ${la.status}`);
+    } finally {
+      t.eq((await crm.lock(u.subject, 'mo_khoa')).status, 200, 'mở cổng T1');
+    }
+    t.ok(await waitFor(() => vipAccs(u.phone)[0].status === 'hoat_dong', 60_000), 'VIP ID → hoat_dong (outbox CRM 15 s/lượt)');
+    t.eq((await papi(await portalClient(u), '/portal/api/me')).status, 200, 'sau mở: vào cổng được');
+  });
+
+  await check('TUDONG-09', '§16 token chuyển phiên (nhan-phien): dùng một lần (phát lại 400), hết hạn 400, sửa token 400, sai Origin bị chặn, đúng → launch', scope, async (t) => {
+    const u = person('T9', 109, 'Khách Chuyển Phiên');
+    const c = new KhachClient(cfg);
+    const r = await register(u, { client: c });
+    t.eq(r.status, 201, 'đăng ký → 201');
+    const tok = formField(r.body, 't');
+    t.ok(tok && tok.startsWith('v1.'), 'trang thành công có token v1.…');
+    const post = (tk, origin = B.dangky, cl = new KhachClient(cfg)) => cl.req('POST', `${B.dangnhap}/tai-khoan/nhan-phien`, { form: { t: tk }, noOrigin: true, headers: origin ? { origin } : {} });
+    t.ok((await post(tok, 'http://evil.example')).status === 403, 'Origin lạ → 403');
+    t.ok((await post(tok, B.dangnhap)).status === 403, 'Origin dangnhap (không phải trang thành công) → 403');
+    const parts = tok.split('.'); parts[2] = String(Number(parts[2]) + 100);
+    t.eq((await post(parts.join('.'))).status, 400, 'sửa exp trong token → 400');
+    const ok = await post(tok);
+    t.ok(ok.status === 303 && /\/portal\/auth\/launch/.test(ok.headers.location || '') && (ok.setCookies || []).some((x) => x.startsWith('vg_khach=')), 'token đúng → 303 launch + phiên vg_khach');
+    const rp = await post(tok);
+    t.ok(rp.status === 400 && !(rp.setCookies || []).some((x) => x.startsWith('vg_khach=')), 'phát lại → 400, không cấp phiên');
+    const u2 = person('T9b', 110, 'Khách Hết Hạn');
+    const r2 = await register(u2);
+    const tok2 = formField(r2.body, 't');
+    await new Promise((res) => setTimeout(res, 11_500)); // COWORK_KHACH_HANDOFF_TTL=10
+    t.eq((await post(tok2)).status, 400, 'quá TTL (10 s) → 400');
+    t.ok((await new KhachClient(cfg).login(u2.phone, u2.pw)).status === 303, 'hết hạn vẫn đăng nhập thường được');
+  });
+
+  await check('TUDONG-10', '§16 trang mới ở 390px: không tràn ngang, không console error, không vi phạm CSP (form-action mở riêng dangnhap ở trang thành công)', scope, async (t) => {
+    const ctx = await newCtx(); const ev = ctx._e2eEvents;
+    try {
+      const pg = await ctx.newPage();
+      const u = person('T10', 111, 'Khách Giao Diện');
+      for (const [name, phone] of [['ok', u.phoneLocal], ['trung', P.T1.phoneLocal], ['ho-so-cu', P.T3.phoneLocal]]) {
+        await pg.goto(`${B.dangky}/tai-khoan/dang-ky`);
+        await pg.fill('input[name=ho_ten]', u.name); await pg.fill('input[name=sdt]', phone);
+        await pg.fill('input[name=mat_khau]', u.pw); await pg.fill('input[name=mat_khau_2]', u.pw); await pg.check('input[name=dong_y]');
+        await Promise.all([pg.waitForLoadState('load'), pg.click('form[action="/tai-khoan/dang-ky"] button[type=submit]')]);
+        await pg.waitForLoadState('load');
+        const o = await inspect(pg, `td-10-${name}`, { expectStatus: name === 'ok' ? 201 : 409 });
+        t.ok(!o.overflow, `${name}: không tràn ngang (${o.scrollWidth}px)`);
+      }
+      const csp = (await pget(cfg.H.dangky, '/tai-khoan/dang-ky')).headers['content-security-policy'] || '';
+      t.ok(!csp.includes(cfg.H.dangnhap), 'form đăng ký thường KHÔNG mở form-action sang dangnhap');
+    } finally { await closeCtx(ctx); }
+    const bad = ev.filter((e) => e.kind === 'csp' || e.kind === 'pageerror' || (e.kind === 'console' && !/status of 40[19]/.test(e.text)));
+    t.ok(!bad.length, `không lỗi console/CSP${bad.length ? ': ' + bad.slice(0, 2).map((e) => e.text).join(' | ') : ''}`);
+  });
 }
 
 // ───────── báo cáo ─────────
