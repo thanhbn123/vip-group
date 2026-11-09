@@ -53,3 +53,49 @@ CRM kiểm SĐT (chuẩn hoá +84) trong TOÀN BỘ hồ sơ khách và tài kho
 - **Q4. Các đăng ký đang chờ duyệt (nếu có) khi bật cờ**
   - ☐ Tự kích hoạt luôn nếu không trùng.
   - ☐ Nhân viên xử lý tay.
+
+---
+
+## 5. OWNER ĐÃ CHỐT (09/11/2026)
+
+| Câu | Quyết định |
+|---|---|
+| Q1 | SĐT trùng hồ sơ khách cũ chưa có tài khoản cổng → báo "Số này đã có hồ sơ tại VIP GROUP — gọi/nhắn Zalo 0961 102 655 để kích hoạt". Nhân viên xác minh rồi bấm **Liên kết**. Không tự nối hồ sơ |
+| Q2 | Quên mật khẩu: giữ như hiện tại (hotline/Zalo → nhân viên cấp link) |
+| Q3 | Tạm chấp nhận rủi ro không xác minh chủ SĐT |
+| Q4 | Các đăng ký đang chờ duyệt: tự kích hoạt nếu không trùng |
+
+## 6. HỢP ĐỒNG KỸ THUẬT (§16) — CRM ⇄ VIP ID
+
+**API mới của CRM:** `POST /api/internal/portal/dang-ky-tu-dong`
+- Chiều gọi: VIP ID → CRM, **đồng bộ**. Ký HMAC `vipid->crm` theo canonical hiện tại (method + path + ts + body). Gọi qua mạng nội bộ, Host không phải PORTAL_HOST.
+- Timeout phía VIP ID: 5 s.
+- Bật bằng cờ CRM `PORTAL_AUTO_APPROVE=1`. Khi tắt: trả 503 `AUTO_APPROVE_OFF`.
+
+Body gửi lên:
+```
+{subject, display_name, phone_e164, email|null}
+```
+
+Kết quả trả về (HTTP 200):
+- `{ok:true, data:{trang_thai:'kich_hoat', crm_customer_id, portal_code}}`: CRM đã tạo khách (tenant VIP), cấp mã VG theo quy tắc §12, tạo `users(kind=customer, vip_subject)` và membership trong **một giao dịch**, ghi audit `portal.signup.auto_approve`.
+- `{ok:true, data:{trang_thai:'trung', loai:'tai_khoan_cong'}}`: SĐT đã thuộc một tài khoản cổng.
+- `{ok:true, data:{trang_thai:'trung', loai:'ho_so_cu'}}`: SĐT trùng hồ sơ khách cũ (mọi tenant/đại lý) chưa có tài khoản cổng. Kèm một dòng chờ trong màn nhân viên để nhân viên liên hệ và liên kết.
+
+Yêu cầu bắt buộc:
+- **So khớp SĐT:** chuẩn hoá về +84, so cả `customers.phone` (tự do) lẫn `phone_e164`, ở mọi tenant.
+- **Idempotent theo subject:** gọi lại với cùng subject trả đúng kết quả cũ, không tạo thêm khách.
+- **Đồng thời:** khoá theo SĐT đã chuẩn hoá (advisory lock hoặc unique) để 20 yêu cầu cùng SĐT chỉ ra **một** khách.
+
+**VIP ID**, bật bằng cờ `COWORK_KHACH_TU_DONG=1`:
+1. Kiểm trùng ngay trong DB của VIP ID. SĐT đã có tài khoản thì trả trang trùng luôn, không gọi CRM.
+2. Nếu chưa có, gọi CRM đồng bộ:
+   - `kich_hoat` → tạo tài khoản `hoat_dong` (`phone_verified_method='tu_dong'`), đăng nhập luôn, hiện trang "Tạo tài khoản thành công · Mã VGxxxx" với nút **Vào cổng khách hàng**.
+   - `trung`, `tai_khoan_cong` → trang "Số điện thoại này đã được đăng ký" với các nút [Dùng số khác] [Đăng nhập] [Quên mật khẩu].
+   - `trung`, `ho_so_cu` → trang "Số này đã có hồ sơ tại VIP GROUP — gọi/nhắn Zalo 0961 102 655 để kích hoạt" với nút [Dùng số khác].
+   - CRM lỗi hoặc timeout → không tạo gì, báo "Hệ thống đang bận, thử lại sau".
+3. Giữ Turnstile, giới hạn IP, trần 200 đăng ký/giờ.
+
+**Backlog Q4:** CRM thêm lệnh vận hành tự duyệt các `portal_signups` đang chờ mà không trùng, đi qua đúng đường approve hiện có (outbox `ket_qua_duyet` sang VIP ID). Chạy một lần khi bật cờ.
+
+**Màn CRM:** thêm danh sách "Khách tự đăng ký" (thời điểm, SĐT che bớt, mã VG, nút Khoá cổng). Tab trùng hồ sơ cũ để nhân viên Liên kết.
