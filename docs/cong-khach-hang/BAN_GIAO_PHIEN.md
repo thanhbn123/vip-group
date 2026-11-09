@@ -1,6 +1,6 @@
 # BÀN GIAO PHIÊN — trạng thái ngày 09/11/2026 (đọc file này trước khi trả lời owner)
 
-Phiên tiếp theo chỉ **HỎI ĐÁP**: không code, không push, không SSH, không thao tác production.
+Phiên tiếp theo (DeepSeek trong Orca) **được code**, theo đúng các quy tắc ở §7. Owner muốn tiếp tục công việc liền mạch.
 
 ## 1. Đang chạy production
 
@@ -62,3 +62,38 @@ Bật **cả hai** file:
   - Phiên CRM: duy nhất ghi repo CRM, nhận phê duyệt **trực tiếp** từ owner.
   - Website + VIP ID: phiên Claude này.
 - Không bao giờ yêu cầu gửi mật khẩu hay secret qua chat.
+
+## 7. Quy tắc cho phiên code tiếp theo (BẮT BUỘC)
+
+1. **Người ghi duy nhất:** khi phiên này làm, nó là người ghi duy nhất của repo `vip-group-com-vn` (website) và `~/code/vip-group-id-khach` (VIP ID). **Không ghi** repo CRM `~/Projects/vip-group-khoqctq`; việc CRM do phiên CRM làm, phối hợp qua tin nhắn hoặc owner chuyển lời.
+2. **Nhánh:** luôn làm trên nhánh mới, không commit thẳng `main`/`develop`. Website: PR → `develop` (CI + staging) → PR → `main`. VIP ID: PR vào `main`.
+3. **Test trước khi báo xong:**
+
+   | Repo | Lệnh | Kỳ vọng |
+   |---|---|---|
+   | Website | `npx astro check` | 0 lỗi |
+   | Website | `npm test` | 183 test đạt hết |
+   | VIP ID | `cd ~/code/vip-group-id-khach && /Users/viporder/code/vip-group-id/.venv/bin/python -m pytest -q --ignore=tests/test_ui_ag01.py -p no:warnings` | rc=0 |
+   | Tích hợp | `tests/portal-e2e/README.md` (`MODE=real TOPO=multi …`) | hết các mục |
+
+   Đổi gì liên quan đăng nhập, phiên, quyền hoặc dữ liệu khách thì cần thêm **một lượt rà soát bảo mật độc lập**.
+4. **Production:**
+   - Chỉ làm khi owner gửi câu duyệt cụ thể cho đúng việc đó.
+   - Luôn backup trước.
+   - Cập nhật VIP ID theo đúng quy trình ở `PHUONG_AN_PILOT_P1.md`: thử bằng container tạm → `docker compose up -d` → **`docker network connect vipcrm6-prod_edge cowork-staging`** (thiếu bước này thì CRM không gọi được VIP ID).
+   - Caddy: backup, `caddy validate`, `reload` mềm. Không bao giờ restart Caddy, vì nó dùng chung cho nhiều site.
+   - Không in hay commit secret. Không yêu cầu owner gửi mật khẩu hay secret qua chat.
+5. **Việc làm ngay khi owner gửi `DUYỆT TỰ KÍCH HOẠT`** (sau khi phiên CRM đã cập nhật CRM `14e6da7`):
+   1. SSH `viporder-staging`, backup `cowork.db` theo cách ở P-02 (sqlite backup API trong container → `/data/backups/`).
+   2. Merge PR #4 (`thanhbn123/vip-group-id`).
+   3. Trên VPS: `cd /srv/vip-staging/cowork && git pull --ff-only`, rồi build và thử bằng container tạm như P-03.
+   4. Thêm `COWORK_KHACH_TU_DONG=0` vào `deploy/vps/.env.staging`, `up -d`, rồi `network connect`. Kiểm `/api/health` và đăng nhập COWORK.
+   5. Báo phiên CRM bật `PORTAL_AUTO_APPROVE=1`. Sau đó đặt `COWORK_KHACH_TU_DONG=1`, `up -d`, `network connect`.
+   6. Phiên CRM chạy `portal-auto-approve-pending.js`: dry-run trước, rồi `--apply`.
+   7. Smoke trên production bằng trình duyệt thật. Không tạo khách giả trên production; nếu cần thì để owner tự đăng ký.
+6. **Không lặp lại lỗi cũ:** image Docker của CRM từng thiếu thư mục `web-portal`. Mọi thay đổi đóng gói phải kiểm **bên trong container**, không chỉ chạy từ mã nguồn.
+7. **Khi phiên Claude quay lại:** để lại ghi chú ở cuối file này (đã làm gì, SHA, còn dở gì) để Claude kiểm và tiếp tục.
+
+## 8. Nhật ký phiên tiếp theo (phiên code ghi vào đây)
+
+- (trống)
