@@ -12,3 +12,6 @@ evidence/screenshots/*.png
 dist-lead/
 evidence/**/*.png
 .preview/
+dist-chat/
+dist-chat-test*/
+dist-demo-home/

@@ -1,0 +1,207 @@
+---
+/**
+ * VIP CHAT V1.0 — Phòng chat chung VIP GROUP trên trang chủ (hợp đồng §5.4, §7.3–7.4; owner 12/11/2026 §8–9).
+ *
+ * - Chỉ render khi build với PUBLIC_CHAT_WIDGET=1 (mặc định TẮT → build thường không đổi trang thật).
+ * - Đọc GET <PUBLIC_CHAT_API_BASE>/portal/public/community mỗi 10 s khi tab đang hiện (không cookie).
+ *   PUBLIC_CHAT_API_BASE rỗng → gọi cùng origin ('/portal/public/community') cho bản demo cùng máy chủ CRM.
+ * - Máy tính ≥1024 px: khung cao ~520 px ở cột phải. Điện thoại <768 px: thẻ gọn (trạng thái + lịch + 3 tin)
+ *   + nút chat nổi mở toàn màn hình (<dialog>, bẫy focus, Esc).
+ * - Dữ liệu API chỉ ghi bằng textContent (không innerHTML). Xem tests/chat-widget/README.md.
+ */
+import { getContent } from '../data';
+import { CHAT } from '../lib/mode';
+
+const { contact } = getContent('vi');
+const portal = contact.portal;
+const apiBase = CHAT.apiBase;
+const defaultJoin = `${apiBase}/portal/#/cong-dong`;
+const NOTE = 'Muốn tham gia chat, vui lòng đăng nhập / đăng ký VIP ID (tài khoản đã có mã VG).';
+---
+{CHAT.enabled && (
+<section class="cc-section" id="phong-chat" aria-labelledby="cc-title" data-cc-root data-api={apiBase} data-join={defaultJoin}>
+  <div class="container cc-grid">
+    <div class="cc-info">
+      <span class="kicker">Cộng đồng VIP GROUP</span>
+      <div class="cc-titlebar">
+        <h2 id="cc-title">Phòng chat chung VIP GROUP</h2>
+        <span class="cc-chip" data-cc-status data-state="loading">ĐANG TẢI</span>
+      </div>
+      <p class="cc-desc">Nơi khách hàng VIP GROUP trao đổi trực tiếp với nhau và với đội ngũ VIP GROUP theo lịch hằng tuần. Ai cũng xem được; chỉ tài khoản VIP ID đã có mã VG mới gửi được tin.</p>
+      <p class="cc-session" data-cc-session>Đang tải trạng thái phòng chat…</p>
+      <p class="cc-warn" data-cc-warn hidden>Không tải được trạng thái phòng chat — đang thử lại…</p>
+
+      <h3 class="cc-h3" id="cc-sched-title">Lịch chat</h3>
+      <ul class="cc-schedule" data-cc-schedule aria-labelledby="cc-sched-title"><li class="cc-muted">Đang tải lịch…</li></ul>
+      <p class="cc-sched-note" data-cc-sched-note hidden></p>
+
+      <div class="cc-preview" aria-labelledby="cc-preview-title">
+        <h3 class="cc-h3" id="cc-preview-title">Tin nhắn mới</h3>
+        <ol class="cc-list cc-list--preview" data-cc-list="preview" data-limit="3" aria-live="polite" aria-relevant="additions"></ol>
+        <p class="cc-empty" data-cc-empty="preview">Đang tải…</p>
+      </div>
+
+      <p class="cc-note">{NOTE}</p>
+      <div class="cc-actions">
+        <a class="btn btn-primary cc-join" data-cc-join href={defaultJoin}>Tham gia chat</a>
+        {portal && <a class="btn btn-ghost" href={portal.loginUrl} data-track="portal_login_click" data-track-location="community_chat">Đăng nhập</a>}
+        {portal && <a class="btn btn-ghost" href={portal.registerUrl} data-track="portal_register_click" data-track-location="community_chat">Đăng ký</a>}
+      </div>
+    </div>
+
+    <div class="cc-panel" aria-labelledby="cc-panel-title">
+      <div class="cc-panel-head">
+        <h3 id="cc-panel-title">Tin nhắn trong phiên</h3>
+        <span class="cc-chip" data-cc-status data-state="loading">ĐANG TẢI</span>
+      </div>
+      <div class="cc-scroll" data-cc-scroll>
+        <ol class="cc-list" data-cc-list="full" aria-live="polite" aria-relevant="additions"></ol>
+        <p class="cc-empty" data-cc-empty="full">Đang tải…</p>
+      </div>
+      <button type="button" class="cc-newbtn" data-cc-newbtn hidden>↓ Tin mới</button>
+      <div class="cc-panel-foot">
+        <p class="cc-online" data-cc-online></p>
+        <a class="btn btn-primary cc-join" data-cc-join href={defaultJoin}>Tham gia chat</a>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="cc-fab" data-cc-fab aria-haspopup="dialog" aria-controls="cc-sheet">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path fill="currentColor" d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm3 6.5a1.5 1.5 0 1 0 0 .01Zm5 0a1.5 1.5 0 1 0 0 .01Zm5 0a1.5 1.5 0 1 0 0 .01Z"/></svg>
+    <span>Phòng chat</span>
+    <span class="cc-dot" data-cc-dot data-state="loading" aria-hidden="true"></span>
+    <span class="visually-hidden" data-cc-fab-state></span>
+  </button>
+
+  <dialog class="cc-sheet" id="cc-sheet" aria-labelledby="cc-sheet-title" data-cc-sheet>
+    <div class="cc-sheet-head">
+      <h2 id="cc-sheet-title">Phòng chat chung VIP GROUP</h2>
+      <button type="button" class="cc-close" data-cc-close aria-label="Đóng phòng chat">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6L19 6.4 17.6 5 12 10.6Z"/></svg>
+      </button>
+    </div>
+    <div class="cc-sheet-status">
+      <span class="cc-chip" data-cc-status data-state="loading">ĐANG TẢI</span>
+      <p class="cc-session" data-cc-session>Đang tải trạng thái phòng chat…</p>
+    </div>
+    <p class="cc-warn" data-cc-warn hidden>Không tải được trạng thái phòng chat — đang thử lại…</p>
+    <details class="cc-sheet-sched">
+      <summary>Lịch chat</summary>
+      <ul class="cc-schedule" data-cc-schedule><li class="cc-muted">Đang tải lịch…</li></ul>
+      <p class="cc-sched-note" data-cc-sched-note hidden></p>
+    </details>
+    <div class="cc-scroll cc-scroll--sheet" data-cc-scroll>
+      <ol class="cc-list" data-cc-list="sheet" aria-live="polite" aria-relevant="additions"></ol>
+      <p class="cc-empty" data-cc-empty="sheet">Đang tải…</p>
+    </div>
+    <button type="button" class="cc-newbtn" data-cc-newbtn hidden>↓ Tin mới</button>
+    <div class="cc-sheet-foot">
+      <p class="cc-note">{NOTE}</p>
+      <a class="btn btn-primary cc-join" data-cc-join href={defaultJoin}>Tham gia chat</a>
+      {portal && (
+        <div class="cc-auth">
+          <a class="btn btn-ghost" href={portal.loginUrl} data-track="portal_login_click" data-track-location="community_chat_sheet">Đăng nhập</a>
+          <a class="btn btn-ghost" href={portal.registerUrl} data-track="portal_register_click" data-track-location="community_chat_sheet">Đăng ký</a>
+        </div>
+      )}
+    </div>
+  </dialog>
+</section>
+)}
+
+<style>
+  .cc-section { padding: clamp(40px, 6vw, 80px) 0; background: linear-gradient(160deg, var(--bg-soft), var(--bg)); border-bottom: 1px solid var(--line); }
+  .cc-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 440px); gap: 48px; align-items: start; }
+  .cc-info { min-width: 0; }
+  .cc-titlebar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 12px; }
+  .cc-titlebar h2 { margin: 0; font-size: clamp(26px, 3vw, 38px); }
+  .cc-desc { color: var(--text-2); max-width: 620px; }
+  .cc-h3 { font-size: 17px; margin: 20px 0 8px; }
+  .cc-session { margin: 0 0 8px; font-weight: 600; color: var(--text-2); }
+  .cc-warn { margin: 0 0 8px; padding: 8px 12px; border-radius: 10px; background: #fdecee; color: var(--brand-ink); font-weight: 600; font-size: 14px; }
+  .cc-schedule { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  /* Phần tử do script tạo không mang thuộc tính scope của Astro → :global() bên trong khối đã scope. */
+  .cc-schedule :global(li) { color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .cc-schedule :global(.cc-exc) { color: var(--brand-ink); }
+  .cc-schedule :global(.cc-muted), .cc-sched-note { color: var(--muted); }
+  .cc-sched-note { margin: 8px 0 0; font-size: 14px; }
+  .cc-note { margin: 20px 0 12px; padding: 12px 14px; border-left: 3px solid var(--brand); background: var(--bg); border-radius: 0 10px 10px 0; color: var(--text-2); font-size: 15px; }
+  .cc-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .cc-actions .btn, .cc-panel-foot .btn, .cc-sheet-foot .btn { min-height: 44px; }
+
+  .cc-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: .06em; white-space: nowrap; background: #eeeff1; color: #3d4148; }
+  .cc-chip::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .cc-chip[data-state='open'] { background: #e5f5ea; color: #11632f; }
+  .cc-chip[data-state='locked'] { background: #fff1d6; color: #6e4300; }
+  .cc-chip[data-state='error'] { background: #fdecee; color: var(--brand-ink); }
+
+  .cc-panel { position: relative; height: 520px; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); box-shadow: var(--shadow); overflow: hidden; }
+  .cc-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+  .cc-panel-head h3 { margin: 0; font-size: 17px; }
+  .cc-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 20px; }
+  .cc-panel-foot { padding: 12px 20px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+  .cc-online { margin: 0; font-size: 14px; color: var(--muted); min-height: 1.6em; }
+  .cc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .cc-list :global(.cc-msg) { padding: 10px 12px; border-radius: 12px; background: var(--bg-alt); }
+  .cc-list :global(.cc-msg-head) { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; font-size: 14px; }
+  .cc-list :global(.cc-name) { font-weight: 700; color: var(--text); overflow-wrap: anywhere; }
+  .cc-list :global(.cc-badge) { padding: 1px 8px; border-radius: 999px; background: var(--brand); color: var(--on-brand); font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+  .cc-list :global(.cc-time) { margin-left: auto; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .cc-list :global(.cc-body) { margin: 2px 0 0; color: var(--text-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .cc-empty { margin: 0; color: var(--muted); }
+  .cc-list:not(:empty) + .cc-empty { display: none; }
+  .cc-newbtn { position: absolute; left: 50%; transform: translateX(-50%); bottom: 132px; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--brand); color: var(--on-brand); font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(17, 17, 20, .2); }
+  .cc-newbtn[hidden] { display: none; }
+
+  .cc-preview { display: none; }
+  .cc-fab { display: none; }
+
+  /* Máy tính bảng 768–1023 px: một cột, khung tin nhắn nằm dưới. */
+  @media (max-width: 1023px) {
+    .cc-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  }
+  /* Điện thoại <768 px: thẻ gọn trong trang + nút nổi mở toàn màn hình. */
+  @media (max-width: 767px) {
+    .cc-section { padding: 32px 0; }
+    .cc-info { padding: 20px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); box-shadow: 0 8px 24px rgba(17, 17, 20, .06); }
+    .cc-titlebar h2 { font-size: 24px; }
+    .cc-desc { display: none; }
+    .cc-panel { display: none; }
+    .cc-preview { display: block; }
+    .cc-note { margin-top: 16px; font-size: 14px; }
+    .cc-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .cc-actions .cc-join { grid-column: 1 / -1; }
+    .cc-actions .btn { padding: 0 12px; }
+    .cc-fab { position: fixed; z-index: 60; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--brand); color: var(--on-brand); font-weight: 800; box-shadow: 0 10px 28px rgba(208, 7, 26, .35); cursor: pointer; }
+    .cc-fab:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+    .cc-dot { width: 10px; height: 10px; border-radius: 50%; background: #c9ccd1; box-shadow: 0 0 0 2px var(--brand); }
+    .cc-dot[data-state='open'] { background: #3ddc6f; }
+    .cc-dot[data-state='locked'] { background: #ffc24d; }
+  }
+  :global(html:not(.js)) .cc-fab { display: none; }
+
+  .cc-sheet { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; background: var(--bg); color: var(--text); flex-direction: column; overflow: hidden; }
+  .cc-sheet[open] { display: flex; }
+  .cc-sheet::backdrop { background: rgba(17, 17, 20, .5); }
+  .cc-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(10px + env(safe-area-inset-top)) 12px 10px 16px; border-bottom: 3px solid var(--brand); }
+  .cc-sheet-head h2 { margin: 0; font-size: 19px; letter-spacing: 0; }
+  .cc-close { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); cursor: pointer; }
+  .cc-sheet-status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; padding: 12px 16px 0; }
+  .cc-sheet-status .cc-session { margin: 0; font-size: 14px; }
+  .cc-sheet > .cc-warn { margin: 8px 16px 0; }
+  .cc-sheet-sched { margin: 8px 16px 0; border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; }
+  .cc-sheet-sched summary { min-height: 44px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+  .cc-sheet-sched .cc-schedule { padding-bottom: 10px; }
+  .cc-scroll--sheet { padding: 12px 16px; }
+  .cc-sheet .cc-newbtn { bottom: calc(190px + env(safe-area-inset-bottom)); }
+  .cc-sheet-foot { padding: 10px 16px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); display: grid; gap: 8px; }
+  .cc-sheet-foot .cc-note { margin: 0; font-size: 14px; padding: 8px 12px; }
+  .cc-auth { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  :global(html.cc-lock), :global(html.cc-lock body) { overflow: hidden; }
+</style>
+
+<script>
+  import { initCommunityChat } from '../lib/community-chat';
+  const root = document.querySelector<HTMLElement>('[data-cc-root]');
+  if (root) initCommunityChat(root);
+</script>

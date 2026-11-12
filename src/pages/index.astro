@@ -7,6 +7,8 @@ import NewsList from '../components/NewsList.astro';
 import CtaBand from '../components/CtaBand.astro';
 import MemberNote from '../components/MemberNote.astro';
 import PriceTable from '../components/PriceTable.astro';
+// Bí danh trong astro.config.mjs: cờ PUBLIC_CHAT_WIDGET tắt → component rỗng (không CSS/JS khung chat).
+import CommunityChat from '@vipg/community-chat';
 import { getContent } from '../data';
 import { heroBanner } from '../data/vi/hero';
 const hb = heroBanner;
@@ -63,6 +65,9 @@ const sloganLast = sloganParts.pop();
       )}
     </div>
   </section>
+
+  {/* VIP CHAT V1.0 — chỉ hiện khi build với PUBLIC_CHAT_WIDGET=1 (mặc định tắt). */}
+  <CommunityChat />
 
   <section class="section" aria-labelledby="about-title">
     <div class="container split">

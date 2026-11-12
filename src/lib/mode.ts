@@ -4,3 +4,6 @@
  * - DEMO (`VIPG_DEMO=1`): hiện dữ liệu MẪU có nhãn, build cả trang nháp, MỌI trang noindex.
  */
 export const DEMO: boolean = __VIPG_DEMO__;
+
+/** Khung "Phòng chat chung" trên trang chủ: bật bằng PUBLIC_CHAT_WIDGET=1 lúc build (mặc định tắt). */
+export const CHAT: { enabled: boolean; apiBase: string } = __VIPG_CHAT__;
