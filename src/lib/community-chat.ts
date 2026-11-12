@@ -61,11 +61,18 @@ export function valid(x: unknown): x is Community {
   return !!c && typeof c === 'object' && typeof c.open === 'boolean' && Array.isArray(c.messages);
 }
 
-/** Chỉ nhận join_url http(s) (chặn javascript:, data:…); http chỉ khi chính API base là http (máy dev). */
+/**
+ * Chỉ nhận join_url http(s) (chặn javascript:, data:…) TRỎ TỚI vipgroup.com.vn (hoặc tên miền con) hoặc cùng host với trang / API base
+ * (môi trường thử, máy dev). http chỉ khi chính API base là http (máy dev). Sai → fallback.
+ */
 export function safeJoin(raw: unknown, fallback: string, apiBase: string) {
   try {
     const u = new URL(String(raw), location.href);
-    if (u.protocol === 'https:' || (u.protocol === 'http:' && !/^https:/.test(apiBase))) return u.href;
+    const host = u.hostname.toLowerCase();
+    let apiHost = '';
+    try { apiHost = apiBase ? new URL(apiBase, location.href).hostname.toLowerCase() : location.hostname.toLowerCase(); } catch { apiHost = ''; }
+    const trusted = host === 'vipgroup.com.vn' || host.endsWith('.vipgroup.com.vn') || host === location.hostname.toLowerCase() || (apiHost !== '' && host === apiHost);
+    if (trusted && (u.protocol === 'https:' || (u.protocol === 'http:' && !/^https:/.test(apiBase)))) return u.href;
   } catch { /* bỏ qua */ }
   return fallback;
 }
