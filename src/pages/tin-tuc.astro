@@ -5,12 +5,16 @@ import NewsList from '../components/NewsList.astro';
 import { getContent } from '../data';
 
 const { company, news } = getContent('vi');
+// VIPG-WEB-030: trang này cũng là KHUNG cho mọi trang /tin-tuc/… và /zh/tin-tuc/… — public/_worker.js lấy bài đã đăng từ CRM
+// rồi thay phần giữa hai mốc <template data-news-page-…> (và thẻ tiêu đề / mô tả / canonical / og:*).
 ---
 <BaseLayout title="Tin tức" description={`Tin tức, thông báo và hoạt động chính thức của ${company.name} cùng các công ty thành viên trong hệ sinh thái.`}>
+  <template data-news-page-start></template>
   <PageHero kicker="Tin tức" title={`Thông tin từ ${company.name}`} lead="Tin tức, thông báo và hoạt động chính thức của VIP GROUP và các công ty thành viên." />
   <section class="section" aria-label="Danh sách tin tức">
     <div class="container">
       <NewsList items={news} headingLevel="h2" />
     </div>
   </section>
+  <template data-news-page-end></template>
 </BaseLayout>

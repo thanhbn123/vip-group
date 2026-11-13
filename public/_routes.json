@@ -1,5 +1,5 @@
 {
   "version": 1,
-  "include": ["/api/*"],
+  "include": ["/api/*", "/", "/tin-tuc", "/tin-tuc/*", "/zh/tin-tuc", "/zh/tin-tuc/*"],
   "exclude": []
 }

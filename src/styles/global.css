@@ -108,3 +108,24 @@ p { margin: 0 0 16px; }
 .card-link:hover { border-color: var(--brand); transform: translateY(-2px); }
 .card-link .more { color: var(--brand-ink); font-weight: 700; margin: 16px 0 0; }
 .source-note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+/* VIPG-WEB-030 · Tin tức từ CRM (public/_worker.js dựng HTML) */
+.news-grid .card { display: flex; flex-direction: column; gap: 8px; padding: 0; overflow: hidden; }
+.news-grid .card .news-card-body { padding: 0 24px 24px; display: flex; flex-direction: column; gap: 8px; }
+.news-grid .card .news-card-body:first-child { padding-top: 24px; }
+.news-grid .card img { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+.news-grid .card h2, .news-grid .card h3 { font-size: 20px; line-height: 1.35; margin: 0; }
+.news-grid .card h2 a:hover, .news-grid .card h3 a:hover { color: var(--brand-ink); }
+.news-cats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+.news-cats a { border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+.news-cats a[aria-current="page"] { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+.news-meta { color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.news-article { max-width: 760px; font-size: 17px; line-height: 1.8; }
+.news-article h2 { font-size: clamp(22px, 2.4vw, 28px); margin: 1.6em 0 .6em; }
+.news-article h3 { font-size: clamp(19px, 2vw, 22px); margin: 1.4em 0 .5em; }
+.news-article a { color: var(--brand-ink); text-decoration: underline; text-underline-offset: 3px; }
+.news-article blockquote { border-left: 4px solid var(--brand); margin: 1.2em 0; padding: 4px 0 4px 18px; color: var(--text-2); }
+.news-article figure { margin: 1.6em 0; }
+.news-article img { max-width: 100%; height: auto; border-radius: var(--radius-sm); display: block; }
+.news-article figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; }
+.news-cover { margin: 0 0 1.6em; }
+.news-back { margin-top: 40px; }
