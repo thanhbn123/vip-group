@@ -1,16 +1,20 @@
-// VIP GROUP — nhận lead từ form website (VIPG-WEB-023). Cloudflare Pages "advanced mode".
+// VIP GROUP — nhận lead từ form website (VIPG-WEB-023, VIPG-WEB-031). Cloudflare Pages "advanced mode".
 // public/_routes.json cho /api/* (lead) và trang chủ + /tin-tuc/… (tin tức, VIPG-WEB-030 bên dưới) đi qua file này; trang khác vẫn tĩnh (giữ _headers).
 //
 // Luồng POST /api/lead:
 //   1. kiểm Origin cùng tên miền, JSON ≤ 8 KB, bẫy bot (honeypot + thời gian điền), dữ liệu hợp lệ
 //   2. kiểm Cloudflare Turnstile (siteverify)
-//   3. GHI Google Sheet qua Google Apps Script (sổ gốc) — chỉ báo "đã nhận" khi bước này thành công
+//   3. LƯU — VIPG-WEB-031 (chủ dự án 13/11/2026, "cách 2"): gửi THẲNG vào CRM (POST {CRM}/api/intake/leads, ký HMAC theo hợp đồng
+//      CRM: X-Lead-Timestamp + X-Lead-Signature = hex(HMAC-SHA256(LEAD_INTAKE_SECRET, ts + "." + body)) + Idempotency-Key = lead_id).
+//      Chưa cấu hình CRM mà còn cấu hình Google Sheet cũ → ghi Sheet như trước. Chỉ báo "đã nhận" khi lưu thành công.
 //   4. báo Zalo Bot tới nhân viên (lỗi Zalo không ảnh hưởng khách)
-//   Apps Script tự đẩy lead sang CRM V5 và gửi lại khi lỗi (ops/lead-sheet/Code.gs).
 //
 // Biến môi trường (đặt trong Cloudflare Pages → Settings → Variables and Secrets — KHÔNG vào git):
-//   TURNSTILE_SECRET, SHEET_WEBHOOK_URL, SHEET_WEBHOOK_SECRET  (bắt buộc — thiếu thì trả 503 not_configured)
-//   ZALO_BOT_TOKEN, ZALO_NOTIFY_CHAT_ID                         (tuỳ chọn — thiếu thì không báo Zalo)
+//   TURNSTILE_SECRET                                   (bắt buộc)
+//   LEAD_INTAKE_SECRET + CRM_INTAKE_URL hoặc CRM_NEWS_URL   (đích lưu chính — CRM; CRM_INTAKE_URL mặc định = CRM_NEWS_URL + /api/intake/leads)
+//   SHEET_WEBHOOK_URL, SHEET_WEBHOOK_SECRET            (đích cũ — chỉ dùng khi chưa cấu hình CRM)
+//   Không có đích lưu nào → 503 not_configured.
+//   ZALO_BOT_TOKEN, ZALO_NOTIFY_CHAT_ID                (tuỳ chọn — thiếu thì không báo Zalo)
 // Không ghi họ tên / SĐT / nội dung vào log.
 
 const MAX_BODY = 8 * 1024;
@@ -111,9 +115,44 @@ async function saveToSheet(env, lead, fetchImpl) {
   return { lead_id: d.lead_id, duplicate: d.duplicate === true };
 }
 
+/** Đích lưu CRM (VIPG-WEB-031): URL nhận lead của CRM + khóa ký; null nếu chưa cấu hình. */
+export function crmTarget(env) {
+  const secret = env.LEAD_INTAKE_SECRET;
+  const base = (env.CRM_INTAKE_URL || (env.CRM_NEWS_URL ? `${String(env.CRM_NEWS_URL).replace(/\/+$/, '')}/api/intake/leads` : '')).trim();
+  return secret && /^https:\/\//.test(base) ? { url: base, secret } : null;
+}
+const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+export async function signLead(secret, ts, raw) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return hex(await crypto.subtle.sign('HMAC', key, enc.encode(`${ts}.${raw}`)));
+}
+/** Payload đúng hợp đồng CRM (server/modules/leads/intake.js validateLead). Tuyến ghi vào đầu nội dung như Apps Script cũ. */
+export function crmPayload(lead) {
+  const msg = `${lead.route && lead.route !== 'chua-ro' ? `[Tuyến: ${ROUTES[lead.route] || lead.route}] ` : ''}${lead.message || ''}`.trim();
+  const utm = Object.fromEntries(Object.entries(lead.utm || {}).filter(([, v]) => v));
+  return {
+    lead_id: lead.idempotency_key, source: lead.source, page: lead.page, utm: Object.keys(utm).length ? utm : null,
+    name: lead.name, phone: lead.phone, email: lead.email, need: lead.need, weight_kg: lead.weight_kg, message: msg || null,
+    consent_at: lead.consent_at, created_at: lead.created_at,
+  };
+}
+async function saveToCrm(target, lead, fetchImpl, now = Date.now()) {
+  const raw = JSON.stringify(crmPayload(lead));
+  const ts = String(Math.floor(now / 1000));
+  const r = await fetchImpl(target.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Lead-Timestamp': ts, 'X-Lead-Signature': await signLead(target.secret, ts, raw), 'Idempotency-Key': lead.idempotency_key },
+    body: raw,
+    signal: AbortSignal.timeout(15000),
+  });
+  const d = await r.json().catch(() => ({}));
+  if ((r.status !== 201 && r.status !== 200) || typeof d.crm_lead_id !== 'string') throw new Error(`crm ${r.status} ${d?.error?.code ?? ''}`);
+  return { lead_id: d.crm_lead_id, duplicate: d.duplicate === true };
+}
 export function zaloText(lead, leadId, saved) {
   const lines = [
-    saved ? '🔔 LEAD MỚI — vipgroup.com.vn' : '⚠️ LEAD MỚI — CHƯA LƯU ĐƯỢC SHEET, GỌI LẠI KHÁCH NGAY',
+    saved ? '🔔 LEAD MỚI — vipgroup.com.vn' : '⚠️ LEAD MỚI — CHƯA LƯU ĐƯỢC, GỌI LẠI KHÁCH NGAY',
     leadId ? `Mã: ${leadId}` : null,
     `Khách: ${lead.name}`,
     `SĐT: ${lead.phone}`,
@@ -145,7 +184,9 @@ async function notifyZalo(env, text, fetchImpl) {
 
 export async function handleLead(request, env, ctx = {}, fetchImpl = fetch, now = Date.now()) {
   if (request.method !== 'POST') return json(405, { ok: false, error: 'method' });
-  if (!env.TURNSTILE_SECRET || !env.SHEET_WEBHOOK_URL || !env.SHEET_WEBHOOK_SECRET) return json(503, { ok: false, error: 'not_configured' });
+  const crmT = crmTarget(env);
+  const sheetOk = !!(env.SHEET_WEBHOOK_URL && env.SHEET_WEBHOOK_SECRET);
+  if (!env.TURNSTILE_SECRET || (!crmT && !sheetOk)) return json(503, { ok: false, error: 'not_configured' });
 
   const url = new URL(request.url);
   // Cùng nguồn (scheme + host). Origin "null"/hỏng → 403, không để lỗi 500 (QA P2-1, P2-2).
@@ -173,9 +214,9 @@ export async function handleLead(request, env, ctx = {}, fetchImpl = fetch, now 
 
   let saved = null;
   try {
-    saved = await saveToSheet(env, lead, fetchImpl);
+    saved = crmT ? await saveToCrm(crmT, lead, fetchImpl, now) : await saveToSheet(env, lead, fetchImpl);
   } catch (e) {
-    console.error('lead: lưu Sheet lỗi', String(e).slice(0, 120));
+    console.error(crmT ? 'lead: lưu CRM lỗi' : 'lead: lưu Sheet lỗi', String(e).slice(0, 120));
   }
   if (saved?.duplicate) return json(200, { ok: true, lead_id: saved.lead_id, duplicate: true });
 
