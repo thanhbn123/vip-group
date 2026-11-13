@@ -1,5 +1,11 @@
 # HƯỚNG DẪN CÀI ĐẶT THU LEAD — dành cho anh (owner)
 
+> **Cập nhật 13/11/2026 (VIPG-WEB-031, chủ dự án chọn "cách 2"):** form gửi lead **thẳng vào CRM** (#/leads), **không cần Google Sheet / Apps Script**.
+> Chỉ cần đặt trong Cloudflare Pages → vip-group → Settings → Variables and Secrets (môi trường **Production**):
+> `TURNSTILE_SECRET` (Secret Key của widget Turnstile vipgroup.com.vn), `LEAD_INTAKE_SECRET` (trùng khóa trong secrets/app.env của CRM),
+> `CRM_NEWS_URL = https://crm.vipgroup.com.vn` (dùng chung với Tin tức). Tùy chọn: `ZALO_BOT_TOKEN`, `ZALO_NOTIFY_CHAT_ID` (mục B).
+> Các mục A (Sheet) bên dưới chỉ còn dùng khi chưa cấu hình CRM.
+
 Làm lần lượt **A → B → C → D → E**. Mất khoảng 30–40 phút. Mỗi bước có ô ☐ để đánh dấu.
 
 > **Quy tắc an toàn:** các giá trị đánh dấu 🔒 là **bí mật** — chỉ dán vào Google Apps Script hoặc Cloudflare, **không gửi qua chat/Zalo/email**, kể cả gửi cho em. Giá trị đánh dấu 🌐 là công khai, gửi em được.
