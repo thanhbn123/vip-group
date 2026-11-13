@@ -32,6 +32,11 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # VIP CHAT V1.0 (owner duyệt 13/11/2026): bật khung "Phòng chat chung" trên trang chủ — đọc API công khai của khachhang
+    # (CSP connect-src thêm https://khachhang.vipgroup.com.vn). Tắt khẩn: đặt "0" rồi phát hành lại.
+    env:
+      PUBLIC_CHAT_WIDGET: "1"
+      PUBLIC_CHAT_API_BASE: https://khachhang.vipgroup.com.vn
     steps:
       - name: Xác nhận SHA phát hành
         env:
