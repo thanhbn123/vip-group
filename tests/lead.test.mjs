@@ -116,7 +116,7 @@ test('worker: Sheet lỗi → vẫn báo Zalo "CHƯA LƯU", trả 503 notified; 
     for (const f of [mockFetch({ throwSheet: true }), mockFetch({ sheetStatus: 500, sheet: { ok: false, error: 'x' } })]) {
       const { res, body } = await run(req(good()), ENV, f);
       assert.equal(res.status, 503); assert.equal(body.error, 'store_failed'); assert.equal(body.notified, true);
-      assert.match(JSON.parse(f.of('zapps')[0].init.body).text, /CHƯA LƯU ĐƯỢC SHEET/);
+      assert.match(JSON.parse(f.of('zapps')[0].init.body).text, /CHƯA LƯU ĐƯỢC/);
     }
   } finally { console.error = orig; }
   assert.ok(logs.length > 0);
@@ -289,4 +289,57 @@ test('QA P2: Origin null/hỏng/sai scheme → 403; Content-Length lớn → 413
     const { f } = await run(req(good({ page })));
     assert.equal(JSON.parse(f.of('script.example')[0].init.body).lead.page, want, page);
   }
+});
+
+// ───────── VIPG-WEB-031 (chủ dự án 13/11/2026 "cách 2"): gửi lead THẲNG vào CRM, bỏ Google Sheet ─────────
+const CRM_ENV = { TURNSTILE_SECRET: 'ts-secret', LEAD_INTAKE_SECRET: 'crm-intake-secret-0123456789abcdef0123456789', CRM_NEWS_URL: 'https://crm.example', ZALO_BOT_TOKEN: '123:zalo', ZALO_NOTIFY_CHAT_ID: 'chat-1' };
+function crmFetch({ status = 201, body = { crm_lead_id: 'LD-260001' }, throwIt = false } = {}) {
+  const calls = [];
+  const fn = async (url, init) => {
+    calls.push({ url: String(url), init });
+    if (String(url).includes('turnstile')) return Response.json({ success: true });
+    if (String(url) === 'https://crm.example/api/intake/leads') { if (throwIt) throw new Error('down'); return Response.json(body, { status }); }
+    if (String(url).includes('bot-api.zapps.me')) return new Response('{}', { status: 200 });
+    throw new Error('unexpected ' + url);
+  };
+  return { fn, calls, of: (s) => calls.filter((c) => c.url.includes(s)) };
+}
+
+test('CRM trực tiếp: ký HMAC đúng hợp đồng CRM (ts + "." + body), Idempotency-Key = lead_id, payload đúng trường; 201 + mã LD; KHÔNG gọi Sheet', async () => {
+  const { createHmac } = await import('node:crypto');
+  const f = crmFetch();
+  const { res, body } = await run(req(good({ route: 'quang-chau', message: 'Hàng nội thất' })), CRM_ENV, f);
+  assert.equal(res.status, 201); assert.equal(body.lead_id, 'LD-260001');
+  const c = f.of('/api/intake/leads')[0];
+  const h = c.init.headers;
+  assert.equal(h['X-Lead-Signature'], createHmac('sha256', CRM_ENV.LEAD_INTAKE_SECRET).update(`${h['X-Lead-Timestamp']}.${c.init.body}`).digest('hex'));
+  assert.equal(h['X-Lead-Timestamp'], String(Math.floor(NOW / 1000)));
+  const p = JSON.parse(c.init.body);
+  assert.equal(h['Idempotency-Key'], p.lead_id); assert.equal(p.lead_id, 'abcdef1234567890abcd');
+  assert.equal(p.source, 'vipgroup.com.vn'); assert.equal(p.need, 'bao-gia-van-chuyen'); assert.equal(p.weight_kg, 120); assert.equal(p.email, null);
+  assert.equal(p.message, '[Tuyến: Quảng Châu] Hàng nội thất');
+  assert.deepEqual(p.utm, { source: 'google', medium: 'organic' });
+  assert.ok(p.consent_at && p.created_at);
+  assert.equal(f.of('script.example').length, 0);
+  assert.equal(f.of('zapps').length, 1, 'báo Zalo');
+});
+
+test('CRM trực tiếp: trùng (200 duplicate) → 200 không báo Zalo; CRM lỗi / 401 → 503 store_failed + Zalo "CHƯA LƯU"; thiếu khóa → dùng Sheet cũ / not_configured', async () => {
+  const dup = await run(req(good()), CRM_ENV, crmFetch({ status: 200, body: { crm_lead_id: 'LD-260001', duplicate: true } }));
+  assert.equal(dup.res.status, 200); assert.equal(dup.body.duplicate, true); assert.equal(dup.f.of('zapps').length, 0);
+  for (const f of [crmFetch({ throwIt: true }), crmFetch({ status: 401, body: { error: { code: 'SIGNATURE_INVALID' } } })]) {
+    const r = await run(req(good()), CRM_ENV, f);
+    assert.equal(r.res.status, 503); assert.equal(r.body.error, 'store_failed');
+    assert.match(JSON.parse(f.of('zapps')[0].init.body).text, /CHƯA LƯU ĐƯỢC/);
+  }
+  // Không có khóa CRM, còn Sheet cũ → ghi Sheet như trước
+  const s = mockFetch();
+  const old = await run(req(good()), { ...ENV, LEAD_INTAKE_SECRET: '' }, s);
+  assert.equal(old.res.status, 201); assert.equal(s.of(ENV.SHEET_WEBHOOK_URL).length, 1);
+  // Không có đích lưu nào → 503 not_configured
+  const none = await run(req(good()), { TURNSTILE_SECRET: 'x' }, crmFetch());
+  assert.equal(none.res.status, 503); assert.equal(none.body.error, 'not_configured');
+  // URL CRM không phải https → coi như chưa cấu hình
+  assert.equal(W.crmTarget({ LEAD_INTAKE_SECRET: 'x', CRM_NEWS_URL: 'http://crm.example' }), null);
+  assert.equal(W.crmTarget({ LEAD_INTAKE_SECRET: 'x', CRM_INTAKE_URL: 'https://a.example/api/intake/leads' }).url, 'https://a.example/api/intake/leads');
 });
