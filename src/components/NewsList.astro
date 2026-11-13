@@ -5,7 +5,10 @@ const { items, limit, headingLevel = 'h3' } = Astro.props;
 const H = headingLevel;
 const sorted = [...items].sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit ?? items.length);
 const fmt = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' });
+// VIPG-WEB-030: hai mốc <template data-news-…> để hàm Cloudflare (public/_worker.js) thay danh sách bằng tin đã đăng từ CRM.
+// Không có CRM / chưa cấu hình → giữ nguyên nội dung tĩnh dưới đây.
 ---
+<template data-news-list-start data-limit={limit ?? ''}></template>
 {sorted.length === 0 ? (
   <div class="empty-state">
     <p><strong>Chưa có tin tức.</strong></p>
@@ -23,3 +26,4 @@ const fmt = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit',
     ))}
   </div>
 )}
+<template data-news-list-end></template>

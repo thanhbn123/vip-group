@@ -138,10 +138,10 @@ test('worker: router chỉ xử lý /api/*, còn lại trả về tài sản tĩ
   assert.equal(served, 1);
 });
 
-test('build mặc định: có _worker.js + _routes.json chỉ /api/*; form bật với mã site Turnstile thật', () => {
+test('build mặc định: có _worker.js + _routes.json (/api/* + tin tức VIPG-WEB-030); form bật với mã site Turnstile thật', () => {
   const dist = join(root, 'dist');
   assert.equal(readFileSync(join(dist, '_worker.js'), 'utf8'), readFileSync(join(root, 'public/_worker.js'), 'utf8'));
-  assert.deepEqual(JSON.parse(readFileSync(join(dist, '_routes.json'), 'utf8')), { version: 1, include: ['/api/*'], exclude: [] });
+  assert.deepEqual(JSON.parse(readFileSync(join(dist, '_routes.json'), 'utf8')), { version: 1, include: ['/api/*', '/', '/tin-tuc', '/tin-tuc/*', '/zh/tin-tuc', '/zh/tin-tuc/*'], exclude: [] });
   // V1.1: mã site Turnstile thật đã ghi (contact.ts) → form bật trong bản build chính.
   const html = readFileSync(join(dist, 'lien-he/index.html'), 'utf8');
   assert.match(html, /data-backend-ready="true"/);
