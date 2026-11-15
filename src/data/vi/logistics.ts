@@ -450,6 +450,18 @@ export const pages: LogisticsPage[] = [
     keyword: 'tra cứu vận đơn hàng Trung Quốc',
   },
   {
+    key: 'kiem-tra-hang',
+    href: '/logistics/kiem-tra-hang/',
+    nav: 'Kiểm tra hàng',
+    title: 'Kiểm tra hàng nhận / không nhận gửi từ Trung Quốc về Việt Nam',
+    description:
+      'Tra cứu mặt hàng kho Trung Quốc của VIP GROUP có nhận và thông quan được không: hàng cấm, hàng có pin, chất lỏng, mỹ phẩm, thực phẩm… (song ngữ Việt · 中文).',
+    h1: 'Kiểm tra hàng',
+    lead: 'Gõ tên hàng (tiếng Việt hoặc tiếng Trung) để biết kho Trung Quốc có nhận và thông quan được không.',
+    status: 'ready',
+    keyword: 'hàng cấm gửi từ Trung Quốc',
+  },
+  {
     key: 'faq',
     href: '/logistics/cau-hoi-thuong-gap/',
     nav: 'Hỏi đáp',
