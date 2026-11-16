@@ -1,7 +1,7 @@
 /**
  * Logic tính cước DÙNG CHUNG (công cụ tính trên web + test) — chính sách owner chốt 07/11/2026:
  * - Bậc giá xác định theo trọng lượng tính cước của TỪNG KIỆN, không cộng gộp cả lô.
- * - Trọng lượng tính cước của kiện = max(cân thực, cân quy đổi); cân quy đổi = dài × rộng × cao (cm) ÷ 6000.
+ * - Trọng lượng tính cước của kiện = max(cân thực, cân quy đổi); cân quy đổi = dài × rộng × cao (cm) ÷ 5000.
  * - Một bảng giá chung cho 4 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô.
  *
  * Làm tròn: owner CHƯA quy định làm tròn khối lượng (ví dụ lên 0,1 kg hay 0,5 kg). Hàm ở đây KHÔNG làm tròn khối lượng;
@@ -9,7 +9,7 @@
  */
 import type { PriceTier } from '../data/types';
 
-export const VOLUMETRIC_DIVISOR = 6000;
+export const VOLUMETRIC_DIVISOR = 5000;
 
 /** Cân quy đổi (kg) của một kiện từ kích thước cm. */
 export const volumetricKg = (lCm: number, wCm: number, hCm: number, divisor = VOLUMETRIC_DIVISOR) =>

@@ -197,8 +197,8 @@ function pickupFaq(p: PickupBase): FaqItem[] {
     {
       q: `Cước vận chuyển từ ${p.city} về Việt Nam tính thế nào?`,
       a: p.priceApplies.value
-        ? `Hàng nhận tại kho ${p.city} áp dụng bảng giá chung cho 4 kho: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá chọn theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000), không gộp cả lô. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.`
-        : `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000). Bảng giá chung Trung Quốc – Việt Nam có tại trang Bảng giá; đơn giá áp dụng cho hàng nhận tại kho ${p.city} được xác nhận khi báo giá, cùng phụ phí và thuế (nếu có).`,
+        ? `Hàng nhận tại kho ${p.city} áp dụng bảng giá chung cho 4 kho: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá chọn theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 5000), không gộp cả lô. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.`
+        : `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 5000). Bảng giá chung Trung Quốc – Việt Nam có tại trang Bảng giá; đơn giá áp dụng cho hàng nhận tại kho ${p.city} được xác nhận khi báo giá, cùng phụ phí và thuế (nếu có).`,
     },
     {
       q: `Hàng từ ${p.city} về Việt Nam mất bao lâu?`,
@@ -216,8 +216,8 @@ function pickupFaqZh(p: PickupBase): { q: string; a: string }[] {
     {
       q: '运费如何计算？',
       a: p.priceApplies.value
-        ? '四个仓库适用统一价格表（越南盾/公斤）：0–5 公斤 20,000；超过 5 公斤，不足 100 公斤 16,000；100 公斤至不足 500 公斤 15,000；500–1,000 公斤 14,000；超过 1,000 公斤 12,000。价格档位按每件货物的计费重量确定（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 6000），不合并整批重量；附加费及税费（如有）将在正式报价前确认。'
-        : '运费按计费重量（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 6000）以公斤计算，具体单价以正式报价为准；附加费及税费（如有）将在正式报价前确认。',
+        ? '四个仓库适用统一价格表（越南盾/公斤）：0–5 公斤 20,000；超过 5 公斤，不足 100 公斤 16,000；100 公斤至不足 500 公斤 15,000；500–1,000 公斤 14,000；超过 1,000 公斤 12,000。价格档位按每件货物的计费重量确定（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 5000），不合并整批重量；附加费及税费（如有）将在正式报价前确认。'
+        : '运费按计费重量（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 5000）以公斤计算，具体单价以正式报价为准；附加费及税费（如有）将在正式报价前确认。',
     },
     ...(p.extraFaqZh ? [p.extraFaqZh] : []),
     { q: '如何联系？', a: `热线 / Zalo：${HOTLINE}（越南号码）。` },
@@ -232,9 +232,9 @@ export const pickupPoints: PickupPoint[] = pickupBase.map(({ extraFaq: _e, extra
 
 export const pickupById = (id: PickupId) => pickupPoints.find((p) => p.id === id)!;
 
-/** Hệ số quy đổi cân nặng thể tích (cm³ / kg) mà VIP GROUP áp dụng — chưa được owner cung cấp. */
-// Owner xác nhận 06/11/2026: có quy đổi thể tích, hệ số 6000; tính theo số lớn hơn giữa cân thực và cân quy đổi.
-export const volumetricDivisor: Fact<number> = { value: 6000, source: 'Owner xác nhận 06/11/2026 (phiên Controller 8d)' };
+/** Hệ số quy đổi cân nặng thể tích (cm³ / kg) mà VIP GROUP áp dụng. */
+// Chủ dự án quyết định 17/11/2026: đổi hệ số quy đổi thể tích 6000 → 5000 (trước đó owner xác nhận 6000 ngày 06/11/2026); tính theo số lớn hơn giữa cân thực và cân quy đổi.
+export const volumetricDivisor: Fact<number> = { value: 5000, source: 'Chủ dự án quyết định 17/11/2026: hệ số 5000' };
 
 /** Bảng giá theo kg: dùng chung `pricing` (src/data/vi/pricing.ts — owner cung cấp 06/11/2026), không lặp lại ở đây. */
 
@@ -284,7 +284,7 @@ export const faqs: FaqItem[] = [
   },
   {
     q: 'Cước vận chuyển tính theo cân nặng hay theo khối?',
-    a: 'Cước tính theo số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao theo cm ÷ 6000). Bậc giá theo kg xác định theo trọng lượng tính cước của từng kiện (không cộng gộp các kiện trong lô).',
+    a: 'Cước tính theo số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao theo cm ÷ 5000). Bậc giá theo kg xác định theo trọng lượng tính cước của từng kiện (không cộng gộp các kiện trong lô).',
   },
   {
     q: 'Hàng về Bắc Ninh mất bao lâu?',
