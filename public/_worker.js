@@ -528,10 +528,44 @@ export async function handleGoods(request, env, fetchImpl = fetch) {
   }
 }
 
+// ───────── VIPG-WEB-033 · Báo giá nhanh (chủ dự án 17/11/2026 "3a": giá lấy TRỰC TIẾP bảng giá chung trong CRM) ─────────
+// GET /api/quote/price-list → CRM /api/public/price-list · POST /api/quote {warehouse_code, lines[]} → CRM /api/public/price-quote.
+// Cùng biến CRM_NEWS_URL + NEWS_PUBLIC_KEY với tin tức; CRM giới hạn 30 lượt / phút / IP theo x-client-ip.
+export async function handleQuote(request, env, fetchImpl = fetch) {
+  const url = new URL(request.url);
+  const isList = url.pathname === '/api/quote/price-list';
+  if (isList ? request.method !== 'GET' : request.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
+  if (!env.CRM_NEWS_URL || !env.NEWS_PUBLIC_KEY) return json(503, { ok: false, error: 'not_configured' });
+  let body;
+  if (!isList) {
+    const raw = await request.text();
+    if (raw.length > 20000) return json(413, { ok: false, error: 'too_large' });
+    try { body = JSON.parse(raw); } catch { return json(400, { ok: false, error: 'bad_json' }); }
+  }
+  try {
+    const ac = new AbortController(); const timer = setTimeout(() => ac.abort(), 5000);
+    const r = await fetchImpl(`${String(env.CRM_NEWS_URL).replace(/\/+$/, '')}/api/public/${isList ? 'price-list' : 'price-quote'}`, {
+      method: isList ? 'GET' : 'POST', signal: ac.signal,
+      headers: { 'x-news-key': env.NEWS_PUBLIC_KEY, 'x-client-ip': request.headers.get('cf-connecting-ip') || '', accept: 'application/json', ...(isList ? {} : { 'content-type': 'application/json' }) },
+      body: isList ? undefined : JSON.stringify(body) });
+    clearTimeout(timer);
+    const data = await r.json().catch(() => null);
+    if (r.status === 429) return json(429, { ok: false, error: 'too_fast' });
+    if (r.status === 400 || r.status === 409) return json(r.status, { ok: false, error: data?.error?.code || 'invalid', message: data?.error?.message || null });
+    if (!r.ok || !data) return json(502, { ok: false, error: 'upstream' });
+    const res = json(200, { ok: true, ...data });
+    if (isList) res.headers.set('cache-control', 'public, max-age=300');
+    return res;
+  } catch {
+    return json(502, { ok: false, error: 'upstream' });
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
     if (pathname === '/api/lead') return handleLead(request, env, ctx);
+    if (pathname === '/api/quote/price-list' || pathname === '/api/quote') return handleQuote(request, env);
     if (pathname === '/api/goods/rules' || pathname === '/api/goods/check') return handleGoods(request, env);
     if (pathname.startsWith('/api/')) return json(404, { ok: false, error: 'not_found' });
     // VIPG-WEB-030: trang chủ + /tin-tuc/… + /zh/tin-tuc/… (tin tức từ CRM)
