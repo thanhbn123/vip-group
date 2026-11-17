@@ -2,7 +2,7 @@
  * Logic tính cước DÙNG CHUNG (công cụ tính trên web + test) — chính sách owner chốt 07/11/2026:
  * - Bậc giá xác định theo trọng lượng tính cước của TỪNG KIỆN, không cộng gộp cả lô.
  * - Trọng lượng tính cước của kiện = max(cân thực, cân quy đổi); cân quy đổi = dài × rộng × cao (cm) ÷ 5000.
- * - Một bảng giá chung cho 4 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô.
+ * - Một bảng giá chung cho 5 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô, Bằng Tường (thêm 18/11/2026).
  *
  * Làm tròn: owner CHƯA quy định làm tròn khối lượng (ví dụ lên 0,1 kg hay 0,5 kg). Hàm ở đây KHÔNG làm tròn khối lượng;
  * chỉ làm tròn tiền ước tính tới đồng khi hiển thị. Ranh giới bậc dùng đúng min/max/inclusive trong pricing.ts.

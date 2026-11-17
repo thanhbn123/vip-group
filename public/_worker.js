@@ -20,7 +20,7 @@
 const MAX_BODY = 8 * 1024;
 const MIN_FILL_MS = 3000;
 export const ROUTES = {
-  'tham-quyen': 'Thâm Quyến', 'quang-chau': 'Quảng Châu', 'ha-mon': 'Hạ Môn', 'nghia-o': 'Nghĩa Ô',
+  'tham-quyen': 'Thâm Quyến', 'quang-chau': 'Quảng Châu', 'ha-mon': 'Hạ Môn', 'nghia-o': 'Nghĩa Ô', 'bang-tuong': 'Bằng Tường',
   'khac': 'Nơi khác tại Trung Quốc', 'chua-ro': 'Chưa rõ',
 };
 export const NEEDS = {

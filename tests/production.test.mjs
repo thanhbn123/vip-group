@@ -75,7 +75,7 @@ const SITEMAP_EXTRA = ['/chinh-sach-bao-mat/'];
 const LOGISTICS_READY = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/logistics/van-chuyen-trung-quoc-viet-nam/',
   '/logistics/quy-trinh-gui-hang/', '/logistics/tra-cuu-van-don/', '/logistics/kiem-tra-hang/', '/logistics/cau-hoi-thuong-gap/', '/logistics/lien-he/', '/logistics/bang-gia/',
   '/logistics/kho-trung-quoc/', '/logistics/van-chuyen-tham-quyen-ve-viet-nam/', '/logistics/van-chuyen-ha-mon-ve-viet-nam/',
-  '/logistics/van-chuyen-quang-chau-ve-viet-nam/', '/logistics/van-chuyen-nghia-o-ve-viet-nam/',
+  '/logistics/van-chuyen-quang-chau-ve-viet-nam/', '/logistics/van-chuyen-nghia-o-ve-viet-nam/', '/logistics/van-chuyen-bang-tuong-ve-viet-nam/',
   // VIPG-WEB-034 (owner 17/11/2026): Kiến thức + 3 bài hướng dẫn xuất bản.
   '/logistics/kien-thuc/', '/logistics/kien-thuc/cach-tinh-so-khoi-va-can-nang-quy-doi/', '/logistics/kien-thuc/ghi-ma-khach-hang-khi-dat-hang-1688-taobao/', '/logistics/kien-thuc/dong-goi-hang-gui-tu-trung-quoc/'];
 

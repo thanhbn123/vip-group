@@ -38,7 +38,7 @@ export const compensation: Fact = {
   source: SRC_OWNER_TERMS,
 };
 
-/** Thời gian vận chuyển — nguyên ý owner: "2 ngày về kho VN"; owner xác nhận áp dụng cả 4 kho (transitTime từng kho dùng câu này). */
+/** Thời gian vận chuyển — nguyên ý owner: "2 ngày về kho VN"; owner xác nhận áp dụng mọi kho (4 kho 17/11, thêm Bằng Tường 18/11) (transitTime từng kho dùng câu này). */
 export const TRANSIT_DAYS = 2;
 export const TRANSIT_PHRASE = `${TRANSIT_DAYS} ngày từ kho Trung Quốc về kho Việt Nam`;
 export const transit: Fact = { value: TRANSIT_PHRASE, source: SRC_OWNER_TERMS };

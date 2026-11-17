@@ -1,6 +1,6 @@
 ---
 /**
- * Trang mạng lưới 4 kho nhận hàng tại Trung Quốc (VIPG-WEB-026) — trang trung tâm của cụm "kho Trung Quốc",
+ * Trang mạng lưới 5 kho nhận hàng tại Trung Quốc (VIPG-WEB-026) — trang trung tâm của cụm "kho Trung Quốc",
  * mọi trang tuyến liên kết về đây. Không khai quyền sở hữu kho; không gắn bảng giá chung cho từng kho.
  */
 import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
@@ -16,11 +16,11 @@ const page = pageByKey('kho-trung-quoc');
 const site = Astro.site!;
 const url = new URL(page.href, site).href;
 const pretty = prettyPhone(provider.hotline);
-const updated = '2026-11-06';
+const updated = '2026-11-18';
 
 const answer =
-  `VIP GROUP nhận hàng tại 4 kho ở Trung Quốc: Thâm Quyến (quận Bảo An, Quảng Đông), Hạ Môn (quận Hải Thương, Phúc Kiến), ` +
-  `Quảng Châu (quận Bạch Vân, Quảng Đông) và Nghĩa Ô (Chiết Giang), rồi vận chuyển về Việt Nam; dịch vụ do ${provider.name} vận hành. ` +
+  `VIP GROUP nhận hàng tại 5 kho ở Trung Quốc: Thâm Quyến (quận Bảo An, Quảng Đông), Hạ Môn (quận Hải Thương, Phúc Kiến), ` +
+  `Quảng Châu (quận Bạch Vân, Quảng Đông), Nghĩa Ô (Chiết Giang) và Bằng Tường (Quảng Tây, sát cửa khẩu Hữu Nghị), rồi vận chuyển về Việt Nam; dịch vụ do ${provider.name} vận hành. ` +
   `Chọn kho gần nhà cung cấp nhất, gửi nguyên văn địa chỉ tiếng Trung và ghi mã khách hàng trên từng kiện. Hotline/Zalo ${pretty}.`;
 
 const choose = [
@@ -28,6 +28,7 @@ const choose = [
   { need: 'Giày dép, quần áo thể thao, gốm sứ, hàng Phúc Kiến', id: 'ha-mon' },
   { need: 'Quần áo, giày dép, túi xách, hàng 1688 / Taobao', id: 'quang-chau' },
   { need: 'Đồ chơi, văn phòng phẩm, quà tặng, hàng tiêu dùng nhỏ', id: 'nghia-o' },
+  { need: 'Hàng từ Quảng Tây, Nam Ninh; hàng muốn nhận sát cửa khẩu', id: 'bang-tuong' },
 ] as const;
 const cityOf = (id: string) => pickupPoints.find((x) => x.id === id)!;
 // Chỉ liệt kê kho có trang tuyến được build (tránh link hỏng nếu một tuyến chuyển về draft).
@@ -39,7 +40,7 @@ const faq: FaqItem[] = [
   faqs.find((f) => f.q === SHARED_Q)!,
   {
     q: 'Nên gửi hàng về kho nào?',
-    a: `Chọn kho gần nhà cung cấp nhất để rút ngắn quãng giao nội địa Trung Quốc: Quảng Đông giao về kho Thâm Quyến hoặc Quảng Châu, Phúc Kiến giao về kho Hạ Môn, Chiết Giang và hàng chợ Nghĩa Ô giao về kho Nghĩa Ô. Chưa chắc chọn kho nào, gọi hoặc nhắn Zalo ${pretty}.`,
+    a: `Chọn kho gần nhà cung cấp nhất để rút ngắn quãng giao nội địa Trung Quốc: Quảng Đông giao về kho Thâm Quyến hoặc Quảng Châu, Phúc Kiến giao về kho Hạ Môn, Chiết Giang và hàng chợ Nghĩa Ô giao về kho Nghĩa Ô, Quảng Tây giao về kho Bằng Tường. Chưa chắc chọn kho nào, gọi hoặc nhắn Zalo ${pretty}.`,
   },
   {
     q: 'Vì sao website không đăng tên người nhận và số điện thoại kho?',
@@ -47,12 +48,12 @@ const faq: FaqItem[] = [
   },
   {
     q: 'Cước vận chuyển từ các kho Trung Quốc tính thế nào?',
-    a: 'Cả 4 kho áp dụng chung bảng giá vận chuyển Trung Quốc – Việt Nam (5 bậc giá theo kg, xem trang Bảng giá). Bậc giá xác định theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 5000), không cộng gộp cả lô. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
+    a: 'Cả 5 kho áp dụng chung bảng giá vận chuyển Trung Quốc – Việt Nam (5 bậc giá theo kg, xem trang Bảng giá). Bậc giá xác định theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 5000), không cộng gộp cả lô. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
   },
 ];
 const ld = [
   serviceLd({
-    name: 'Nhận hàng tại 4 kho Trung Quốc, vận chuyển về Việt Nam',
+    name: 'Nhận hàng tại 5 kho Trung Quốc, vận chuyển về Việt Nam',
     serviceType: 'Nhận hàng tại Trung Quốc và vận chuyển về Việt Nam',
     description: page.description,
     url: new URL(page.href, site),
@@ -74,7 +75,7 @@ const ld = [
       <div class="answer-box">
         <h2 id="net-sum" class="answer-title">Tóm tắt nhanh</h2>
         <p class="answer">{answer}</p>
-        <p class="answer-zh" lang="zh-CN">VIP GROUP 在中国四个仓库直接收货：深圳（宝安区）、厦门（海沧区）、广州（白云区）、义乌，并运往越南。请选择离供应商最近的仓库，按中文地址原文发货，并在每件货物上标明客户编号。</p>
+        <p class="answer-zh" lang="zh-CN">VIP GROUP 在中国五个仓库直接收货：深圳（宝安区）、厦门（海沧区）、广州（白云区）、义乌、凭祥（友谊镇），并运往越南。请选择离供应商最近的仓库，按中文地址原文发货，并在每件货物上标明客户编号。</p>
         <p class="updated">Cập nhật: <time datetime={updated}>06/11/2026</time></p>
       </div>
     </div>
@@ -82,7 +83,7 @@ const ld = [
 
   <section class="section" aria-labelledby="net-table">
     <div class="container">
-      <span class="kicker">So sánh 4 kho</span>
+      <span class="kicker">So sánh 5 kho</span>
       <h2 id="net-table">Chọn kho theo nguồn hàng</h2>
       <div class="table-wrap" role="region" aria-labelledby="net-table" tabindex="0">
         <table class="data-table">
@@ -110,7 +111,7 @@ const ld = [
   <section class="section section-alt" aria-labelledby="net-addr">
     <div class="container">
       <span class="kicker">Địa chỉ · <span lang="zh-CN">仓库地址</span></span>
-      <h2 id="net-addr">Địa chỉ 4 kho bằng tiếng Trung</h2>
+      <h2 id="net-addr">Địa chỉ 5 kho bằng tiếng Trung</h2>
       <p class="muted">Gửi nguyên văn địa chỉ cho nhà cung cấp. Tên người nhận, số điện thoại khi giao và mã khách hàng được cung cấp sau khi đăng ký.</p>
       <div class="addr-grid">
         {points.map((p) => (
