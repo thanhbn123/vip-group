@@ -3,6 +3,7 @@ import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
 import FaqList from '../../components/logistics/FaqList.astro';
 import { pageByKey } from '../../lib/logistics';
 import PickupCards from '../../components/logistics/PickupCards.astro';
+import Commitments from '../../components/Commitments.astro';
 import { serviceLd } from '../../lib/schema';
 import { services, processSteps, faqs, provider } from '../../data/vi/logistics';
 
@@ -43,6 +44,8 @@ const audiences = [
       <p><a class="text-link" href="/logistics/van-chuyen-trung-quoc-viet-nam/">Vận chuyển hàng Trung Quốc về Việt Nam →</a></p>
     </div>
   </section>
+
+  <Commitments />
 
   <section class="section section-alt" aria-labelledby="kho-title">
     <div class="container">

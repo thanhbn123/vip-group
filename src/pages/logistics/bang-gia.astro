@@ -5,6 +5,8 @@ import PriceTable from '../../components/PriceTable.astro';
 import ContactForm from '../../components/ContactForm.astro';
 import VolumeCalculator from '../../components/logistics/VolumeCalculator.astro';
 import QuickQuote from '../../components/logistics/QuickQuote.astro';
+import PriceExamples from '../../components/PriceExamples.astro';
+import OrderFee from '../../components/OrderFee.astro';
 import { pageByKey } from '../../lib/logistics';
 import { priceFactors } from '../../data/vi/logistics';
 import { getContent } from '../../data';
@@ -27,6 +29,8 @@ const priceLd = {
   <QuickQuote />
   <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline} hotlineDisplay={contact.hotlineDisplay} zaloUrl={contact.zaloUrl}
     quoteHref={contact.formBackendReady ? '#form-lien-he' : null} />
+  <PriceExamples tiers={pricing.tiers} quoteHref="#bao-gia-nhanh" />
+  <OrderFee />
 
   <section class="section section-alt" aria-labelledby="factor-title">
     <div class="container">

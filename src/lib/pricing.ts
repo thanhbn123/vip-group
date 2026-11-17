@@ -48,3 +48,14 @@ export const priceOffers = (tiers: PriceTier[]) =>
       eligibleQuantity: { '@type': 'QuantitativeValue', minValue: t.min, ...(t.max !== null ? { maxValue: t.max } : {}), unitCode: 'KGM', unitText: 'kg/kiện' },
     },
   }));
+
+/**
+ * VIPG-WEB-034 · Phí dịch vụ order (owner 17/11/2026): % theo giá trị tiền hàng, bậc theo src/data/vi/service-terms.ts
+ * (min loại trừ, max bao gồm). Đơn hàng đầu tiên miễn phí. Làm tròn tới đồng.
+ */
+export function orderServiceFee(tiers: { min: number; max: number | null; percent: number }[], goodsVnd: number, firstOrder = false) {
+  const v = Math.max(0, goodsVnd);
+  const tier = tiers.find((t) => (t.min === 0 ? v >= 0 : v > t.min) && (t.max === null || v <= t.max));
+  if (!tier) throw new Error(`Giá trị ${v}đ không thuộc bậc phí nào`);
+  return { tier, fee: firstOrder ? 0 : Math.round((v * tier.percent) / 100) };
+}
