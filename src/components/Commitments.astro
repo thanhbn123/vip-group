@@ -3,13 +3,13 @@
  * VIPG-WEB-034 · Cam kết bằng con số (owner 17/11/2026) — mọi câu lấy từ src/data/vi/service-terms.ts.
  * Học từ đối thủ (Báo Đen, Vĩnh Cát nêu cam kết bồi thường cụ thể); không thêm cam kết nào ngoài dữ liệu owner.
  */
-import { orderFee, compensation, transit } from '../data/vi/service-terms';
+import { orderFee, compensation, transit, TRANSIT_DAYS, COMPENSATION_MULTIPLIER } from '../data/vi/service-terms';
 interface Props { feeHref?: string }
 const { feeHref = '/logistics/bang-gia/#phi-dich-vu-order' } = Astro.props;
 const pct = orderFee.tiers.map((t) => t.percent);
 const items = [
-  transit.value && { title: '2 ngày về kho Việt Nam', text: `Thời gian vận chuyển ${transit.value}.` },
-  compensation.value && { title: 'Đền bù gấp 10 lần tiền cước', text: compensation.value },
+  transit.value && { title: `${TRANSIT_DAYS} ngày về kho Việt Nam`, text: `Thời gian vận chuyển ${transit.value}.` },
+  compensation.value && { title: `Đền bù gấp ${COMPENSATION_MULTIPLIER} lần tiền cước`, text: compensation.value },
   orderFee.firstOrderFree.value && { title: 'Đơn đầu tiên miễn phí dịch vụ', text: 'Đặt hàng 1688, Taobao, Pinduoduo lần đầu không mất phí dịch vụ order.', href: feeHref },
   { title: `Phí order chỉ ${Math.min(...pct)}–${Math.max(...pct)}%`, text: 'Theo giá trị tiền hàng, đơn càng lớn phí càng thấp.', href: feeHref },
 ].filter(Boolean) as { title: string; text: string; href?: string }[];
