@@ -1,0 +1,120 @@
+---
+/**
+ * VIPG-WEB-032 · Kiểm tra hàng nhận / không nhận — danh sách quy định 禁运参考 do CRM quản lý (song ngữ Việt · 中文, chủ dự án 15/11/2026 "2c").
+ * Trình duyệt gọi /api/goods/rules + /api/goods/check (public/_worker.js chuyển tiếp sang CRM bằng NEWS_PUBLIC_KEY, không AI).
+ * CRM chưa bật trang công khai / chưa cấu hình → hiện hướng dẫn hỏi Zalo / hotline (không lỗi).
+ */
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import { pageByKey, telHref, prettyPhone } from '../../lib/logistics';
+import { provider } from '../../data/vi/logistics';
+
+const page = pageByKey('kiem-tra-hang');
+const phone = prettyPhone(provider.hotline);
+---
+<LogisticsLayout page={page} showActions={false}>
+  <section class="section" aria-labelledby="goods-title">
+    <div class="container">
+      <div class="goods-head">
+        <h2 id="goods-title" data-i18n="title">Hàng này kho có nhận không?</h2>
+        <div class="goods-lang" role="group" aria-label="Ngôn ngữ / 语言">
+          <button type="button" class="btn btn-ghost btn-sm" data-lang="vi" aria-pressed="true">Tiếng Việt</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-lang="zh" aria-pressed="false">中文</button>
+        </div>
+      </div>
+      <form class="goods-form" id="goods-form" novalidate>
+        <label class="visually-hidden" for="goods-q" data-i18n="label">Tên hàng</label>
+        <input id="goods-q" name="q" type="text" maxlength="300" autocomplete="off" placeholder="Tên hàng, vd: nước hoa, sạc dự phòng, 香水" />
+        <button type="submit" class="btn btn-primary" data-i18n="go">Kiểm tra</button>
+      </form>
+      <div id="goods-out" aria-live="polite"></div>
+      <div id="goods-off" class="card" hidden>
+        <p data-i18n="off">Chức năng tra cứu đang được cập nhật. Vui lòng hỏi nhân viên VIP GROUP:</p>
+        <a class="btn btn-primary" href={provider.zaloUrl} rel="noopener" target="_blank" data-track="zalo_click" data-track-location="goods_page">Zalo {phone}<span class="visually-hidden"> (mở tab mới)</span></a>
+        <a class="btn btn-ghost" href={telHref(provider.hotline)} data-track="call_click" data-track-location="goods_page">Gọi {phone}</a>
+      </div>
+      <details class="goods-all" id="goods-all" hidden>
+        <summary data-i18n="all">Xem toàn bộ danh sách</summary>
+        <div id="goods-list"></div>
+      </details>
+      <p class="muted small" data-i18n="note">Kết quả tham khảo — hàng đặc biệt / số lượng lớn vui lòng hỏi nhân viên VIP GROUP trước khi gửi.</p>
+      <p class="muted small"><a class="text-link" href={provider.zaloUrl} rel="noopener" target="_blank">Zalo {phone}</a> · <a class="text-link" href={telHref(provider.hotline)}>{phone}</a></p>
+    </div>
+  </section>
+</LogisticsLayout>
+<script>
+  // @ts-nocheck — script trình duyệt thuần (DOM động); bỏ kiểm tra kiểu như QuickQuote
+  const TXT = {
+    vi: { title: 'Hàng này kho có nhận không?', label: 'Tên hàng', go: 'Kiểm tra', all: 'Xem toàn bộ danh sách', examples: 'Ví dụ', reason: 'Lý do',
+      note: 'Kết quả tham khảo — hàng đặc biệt / số lượng lớn vui lòng hỏi nhân viên VIP GROUP trước khi gửi.', none: 'Hàng này chưa có trong danh sách — vui lòng hỏi nhân viên VIP GROUP trước khi gửi.',
+      fast: 'Bạn tra hơi nhanh, vui lòng đợi một chút.', err: 'Không tra được, vui lòng thử lại hoặc hỏi Zalo.', ph: 'Tên hàng, vd: nước hoa, sạc dự phòng, 香水' },
+    zh: { title: '这个货能收吗？', label: '品名', go: '查询', all: '查看完整清单', examples: '例如', reason: '原因',
+      note: '结果仅供参考——特殊货物或大批量请先咨询客服。', none: '该货物不在清单内——发货前请咨询客服。', fast: '查询太快，请稍候。', err: '查询失败，请重试或咨询客服。', ph: '输入品名，如：香水、充电宝' },
+  };
+  const ICON = { banned: '⛔', road_ok: '⚠️', ask: '❔', none: '❔' };
+  let L = 'vi'; let rules = null; let last = null;
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+  const T = (o) => (o ? o[L] || o.vi || '' : '');
+  const levelText = (lv) => `${ICON[lv]} ${(rules?.levels?.[L] || {})[lv] || ''}`;
+  function groupCard(g, kws) {
+    const c = el('article', `card goods-card goods-${g.level}`);
+    c.dataset.goodsGroup = String(g.seq);
+    c.append(el('p', 'goods-level', levelText(g.level)), el('h3', '', T(g.name)), el('p', 'muted small', L === 'vi' ? g.name.zh : g.name.vi));
+    if (T(g.note)) c.append(el('p', 'goods-note', T(g.note)));
+    c.append(el('p', 'small', `${TXT[L].examples}: ${T(g.examples)}`), el('p', 'muted small', `${TXT[L].reason}: ${T(g.reason)}`));
+    if (kws) c.append(el('p', 'muted small', kws.join(', ')));
+    return c;
+  }
+  function showResult(r) {
+    last = r;
+    const out = $('goods-out'); out.replaceChildren();
+    out.append(el('p', 'goods-result', `${ICON[r.level]} ${r.level_label[L]} — "${r.query}"`));
+    for (const m of r.matches) out.append(groupCard(m.group, m.keywords));
+    if (!r.matches.length) out.append(el('p', 'card', TXT[L].none));
+  }
+  function paintAll() {
+    for (const n of document.querySelectorAll('[data-i18n]')) n.textContent = TXT[L][n.dataset.i18n] || n.textContent;
+    for (const b of document.querySelectorAll('[data-lang]')) b.setAttribute('aria-pressed', String(b.dataset.lang === L));
+    $('goods-q').placeholder = TXT[L].ph;
+    if (rules) { const list = $('goods-list'); list.replaceChildren(...rules.groups.map((g) => groupCard(g))); }
+    if (last) showResult(last);
+  }
+  async function load() {
+    try {
+      const r = await fetch('/api/goods/rules', { headers: { accept: 'application/json' } });
+      if (!r.ok) throw new Error(String(r.status));
+      rules = await r.json();
+      $('goods-all').hidden = false;
+      paintAll();
+    } catch { $('goods-off').hidden = false; $('goods-form').hidden = true; }
+  }
+  $('goods-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const q = $('goods-q').value.trim();
+    if (!q) { $('goods-q').focus(); return; }
+    try {
+      const r = await fetch(`/api/goods/check?q=${encodeURIComponent(q)}`, { headers: { accept: 'application/json' } });
+      if (r.status === 429) { $('goods-out').replaceChildren(el('p', 'card', TXT[L].fast)); return; }
+      if (!r.ok) throw new Error(String(r.status));
+      showResult(await r.json());
+    } catch { $('goods-out').replaceChildren(el('p', 'card', TXT[L].err)); }
+  });
+  for (const b of document.querySelectorAll('[data-lang]')) b.addEventListener('click', () => { L = b.dataset.lang; paintAll(); });
+  load();
+</script>
+<style>
+  .goods-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  .goods-lang { display: flex; gap: 6px; }
+  .goods-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .goods-form input { flex: 1 1 240px; min-width: 0; padding: 12px 14px; font-size: 1rem; border: 1px solid var(--line, #ccd); border-radius: 10px; }
+  .goods-result { font-weight: 700; font-size: 1.15rem; }
+  .goods-card { margin: 10px 0; }
+  .goods-card h3 { margin: 4px 0; }
+  .goods-level { font-weight: 700; margin: 0; }
+  .goods-banned .goods-level { color: #b42318; }
+  .goods-road_ok .goods-level, .goods-ask .goods-level { color: #b54708; }
+  .goods-note { font-weight: 600; }
+  .goods-all { margin: 20px 0; }
+  .goods-all summary { cursor: pointer; font-weight: 600; }
+  .small { font-size: .9rem; }
+</style>
