@@ -511,7 +511,7 @@ export const articles: Article[] = [
       'Hướng dẫn đo kiện, tính số khối m³ và cân nặng quy đổi để ước tính cước vận chuyển hàng Trung Quốc về Việt Nam, kèm ví dụ cụ thể.',
     keyword: 'cách tính số khối hàng Trung Quốc',
     status: 'draft',
-    updated: '2026-11-06',
+    updated: '2026-11-17',
     sections: [
       {
         heading: 'Vì sao cần biết số khối?',
@@ -530,7 +530,9 @@ export const articles: Article[] = [
         heading: 'Cân nặng quy đổi',
         paragraphs: [
           'Cân nặng quy đổi (kg) = dài × rộng × cao (cm) ÷ hệ số quy đổi. Hệ số này do từng đơn vị vận chuyển quy định và có thể khác nhau theo tuyến, loại hình vận chuyển.',
-          'Hệ số quy đổi VIP GROUP áp dụng sẽ được ghi rõ trong báo giá cho từng lô hàng.',
+          'VIP GROUP áp dụng hệ số 5000: cân quy đổi = dài × rộng × cao (cm) ÷ 5000. Cước tính theo số lớn hơn giữa cân thực và cân quy đổi, xét riêng từng kiện.',
+          'Ví dụ: kiện 60 × 50 × 40 cm nặng 8 kg có cân quy đổi 120.000 ÷ 5000 = 24 kg. Vì 24 kg lớn hơn 8 kg nên kiện được tính cước như 24 kg. Cùng kích thước đó nhưng nặng 30 kg thì tính theo cân thực 30 kg.',
+          'Đơn giá theo từng bậc cân nặng xem tại trang Bảng giá; công cụ Báo giá nhanh trên trang đó tính sẵn cho nhiều loại kiện.',
         ],
       },
       {

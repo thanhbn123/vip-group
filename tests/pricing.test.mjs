@@ -102,7 +102,8 @@ test('không ảnh hưởng nội dung trang chủ đang chạy: title, H1, các
   assert.match(html, /<title>VIP GROUP \| Con người - Công nghệ - Cơ hội<\/title>/);
   assert.equal((html.match(/<h1[\s>]/g) ?? []).length, 1);
   // Owner 07/11/2026: bỏ VIPORDER → không còn khối "Công ty thành viên" trên trang chủ.
-  const order = ['hero-title', 'about-title', 'sectors-title', 'price-title', 'news-title', 'careers-title', 'cta-title'];
+  // VIPG-WEB-034 (owner 17/11/2026 "làm hết"): bảng giá + ví dụ tính cước dời lên ngay sau banner.
+  const order = ['hero-title', 'price-title', 'ex-title', 'about-title', 'sectors-title', 'news-title', 'careers-title', 'cta-title'];
   const pos = order.map((id) => html.indexOf(`id="${id}"`));
   assert.ok(pos.every((p) => p > 0), `thiếu khối: ${order.filter((_, i) => pos[i] < 0)}`);
   assert.deepEqual([...pos].sort((a, b) => a - b), pos, 'thứ tự khối trang chủ thay đổi ngoài dự kiến');
@@ -112,6 +113,9 @@ test('không ảnh hưởng nội dung trang chủ đang chạy: title, H1, các
   // Thay đổi có chủ đích ngoài bảng giá: link "Chính sách bảo mật" chân trang (023); mục menu/chân trang "Logistics"
   // và link "Dịch vụ vận chuyển Trung Quốc – Việt Nam →" trên thẻ lĩnh vực (021).
   const strip = (h) => text(h.replace(/<nav class="account-bar[\s\S]*?<\/nav>/, '').replace(/<section class="section price-section"[\s\S]*?<\/section>/, '').replace(/<section class="section" aria-labelledby="members-title"[\s\S]*?<\/section>/, '')
+    // VIPG-WEB-034: khối ví dụ tính cước mới; nút banner đổi thành Báo giá vận chuyển / Xem bảng giá / Khám phá hệ sinh thái
+    // (nút "Liên hệ hợp tác" ở banner bỏ, CtaBand cuối trang vẫn giữ) — các nút banner được kiểm ở tests/home-logistics.test.mjs.
+    .replace(/<section class="section ex-section"[\s\S]*?<\/section>/, '').replace(/<div class="hero-actions"[\s\S]*?<\/div>/, '')
     // VIP CHAT V1.0: khung "Phòng chat chung" chỉ có khi build PUBLIC_CHAT_WIDGET=1 (thay đổi có chủ đích, chờ owner duyệt).
     .replace(/<section class="cc-section"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '')
     .replace(/Chính sách bảo mật · /, '').replace(/0961 102 655/g, '0961102655').replace(/ Xem thêm: Vận chuyển hàng Trung Quốc về Bắc Ninh · Vận chuyển Thâm Quyến về Việt Nam /, ' ').replace(/ Logistics /g, ' ').replace(/ Dịch vụ vận chuyển Trung Quốc – Việt Nam → /, ' ');

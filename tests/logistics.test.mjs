@@ -117,7 +117,9 @@ test('chống trùng lặp: title, description, H1 khác nhau trên toàn site',
 
 test('production KHÔNG chứa dữ liệu MẪU, giá, thời gian giao hay đánh giá chưa xác minh', () => {
   for (const file of allHtml(dist)) {
-    const html = readFileSync(file, 'utf8');
+    // VIPG-WEB-034: khối "Ví dụ tính cước" chứa thành tiền TÍNH từ 5 mức giá owner (không gõ tay) — từng số đã được
+    // kiểm riêng ở tests/home-logistics.test.mjs, nên chỉ khối đó được loại khỏi phép chặn giá. Mọi chỗ khác vẫn chặn.
+    const html = readFileSync(file, 'utf8').replace(/<section class="section ex-section" id="vi-du-tinh-cuoc"[\s\S]*?<\/section>/, '');
     // Giá DUY NHẤT được phép: 5 mức owner cung cấp 06/11/2026 (src/data/vi/pricing.ts). Mọi giá khác vẫn bị chặn.
     const t = text(html).replace(/\b(?:20|16|15|14|12)\.000\s*(?:đ\/kg|VNĐ\/kg)/g, ' ').replace(/(?:20|16|15|14|12)\.000(?=\s*đ\/kg)/g, ' ');
     assert.doesNotMatch(t, /\bMẪU\b|\[MẪU\]|KHÔNG PHẢI ĐỊA CHỈ THẬT|BẢN DEMO/, `${file}: lọt dữ liệu mẫu`);

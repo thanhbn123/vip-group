@@ -7,6 +7,7 @@ import NewsList from '../components/NewsList.astro';
 import CtaBand from '../components/CtaBand.astro';
 import MemberNote from '../components/MemberNote.astro';
 import PriceTable from '../components/PriceTable.astro';
+import PriceExamples from '../components/PriceExamples.astro';
 // Bí danh trong astro.config.mjs: cờ PUBLIC_CHAT_WIDGET tắt → component rỗng (không CSS/JS khung chat).
 import CommunityChat from '@vipg/community-chat';
 import { getContent } from '../data';
@@ -51,8 +52,10 @@ const sloganLast = sloganParts.pop();
         <h1 id="hero-title">{sloganParts.map((p) => <>{p}.<br /></>)}<span class="nhan">{sloganLast}.</span></h1>
         <p class="lead">{company.tagline}</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="/linh-vuc-hoat-dong/">Khám phá hệ sinh thái</a>
-          <a class="btn btn-ghost" href="/lien-he/">Liên hệ hợp tác</a>
+          {/* VIPG-WEB-034: dịch vụ tạo doanh thu (vận chuyển) đứng trước; hệ sinh thái giữ lại ở nút cuối. */}
+          <a class="btn btn-primary" href="/logistics/bang-gia/#bao-gia-nhanh" data-track="quote_cta_click" data-track-location="hero">Báo giá vận chuyển</a>
+          <a class="btn btn-ghost" href="#bang-gia">Xem bảng giá</a>
+          <a class="btn btn-ghost" href="/linh-vuc-hoat-dong/">Khám phá hệ sinh thái</a>
         </div>
       </div>
       {!heroBanner && (
@@ -66,7 +69,17 @@ const sloganLast = sloganParts.pop();
     </div>
   </section>
 
-  {/* VIP CHAT V1.0 — chỉ hiện khi build với PUBLIC_CHAT_WIDGET=1 (mặc định tắt). */}
+  {/* VIPG-WEB-034: bảng giá + ví dụ tính cước ngay sau banner — khách tìm vận chuyển không phải cuộn qua phần giới thiệu tập đoàn. */}
+  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline} hotlineDisplay={contact.hotlineDisplay} zaloUrl={contact.zaloUrl}
+    quoteHref={contact.formBackendReady ? '/lien-he/?nhu-cau=bao-gia-van-chuyen#form-lien-he' : null} detailHref="/logistics/bang-gia/"
+    relatedLinks={[
+      { href: '/logistics/van-chuyen-trung-quoc-bac-ninh/', label: 'Vận chuyển hàng Trung Quốc về Bắc Ninh' },
+      { href: '/logistics/van-chuyen-tham-quyen-ve-viet-nam/', label: 'Vận chuyển Thâm Quyến về Việt Nam' },
+    ].filter((l) => linkable(l.href))} />
+
+  <PriceExamples tiers={pricing.tiers} quoteHref="/logistics/bang-gia/#bao-gia-nhanh" />
+
+  {/* VIP CHAT V1.0 — chỉ hiện khi build với PUBLIC_CHAT_WIDGET=1 (mặc định tắt). Dời xuống sau bảng giá (VIPG-WEB-034): khung chat cần VIP ID, khách mới chưa dùng được. */}
   <CommunityChat />
 
   <section class="section" aria-labelledby="about-title">
@@ -94,13 +107,6 @@ const sloganLast = sloganParts.pop();
       <SectorGrid sectors={sectors} />
     </div>
   </section>
-
-  <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline} hotlineDisplay={contact.hotlineDisplay} zaloUrl={contact.zaloUrl}
-    quoteHref={contact.formBackendReady ? '/lien-he/?nhu-cau=bao-gia-van-chuyen#form-lien-he' : null} detailHref="/logistics/bang-gia/"
-    relatedLinks={[
-      { href: '/logistics/van-chuyen-trung-quoc-bac-ninh/', label: 'Vận chuyển hàng Trung Quốc về Bắc Ninh' },
-      { href: '/logistics/van-chuyen-tham-quyen-ve-viet-nam/', label: 'Vận chuyển Thâm Quyến về Việt Nam' },
-    ].filter((l) => linkable(l.href))} />
 
 {subsidiaries.length > 0 && (
   <section class="section" aria-labelledby="members-title">

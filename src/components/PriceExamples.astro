@@ -1,0 +1,67 @@
+---
+/**
+ * VIPG-WEB-034 · Ví dụ tính cước — minh hoạ bảng giá bằng con số cụ thể (học từ đối thủ: khách tự hiểu giá trước khi hỏi).
+ * MỌI con số được TÍNH khi build từ src/data/vi/pricing.ts qua src/lib/pricing.ts (cùng logic với công cụ tính):
+ * không gõ tay số tiền nào ở đây, đổi bảng giá → ví dụ tự đổi theo. Kích thước / cân nặng chỉ là kiện mẫu minh hoạ.
+ * Không nêu phụ phí, thuế, thời gian giao: owner chưa xác nhận.
+ */
+import type { PriceTier } from '../data/types';
+import { estimate, volumetricKg, VOLUMETRIC_DIVISOR } from '../lib/pricing';
+
+interface Props { tiers: PriceTier[]; quoteHref?: string | null }
+const { tiers, quoteHref = null } = Astro.props;
+
+const samples = [
+  { name: 'Kiện nhỏ', note: 'Phụ kiện, quần áo', lCm: 30, wCm: 20, hCm: 15, kg: 3 },
+  { name: 'Kiện vừa', note: 'Hàng gia dụng, linh kiện', lCm: 50, wCm: 40, hCm: 30, kg: 20 },
+  { name: 'Kiện nhẹ nhưng cồng kềnh', note: 'Thú bông, đồ nhựa', lCm: 60, wCm: 50, hCm: 40, kg: 8 },
+];
+const fmt = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+const rows = samples.map((s) => {
+  const r = estimate(tiers, { ...s, count: 1 });
+  return { ...s, vol: volumetricKg(s.lCm, s.wCm, s.hCm), byVolume: r.chargeablePerPackage > s.kg, ...r };
+});
+const minPrice = Math.min(...tiers.map((t) => t.price));
+---
+<section class="section ex-section" id="vi-du-tinh-cuoc" aria-labelledby="ex-title">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="kicker">Ví dụ tính cước</span>
+        <h2 id="ex-title">Cước chỉ từ {fmt(minPrice)}đ/kg — tự tính được trước khi gửi</h2>
+      </div>
+      {quoteHref && <a class="text-link" href={quoteHref}>Tính cước cho lô hàng của bạn →</a>}
+    </div>
+    <div class="grid grid-3">
+      {rows.map((r) => (
+        <article class="card ex-card">
+          <h3>{r.name}</h3>
+          <p class="muted">{r.note}</p>
+          <dl>
+            <div><dt>Kích thước</dt><dd>{r.lCm} × {r.wCm} × {r.hCm} cm</dd></div>
+            <div><dt>Cân thực</dt><dd>{fmt(r.kg)} kg</dd></div>
+            <div><dt>Cân quy đổi</dt><dd>{fmt(r.vol)} kg</dd></div>
+            <div><dt>Cân tính cước</dt><dd><strong>{fmt(r.chargeablePerPackage)} kg</strong>{r.byVolume && <span class="tag">theo thể tích</span>}</dd></div>
+            <div><dt>Đơn giá</dt><dd>{fmt(r.tier.price)}đ/kg</dd></div>
+          </dl>
+          <p class="ex-total">{fmt(r.total)}đ</p>
+        </article>
+      ))}
+    </div>
+    <p class="muted ex-note">
+      Cân tính cước mỗi kiện = số lớn hơn giữa cân thực và cân quy đổi (dài × rộng × cao cm ÷ {VOLUMETRIC_DIVISOR}); bậc giá xét theo từng kiện.
+      Ví dụ minh hoạ theo bảng giá hiện hành, chưa gồm phụ phí và thuế (nếu có) — sẽ được xác nhận trước khi báo giá chính thức.
+    </p>
+  </div>
+</section>
+
+<style>
+  .ex-card h3 { font-size: 19px; margin-bottom: 2px; }
+  .ex-card dl { display: grid; gap: 6px; margin: 14px 0 0; font-size: 15px; }
+  .ex-card dl div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed var(--line); padding-bottom: 6px; }
+  .ex-card dt { color: var(--text-2); }
+  .ex-card dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .tag { display: inline-block; margin-left: 6px; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--bg-alt); color: var(--brand-ink); }
+  .ex-total { margin: 14px 0 0; font-size: 28px; font-weight: 800; color: var(--brand-ink); text-align: right; font-variant-numeric: tabular-nums; }
+  .ex-note { margin-top: 20px; font-size: 14px; }
+</style>
