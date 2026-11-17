@@ -1,6 +1,6 @@
 import { contact } from './contact';
 import { company } from './company';
-import { TRANSIT_PHRASE, compensation, orderFee } from './service-terms';
+import { TRANSIT_PHRASE, SRC_OWNER_TERMS, compensation, orderFee } from './service-terms';
 import type { Article, FaqItem, LogisticsPage, LogisticsProvider, PickupId, PickupPoint, Fact } from '../types';
 
 /**
@@ -97,7 +97,8 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Điểm nhận nằm trong khu logistics 新钢物流园, giai đoạn 3 (三期), tòa nhà số 2 (2栋) — ghi đủ "三期2栋" để tài xế tìm đúng tòa.', 'Khu vực: 海洋新城, phường 福海街道 (Phúc Hải), quận Bảo An (宝安区), phía tây Thâm Quyến.'],
     deliveryNotesZh: ['送货点位于新钢物流园三期2栋，请写全“三期2栋”，以免送错楼栋。', '区域：宝安区福海街道海洋新城。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    transitTime: pending('[MẪU] 2–3 ngày về Hà Nội'),
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
@@ -122,7 +123,8 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Điểm nhận là kho số 2, ô kho số 3 (2号库3号仓) trong khu kho 嘉功物流 trên đường 囷瑶路 — ghi đủ số kho và số ô.', 'Khu vực: quận Hải Thương (海沧区), Hạ Môn, tỉnh Phúc Kiến.'],
     deliveryNotesZh: ['送货点为嘉功物流2号库3号仓（囷瑶路），请写全库号与仓号。', '区域：福建省厦门市海沧区。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    transitTime: pending('[MẪU] 3–5 ngày về Hà Nội'),
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
@@ -147,7 +149,8 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Địa chỉ ở thôn Hổ Đường (虎塘村), số 26 đường 凤岗路, trấn Chung Lạc Đàm — khu ngoại thành phía bắc Quảng Châu.', 'Gửi nhà cung cấp đủ tên người nhận và số điện thoại liên hệ (cung cấp khi đăng ký) để tài xế liên hệ khi tới.'],
     deliveryNotesZh: ['地址位于广州北部白云区钟落潭镇虎塘村凤岗路26号。', '请将客户提供的收货人及联系电话一并告知司机，便于到达时联系。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    transitTime: pending('[MẪU] 3–5 ngày về Hà Nội'),
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
@@ -172,7 +175,8 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Điểm nhận: khu Bắc Uyển giai đoạn 3 (北苑三期), số 121 đường 秋实路, tòa nhà số 6, kho 10 đến 12.', 'Vào cửa Tây (西门), dỡ hàng cạnh thang máy chở hàng số 5 (5号货梯).'],
     deliveryNotesZh: ['送货点：北苑三期秋实路121号6号楼10-12库。', '请从西门进入，靠5号货梯卸货。'],
     receivingHours: pending('[MẪU] 08:30–17:30, thứ Hai – thứ Bảy'),
-    transitTime: pending('[MẪU] 5–7 ngày về Hà Nội'),
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
@@ -203,7 +207,9 @@ function pickupFaq(p: PickupBase): FaqItem[] {
     },
     {
       q: `Hàng từ ${p.city} về Việt Nam mất bao lâu?`,
-      a: `Thời gian phụ thuộc loại hàng, thủ tục và lịch xe. Gọi hoặc nhắn Zalo ${HOTLINE} để được báo thời gian cho lô hàng cụ thể.`,
+      a: p.transitTime.value
+        ? `Hàng nhận tại kho ${p.city} về Việt Nam theo thời gian vận chuyển ${p.transitTime.value}. Thời gian giao từ kho Việt Nam tới địa chỉ của bạn tuỳ phương án nhận hàng đã thỏa thuận.`
+        : `Thời gian phụ thuộc loại hàng, thủ tục và lịch xe. Gọi hoặc nhắn Zalo ${HOTLINE} để được báo thời gian cho lô hàng cụ thể.`,
       pending: p.transitTime.value === null,
     },
     p.extraFaq,

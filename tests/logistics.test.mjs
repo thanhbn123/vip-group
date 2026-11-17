@@ -216,8 +216,10 @@ test('V2: trang tuyến — nội dung riêng, liên kết mạng lưới, phầ
     assert.ok(faq.mainEntity.length >= 3, `${p}: FAQPage`);
     for (const q of faq.mainEntity) {
       assert.ok(t.includes(q.name), `${p}: câu hỏi schema phải hiển thị: ${q.name}`);
-      assert.doesNotMatch(q.name, /mất bao lâu/, `${p}: câu thời gian (chưa có nguồn) không vào FAQPage`);
+      // VIPG-WEB-034: owner 17/11/2026 chốt "2 ngày về kho VN" cho cả 4 kho → câu thời gian có nguồn, được vào FAQPage với đúng câu owner.
+      if (/mất bao lâu/.test(q.name)) assert.match(q.acceptedAnswer.text, /2 ngày từ kho Trung Quốc về kho Việt Nam/, `${p}: câu thời gian phải theo owner`);
     }
+    assert.ok(faq.mainEntity.some((q) => /mất bao lâu/.test(q.name)), `${p}: thiếu câu thời gian đã có nguồn`);
     // Lưu ý giao hàng riêng từng kho (diễn giải từ địa chỉ owner) — phần nội dung không lặp giữa các tuyến.
     assert.match(t, /Lưu ý khi giao hàng tới kho/, `${p}: thiếu lưu ý giao hàng riêng`);
     // Owner 07/11/2026: bảng giá chung ÁP DỤNG cho 4 kho → trang tuyến hiện 5 bậc + Offer (chi tiết: pricing-policy.test.mjs).
