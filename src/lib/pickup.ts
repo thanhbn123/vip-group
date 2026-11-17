@@ -25,8 +25,8 @@ export const pickupAnswer = (p: PickupPoint) =>
   `VIP GROUP nhận hàng tại kho ${p.city} (${p.cityZh}, ${p.district}, ${p.province}) và vận chuyển về Việt Nam; dịch vụ do ${provider.name} vận hành. ` +
   `Nhà cung cấp giao hàng tới địa chỉ kho, ghi mã khách hàng trên từng kiện. ` +
   (p.priceApplies.value
-    ? `Cước theo bảng giá chung cho cả 4 kho (5 bậc giá theo kg); bậc giá xác định theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân thực và cân quy đổi (dài × rộng × cao cm ÷ 6000), không gộp cả lô. `
-    : `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000); đơn giá cho hàng nhận tại kho ${p.city} được xác nhận khi báo giá. `) +
+    ? `Cước theo bảng giá chung cho cả 4 kho (5 bậc giá theo kg); bậc giá xác định theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân thực và cân quy đổi (dài × rộng × cao cm ÷ 5000), không gộp cả lô. `
+    : `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 5000); đơn giá cho hàng nhận tại kho ${p.city} được xác nhận khi báo giá. `) +
   `Hotline/Zalo ${prettyPhone(provider.hotline)}.`;
 
 export const pickupAnswerZh = (p: PickupPoint) =>

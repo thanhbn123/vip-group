@@ -55,7 +55,7 @@ for (const [base, label, list] of [[PROD, 'prod', PAGES], [DEMO, 'demo', [...PAG
   }
 }
 
-// Luồng chức năng trên bản production: công cụ tính (hệ số 6000 owner), đo lường nút liên hệ, không gọi domain ngoài
+// Luồng chức năng trên bản production: công cụ tính (hệ số 5000, chủ dự án 17/11/2026), đo lường nút liên hệ, không gọi domain ngoài
 // ngoài Turnstile. Luồng gửi lead đầy đủ nằm ở tests/e2e/lead.e2e.mjs.
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'vi-VN' });
@@ -66,11 +66,11 @@ for (const [base, label, list] of [[PROD, 'prod', PAGES], [DEMO, 'demo', [...PAG
   await page.fill('#vc-n', '3');
   check('calc: 60×50×40 × 3 kiện = 0,36 m³', (await page.textContent('[data-out="m3"]'))?.trim() === '0,36 m³', await page.textContent('[data-out="m3"]'));
   check('calc: cân thực 12 kg × 3 = 36 kg', (await page.textContent('[data-out="kg"]'))?.trim() === '36 kg');
-  check('calc: cân quy đổi 360.000 ÷ 6000 = 60 kg (owner xác nhận hệ số 6000)', (await page.textContent('[data-out="dim"]'))?.trim() === '60 kg', await page.textContent('[data-out="dim"]'));
-  // Owner 07/11/2026: bậc giá theo TỪNG KIỆN — 3 kiện × (60×50×40 cm, 12 kg) → mỗi kiện tính 20 kg → 16.000 đ/kg.
-  check('cước theo kiện: 20 kg/kiện tính cước', (await page.textContent('[data-out="charge"]'))?.trim() === '20 kg', await page.textContent('[data-out="charge"]'));
-  check('cước theo kiện: bậc 16.000 đ/kg (không gộp 60 kg của cả lô)', /^16\.000 đ\/kg/.test((await page.textContent('[data-out="tier"]'))?.trim() ?? ''), await page.textContent('[data-out="tier"]'));
-  check('cước theo kiện: tổng 960.000 đ = 320.000 đ/kiện × 3', (await page.textContent('[data-out="cost"]'))?.trim() === '960.000 đ' && /320\.000 đ\/kiện × 3/.test(await page.textContent('[data-out="cost-per"]')), await page.textContent('[data-out="cost"]'));
+  check('calc: cân quy đổi 360.000 ÷ 5000 = 72 kg (chủ dự án quyết định hệ số 5000)', (await page.textContent('[data-out="dim"]'))?.trim() === '72 kg', await page.textContent('[data-out="dim"]'));
+  // Owner 07/11/2026: bậc giá theo TỪNG KIỆN — 3 kiện × (60×50×40 cm, 12 kg) → mỗi kiện tính 24 kg (÷ 5000) → 16.000 đ/kg.
+  check('cước theo kiện: 24 kg/kiện tính cước', (await page.textContent('[data-out="charge"]'))?.trim() === '24 kg', await page.textContent('[data-out="charge"]'));
+  check('cước theo kiện: bậc 16.000 đ/kg (không gộp 72 kg của cả lô)', /^16\.000 đ\/kg/.test((await page.textContent('[data-out="tier"]'))?.trim() ?? ''), await page.textContent('[data-out="tier"]'));
+  check('cước theo kiện: tổng 1.152.000 đ = 384.000 đ/kiện × 3', (await page.textContent('[data-out="cost"]'))?.trim() === '1.152.000 đ' && /384\.000 đ\/kiện × 3/.test(await page.textContent('[data-out="cost-per"]')), await page.textContent('[data-out="cost"]'));
   await page.fill('#vc-l', '10'); await page.fill('#vc-w', '10'); await page.fill('#vc-h', '10'); await page.fill('#vc-kg', '5'); await page.fill('#vc-n', '1');
   check('biên 5 kg/kiện → 20.000 đ/kg', /^20\.000 đ\/kg/.test((await page.textContent('[data-out="tier"]'))?.trim() ?? ''));
   await page.fill('#vc-kg', '5.01');
