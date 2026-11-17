@@ -561,12 +561,37 @@ export async function handleQuote(request, env, fetchImpl = fetch) {
   }
 }
 
+// ───────── VIPG-WEB-034 · Tỷ giá CNY→VND công khai (owner 17/11/2026: "có công khai, admin được phép cập nhật") ─────────
+// GET /api/fx → CRM /api/public/fx-rate (admin cập nhật trong CRM). Trả { ok, rate, updated_at }. Cùng biến CRM_NEWS_URL + NEWS_PUBLIC_KEY.
+// CRM chưa có / chưa đặt tỷ giá → 404/503, giao diện giữ ẩn khối tỷ giá.
+export async function handleFx(request, env, fetchImpl = fetch) {
+  if (request.method !== 'GET') return json(405, { ok: false, error: 'method_not_allowed' });
+  if (!env.CRM_NEWS_URL || !env.NEWS_PUBLIC_KEY) return json(503, { ok: false, error: 'not_configured' });
+  try {
+    const ac = new AbortController(); const timer = setTimeout(() => ac.abort(), 5000);
+    const r = await fetchImpl(`${String(env.CRM_NEWS_URL).replace(/\/+$/, '')}/api/public/fx-rate`, {
+      headers: { 'x-news-key': env.NEWS_PUBLIC_KEY, 'x-client-ip': request.headers.get('cf-connecting-ip') || '', accept: 'application/json' }, signal: ac.signal });
+    clearTimeout(timer);
+    const data = await r.json().catch(() => null);
+    if (r.status === 404) return json(404, { ok: false, error: 'not_set' });
+    if (r.status === 429) return json(429, { ok: false, error: 'too_fast' });
+    const rate = Number(data?.rate ?? data?.exchange_rate);
+    if (!r.ok || !Number.isFinite(rate) || rate <= 0) return json(502, { ok: false, error: 'upstream' });
+    const res = json(200, { ok: true, rate, updated_at: typeof data?.updated_at === 'string' ? data.updated_at : null });
+    res.headers.set('cache-control', 'public, max-age=300');
+    return res;
+  } catch {
+    return json(502, { ok: false, error: 'upstream' });
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
     if (pathname === '/api/lead') return handleLead(request, env, ctx);
     if (pathname === '/api/quote/price-list' || pathname === '/api/quote') return handleQuote(request, env);
     if (pathname === '/api/goods/rules' || pathname === '/api/goods/check') return handleGoods(request, env);
+    if (pathname === '/api/fx') return handleFx(request, env);
     if (pathname.startsWith('/api/')) return json(404, { ok: false, error: 'not_found' });
     // VIPG-WEB-030: trang chủ + /tin-tuc/… + /zh/tin-tuc/… (tin tức từ CRM)
     if (pathname === '/' || /^\/(zh\/)?tin-tuc(\/|$)/.test(pathname)) return handleNews(request, env, ctx);

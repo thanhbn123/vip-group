@@ -1,0 +1,54 @@
+---
+/**
+ * VIPG-WEB-034 · Phí dịch vụ đặt hàng (order hộ) — owner 17/11/2026. Bậc + % lấy từ src/data/vi/service-terms.ts,
+ * ví dụ TÍNH khi build qua orderServiceFee() (không gõ tay số tiền). data-owner-terms: khối có nguồn owner, test riêng.
+ */
+import { orderFee } from '../data/vi/service-terms';
+import { orderServiceFee } from '../lib/pricing';
+import FxRate from './FxRate.astro';
+import { provider } from '../data/vi/logistics';
+
+const fmt = (n: number) => n.toLocaleString('vi-VN');
+const sample = 3_000_000;
+const ex = orderServiceFee(orderFee.tiers, sample);
+---
+<section class="section section-alt" id="phi-dich-vu-order" aria-labelledby="of-title" data-owner-terms>
+  <div class="container of-grid">
+    <div>
+      <span class="kicker">Đặt hàng 1688 · Taobao · Pinduoduo</span>
+      <h2 id="of-title">Phí dịch vụ đặt hàng</h2>
+      {orderFee.firstOrderFree.value && <p class="of-free">Miễn phí dịch vụ cho đơn hàng đầu tiên</p>}
+      <p class="muted">{orderFee.basis} Đơn càng lớn, phí càng thấp.</p>
+      <FxRate />
+      <p class="of-cta"><a class="btn btn-primary" href={provider.zaloUrl} rel="noopener" target="_blank" data-track="zalo_click" data-track-location="order_fee">Gửi link sản phẩm qua Zalo<span class="visually-hidden"> (mở tab mới)</span></a></p>
+    </div>
+    <div class="card of-card">
+      <table class="of-table">
+        <caption class="visually-hidden">Phí dịch vụ đặt hàng theo giá trị tiền hàng</caption>
+        <thead><tr><th scope="col">Giá trị tiền hàng</th><th scope="col" class="num">Phí dịch vụ</th></tr></thead>
+        <tbody>
+          {orderFee.tiers.map((t) => <tr><th scope="row">{t.label}</th><td class="num"><strong>{t.percent}%</strong></td></tr>)}
+        </tbody>
+      </table>
+      <p class="of-ex">
+        Ví dụ: đơn {fmt(sample)}đ tiền hàng → phí {ex.tier.percent}% = <strong>{fmt(ex.fee)}đ</strong>.
+        {orderFee.firstOrderFree.value && <> Nếu là đơn hàng đầu tiên: <strong>0đ</strong>.</>}
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .of-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 40px; align-items: start; }
+  @media (max-width: 900px) { .of-grid { grid-template-columns: 1fr; gap: 24px; } }
+  .of-free { display: inline-block; margin: 4px 0 12px; padding: 6px 14px; border-radius: 999px; background: var(--brand); color: var(--on-brand); font-weight: 700; }
+  .of-card { padding: 0; overflow: hidden; }
+  .of-table { width: 100%; border-collapse: collapse; }
+  .of-table th, .of-table td { padding: 16px 22px; border-bottom: 1px solid var(--line); text-align: left; }
+  .of-table thead th { background: var(--brand); color: var(--on-brand); font-size: 14px; }
+  .of-table tbody th { font-weight: 600; }
+  .of-table .num { text-align: right; white-space: nowrap; }
+  .of-cta { margin-top: 18px; }
+  .of-table td strong { font-size: 22px; color: var(--brand-ink); }
+  .of-ex { margin: 0; padding: 16px 22px; font-size: 15px; color: var(--text-2); }
+</style>

@@ -1,5 +1,6 @@
 import { contact } from './contact';
 import { company } from './company';
+import { TRANSIT_PHRASE, compensation, orderFee } from './service-terms';
 import type { Article, FaqItem, LogisticsPage, LogisticsProvider, PickupId, PickupPoint, Fact } from '../types';
 
 /**
@@ -270,6 +271,11 @@ export const faqs: FaqItem[] = [
     a: 'Có. VIP GROUP hỗ trợ khách tìm nguồn và đặt hàng từ các nền tảng 1688, Taobao, Pinduoduo, sau đó vận chuyển về Việt Nam.',
   },
   {
+    // Owner 17/11/2026 (service-terms.ts).
+    q: 'Phí dịch vụ đặt hàng bao nhiêu?',
+    a: `Miễn phí dịch vụ cho đơn hàng đầu tiên. Từ đơn thứ hai, phí tính theo giá trị tiền hàng: ${orderFee.tiers.map((t) => `${t.percent}%`).join(', ')} — đơn càng lớn phí càng thấp. Bảng chi tiết có tại trang Bảng giá.`,
+  },
+  {
     q: 'Doanh nghiệp cần nhập khẩu chính ngạch thì làm thế nào?',
     a: 'VIP GROUP hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp. Hồ sơ cụ thể phụ thuộc mặt hàng — vui lòng gửi thông tin hàng để được tư vấn.',
   },
@@ -287,9 +293,9 @@ export const faqs: FaqItem[] = [
     a: 'Cước tính theo số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao theo cm ÷ 5000). Bậc giá theo kg xác định theo trọng lượng tính cước của từng kiện (không cộng gộp các kiện trong lô).',
   },
   {
-    q: 'Hàng về Bắc Ninh mất bao lâu?',
-    a: 'Thời gian phụ thuộc kho xuất phát, loại hàng và thủ tục. Thời gian cụ thể đang được cập nhật — vui lòng liên hệ để được báo theo lô hàng.',
-    pending: true,
+    // Owner 17/11/2026: "2 ngày về kho VN" (service-terms.ts).
+    q: 'Hàng từ Trung Quốc về Việt Nam mất bao lâu?',
+    a: `Thời gian vận chuyển ${TRANSIT_PHRASE}. Thời gian giao từ kho Việt Nam tới địa chỉ của bạn tuỳ phương án nhận hàng đã thỏa thuận.`,
   },
   {
     q: 'Nhận hàng tại Việt Nam như thế nào?',
@@ -297,8 +303,8 @@ export const faqs: FaqItem[] = [
   },
   {
     q: 'Hàng bị thiếu, hỏng khi vận chuyển thì xử lý ra sao?',
-    a: 'Chính sách kiểm đếm, khiếu nại và bồi thường đang được cập nhật. Vui lòng liên hệ hotline để được hướng dẫn trước khi gửi hàng giá trị cao.',
-    pending: true,
+    // Owner 17/11/2026: đền bù gấp 10 lần tiền cước, hoàn lại tiền cước (service-terms.ts).
+    a: `${compensation.value} Báo ngay cho VIP GROUP qua hotline / Zalo ${HOTLINE} kèm ảnh, video kiện hàng để được xử lý.`,
   },
   {
     q: 'Hàng cấm hoặc hàng cần giấy phép có gửi được không?',
@@ -496,8 +502,8 @@ export const knowledgeIndex: LogisticsPage = {
     'Hướng dẫn thực tế về nhập hàng Trung Quốc: cách tính số khối, cân nặng quy đổi, ghi mã khách hàng khi đặt hàng, đóng gói hàng gửi về Việt Nam.',
   h1: 'Kiến thức nhập hàng Trung Quốc',
   lead: 'Bài hướng dẫn thực tế cho chủ shop, xưởng sản xuất và doanh nghiệp.',
-  // Chưa có bài nào được duyệt → trang mục lục cũng chưa xuất bản.
-  status: 'draft',
+  // Owner 17/11/2026 ("6 đề xuất"): xuất bản 3 bài hướng dẫn; bài C/O Form E vẫn nháp chờ chuyên viên hải quan.
+  status: 'ready',
   keyword: 'kiến thức nhập hàng Trung Quốc',
 };
 
@@ -510,7 +516,7 @@ export const articles: Article[] = [
     description:
       'Hướng dẫn đo kiện, tính số khối m³ và cân nặng quy đổi để ước tính cước vận chuyển hàng Trung Quốc về Việt Nam, kèm ví dụ cụ thể.',
     keyword: 'cách tính số khối hàng Trung Quốc',
-    status: 'draft',
+    status: 'ready',
     updated: '2026-11-17',
     sections: [
       {
@@ -540,7 +546,7 @@ export const articles: Article[] = [
         paragraphs: ['Một vài cách đơn giản giúp lô hàng gọn hơn:'],
         list: [
           'Đề nghị nhà cung cấp đóng thùng vừa khít, không độn quá nhiều.',
-          'Gom nhiều đơn nhỏ vào ít thùng lớn tại kho Trung Quốc.',
+          'Mua nhiều món từ cùng một nhà cung cấp và đề nghị họ đóng chung vào ít thùng.',
           'Với nội thất, đồ gỗ: ưu tiên tháo rời nếu sản phẩm cho phép.',
         ],
       },
@@ -553,13 +559,13 @@ export const articles: Article[] = [
     description:
       'Hướng dẫn ghi mã khách hàng và thông tin người nhận khi đặt hàng 1688, Taobao để kho Trung Quốc nhận đúng hàng và không bị thất lạc.',
     keyword: 'ghi mã khách hàng đặt hàng 1688',
-    status: 'draft',
+    status: 'ready',
     updated: '2026-11-06',
     sections: [
       {
         heading: 'Vì sao mã khách hàng quan trọng?',
         paragraphs: [
-          'Kho Trung Quốc nhận hàng của rất nhiều khách mỗi ngày. Mã khách hàng ghi trên kiện là cách để kho biết kiện đó thuộc về ai. Thiếu mã, kiện có thể phải chờ xác minh, làm chậm cả lô hàng.',
+          'Kho Trung Quốc nhận hàng của rất nhiều khách mỗi ngày. Mã khách hàng ghi trên kiện là cách để kho biết kiện đó thuộc về ai. Thiếu mã, kiện có thể phải chờ xác minh nên về chậm hơn.',
         ],
       },
       {
@@ -585,7 +591,7 @@ export const articles: Article[] = [
     description:
       'Lưu ý đóng gói hàng từ Trung Quốc về Việt Nam: hàng dễ vỡ, đồ gỗ nội thất, linh kiện, máy móc. Khi nào nên đóng gỗ, gia cố kiện hàng.',
     keyword: 'đóng gói hàng gửi từ Trung Quốc',
-    status: 'draft',
+    status: 'ready',
     updated: '2026-11-06',
     sections: [
       {

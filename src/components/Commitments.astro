@@ -1,0 +1,35 @@
+---
+/**
+ * VIPG-WEB-034 · Cam kết bằng con số (owner 17/11/2026) — mọi câu lấy từ src/data/vi/service-terms.ts.
+ * Học từ đối thủ (Báo Đen, Vĩnh Cát nêu cam kết bồi thường cụ thể); không thêm cam kết nào ngoài dữ liệu owner.
+ */
+import { orderFee, compensation, transit } from '../data/vi/service-terms';
+interface Props { feeHref?: string }
+const { feeHref = '/logistics/bang-gia/#phi-dich-vu-order' } = Astro.props;
+const pct = orderFee.tiers.map((t) => t.percent);
+const items = [
+  transit.value && { title: '2 ngày về kho Việt Nam', text: `Thời gian vận chuyển ${transit.value}.` },
+  compensation.value && { title: 'Đền bù gấp 10 lần tiền cước', text: compensation.value },
+  orderFee.firstOrderFree.value && { title: 'Đơn đầu tiên miễn phí dịch vụ', text: 'Đặt hàng 1688, Taobao, Pinduoduo lần đầu không mất phí dịch vụ order.', href: feeHref },
+  { title: `Phí order chỉ ${Math.min(...pct)}–${Math.max(...pct)}%`, text: 'Theo giá trị tiền hàng, đơn càng lớn phí càng thấp.', href: feeHref },
+].filter(Boolean) as { title: string; text: string; href?: string }[];
+---
+<section class="section commit-band" id="cam-ket" aria-labelledby="ck-title" data-owner-terms>
+  <div class="container">
+    <span class="kicker">Cam kết dịch vụ</span>
+    <h2 id="ck-title">Rõ ràng từ trước khi gửi hàng</h2>
+    <div class="grid grid-4">
+      {items.map((i) => (
+        <article class="card ck-card">
+          <h3>{i.title}</h3>
+          <p>{i.text}</p>
+          {i.href && <a class="text-link" href={i.href}>Xem chi tiết →</a>}
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+<style>
+  .ck-card h3 { font-size: 20px; color: var(--brand-ink); margin-bottom: 8px; }
+  .ck-card p { margin: 0 0 8px; }
+</style>

@@ -8,6 +8,7 @@ import CtaBand from '../components/CtaBand.astro';
 import MemberNote from '../components/MemberNote.astro';
 import PriceTable from '../components/PriceTable.astro';
 import PriceExamples from '../components/PriceExamples.astro';
+import Commitments from '../components/Commitments.astro';
 // Bí danh trong astro.config.mjs: cờ PUBLIC_CHAT_WIDGET tắt → component rỗng (không CSS/JS khung chat).
 import CommunityChat from '@vipg/community-chat';
 import { getContent } from '../data';
@@ -78,6 +79,8 @@ const sloganLast = sloganParts.pop();
     ].filter((l) => linkable(l.href))} />
 
   <PriceExamples tiers={pricing.tiers} quoteHref="/logistics/bang-gia/#bao-gia-nhanh" />
+
+  <Commitments />
 
   {/* VIP CHAT V1.0 — chỉ hiện khi build với PUBLIC_CHAT_WIDGET=1 (mặc định tắt). Dời xuống sau bảng giá (VIPG-WEB-034): khung chat cần VIP ID, khách mới chưa dùng được. */}
   <CommunityChat />
