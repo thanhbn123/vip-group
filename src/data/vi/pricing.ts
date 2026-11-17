@@ -25,8 +25,8 @@ export const pricing: ShippingPricing = {
   ],
   // OWNER DIRECTIVE 07/11/2026 (chốt, thay xác nhận 06/11 "cả lô"): bậc giá theo trọng lượng tính cước TỪNG KIỆN,
   // không gộp lô; quy đổi hệ số 5000; một bảng giá chung cho 4 kho. Logic dùng chung: src/lib/pricing.ts.
-  basis: 'Bậc giá xác định theo trọng lượng tính cước của từng kiện, không cộng gộp cả lô. Trọng lượng tính cước mỗi kiện là số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 5000). Áp dụng chung cho hàng nhận tại 4 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô.',
-  basisZh: '价格档位按每件货物的计费重量确定，不合并整批重量。每件计费重量取实际重量与体积重量（长×宽×高 cm ÷ 5000）中较大者。适用于深圳、厦门、广州、义乌四个仓库。',
-  source: 'Owner cung cấp 06/11/2026; cách áp bậc theo từng kiện + 4 kho: owner directive 07/11/2026',
+  basis: 'Bậc giá xác định theo trọng lượng tính cước của từng kiện, không cộng gộp cả lô. Trọng lượng tính cước mỗi kiện là số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 5000). Áp dụng chung cho hàng nhận tại 5 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô, Bằng Tường.',
+  basisZh: '价格档位按每件货物的计费重量确定，不合并整批重量。每件计费重量取实际重量与体积重量（长×宽×高 cm ÷ 5000）中较大者。适用于深圳、厦门、广州、义乌、凭祥五个仓库。',
+  source: 'Owner cung cấp 06/11/2026; cách áp bậc theo từng kiện + 4 kho: owner directive 07/11/2026; thêm kho Bằng Tường: owner 18/11/2026',
   updated: '2026-11-07',
 };

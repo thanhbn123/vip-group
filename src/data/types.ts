@@ -173,7 +173,7 @@ export interface LogisticsProvider {
 }
 
 /** Mã 4 điểm nhận hàng tại Trung Quốc (owner xác nhận 06/11/2026 — VIPG-WEB-026). */
-export type PickupId = 'tham-quyen' | 'ha-mon' | 'quang-chau' | 'nghia-o';
+export type PickupId = 'tham-quyen' | 'ha-mon' | 'quang-chau' | 'nghia-o' | 'bang-tuong';
 
 /**
  * Điểm (kho) nhận hàng tại Trung Quốc. KHÔNG mô tả quyền sở hữu kho — chỉ là nơi VIP GROUP nhận hàng của khách.
