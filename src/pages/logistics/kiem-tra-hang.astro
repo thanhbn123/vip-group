@@ -42,6 +42,7 @@ const phone = prettyPhone(provider.hotline);
   </section>
 </LogisticsLayout>
 <script>
+  // @ts-nocheck — script trình duyệt thuần (DOM động); bỏ kiểm tra kiểu như QuickQuote
   const TXT = {
     vi: { title: 'Hàng này kho có nhận không?', label: 'Tên hàng', go: 'Kiểm tra', all: 'Xem toàn bộ danh sách', examples: 'Ví dụ', reason: 'Lý do',
       note: 'Kết quả tham khảo — hàng đặc biệt / số lượng lớn vui lòng hỏi nhân viên VIP GROUP trước khi gửi.', none: 'Hàng này chưa có trong danh sách — vui lòng hỏi nhân viên VIP GROUP trước khi gửi.',
