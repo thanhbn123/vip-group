@@ -53,6 +53,11 @@ const localFaq: FaqItem[] = [
         <span class="kicker">Đầu mối cho khách Bắc Ninh</span>
         <h2 id="office-title">Đầu mối {provider.name} cho khách hàng Bắc Ninh</h2>
         <p class="muted">Thuận tiện cho khách hàng khu vực Từ Sơn, Đồng Kỵ và các khu công nghiệp lân cận.</p>
+        {/* VIPG-WEB-035 · ảnh owner gửi 18/11/2026 (kho Việt Nam ở Bắc Ninh — owner xác nhận cùng ngày); đã cắt khung, xoá EXIF/GPS. */}
+        <figure class="bn-photo">
+          <img src="/kho/bac-ninh-1.jpg" alt="Kho nhận hàng tại Bắc Ninh — nhân viên kiểm đếm và chia hàng về từ Trung Quốc" width="1280" height="840" loading="lazy" decoding="async" />
+          <figcaption class="muted">Hàng về kho Bắc Ninh được kiểm đếm, chia theo mã khách hàng.</figcaption>
+        </figure>
       </div>
       <div>
         <dl class="info-table">
@@ -113,3 +118,9 @@ const localFaq: FaqItem[] = [
     </div>
   </section>
 </LogisticsLayout>
+
+<style>
+  .bn-photo { margin: 20px 0 0; }
+  .bn-photo img { width: 100%; height: auto; border-radius: var(--radius-sm); display: block; }
+  .bn-photo figcaption { font-size: 14px; margin-top: 8px; }
+</style>
