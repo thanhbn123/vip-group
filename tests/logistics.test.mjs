@@ -123,7 +123,11 @@ test('production KHÔNG chứa dữ liệu MẪU, giá, thời gian giao hay đ�
     // Cùng lý do: khối có data-owner-terms (phí order, cam kết — owner 17/11/2026, src/data/vi/service-terms.ts) được kiểm riêng
     // ở tests/home-logistics.test.mjs; câu thời gian owner chốt "2 ngày từ kho Trung Quốc về kho Việt Nam" được phép nguyên văn.
     const html = readFileSync(file, 'utf8').replace(/<section class="section ex-section" id="vi-du-tinh-cuoc"[\s\S]*?<\/section>/, '')
-      .replace(/<section [^>]*data-owner-terms[\s\S]*?<\/section>/g, '').replace(/2 ngày từ kho Trung Quốc về kho Việt Nam/g, ' ');
+      .replace(/<section class="section section-alt" id="phi-dich-vu-order"[^>]*data-owner-terms[\s\S]*?<\/section>/, '')
+      .replace(/<section class="section commit-band" id="cam-ket"[^>]*data-owner-terms[\s\S]*?<\/section>/, '')
+      .replace(/2 ngày từ kho Trung Quốc về kho Việt Nam/g, ' ');
+    // Chỉ đúng 2 khối đã biết được miễn; khối data-owner-terms lạ nào khác → hỏng (verifier PR #63, phát hiện 1).
+    assert.doesNotMatch(html, /data-owner-terms/, `${file}: khối data-owner-terms ngoài danh sách đã kiểm`);
     // Giá DUY NHẤT được phép: 5 mức owner cung cấp 06/11/2026 (src/data/vi/pricing.ts). Mọi giá khác vẫn bị chặn.
     const t = text(html).replace(/\b(?:20|16|15|14|12)\.000\s*(?:đ\/kg|VNĐ\/kg)/g, ' ').replace(/(?:20|16|15|14|12)\.000(?=\s*đ\/kg)/g, ' ');
     assert.doesNotMatch(t, /\bMẪU\b|\[MẪU\]|KHÔNG PHẢI ĐỊA CHỈ THẬT|BẢN DEMO/, `${file}: lọt dữ liệu mẫu`);

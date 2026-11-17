@@ -308,9 +308,9 @@ export const faqs: FaqItem[] = [
     a: `Khách nhận hàng tại kho hoặc theo phương án giao hàng đã thỏa thuận khi báo giá. Gọi hoặc nhắn Zalo ${HOTLINE} để thống nhất địa điểm nhận.`,
   },
   {
-    q: 'Hàng bị thiếu, hỏng khi vận chuyển thì xử lý ra sao?',
+    q: 'Hàng bị mất, hỏng khi vận chuyển thì xử lý ra sao?',
     // Owner 17/11/2026: đền bù gấp 10 lần tiền cước, hoàn lại tiền cước (service-terms.ts).
-    a: `${compensation.value} Báo ngay cho VIP GROUP qua hotline / Zalo ${HOTLINE} kèm ảnh, video kiện hàng để được xử lý.`,
+    a: `${compensation.value} Liên hệ hotline / Zalo ${HOTLINE} để được hướng dẫn xử lý.`,
   },
   {
     q: 'Hàng cấm hoặc hàng cần giấy phép có gửi được không?',

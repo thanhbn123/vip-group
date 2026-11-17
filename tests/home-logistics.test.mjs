@@ -79,7 +79,22 @@ test('dải cam kết trên trang chủ và /logistics/: đúng nguyên ý owner
     const cards = [...html.slice(s, html.indexOf('</section>', s)).matchAll(/<h3[^>]*>([^<]*)<\/h3>/g)].map((m) => m[1]);
     assert.deepEqual(cards, ['2 ngày về kho Việt Nam', 'Đền bù gấp 10 lần tiền cước', 'Đơn đầu tiên miễn phí dịch vụ', 'Phí order chỉ 1–3%'], p);
     assert.match(text(html), /Mất hàng, hỏng hàng: đền bù gấp 10 lần tiền cước và hoàn lại tiền cước\./);
+    const t = text(html.slice(html.indexOf('>', s) + 1, html.indexOf('</section>', s)));
+    assert.match(t, /Thời gian vận chuyển 2 ngày từ kho Trung Quốc về kho Việt Nam\./);
+    assert.match(t, /Đặt hàng 1688, Taobao, Pinduoduo lần đầu không mất phí dịch vụ order\./);
+    assert.match(t, /Theo giá trị tiền hàng, đơn càng lớn phí càng thấp\./);
+    assert.doesNotMatch(t.replace(/2 ngày|10 lần|1–3%|1688/g, ''), /\d/, `${p}: số lạ trong dải cam kết`);
   }
+});
+
+test('data-owner-terms chỉ có đúng 3 chỗ: cam kết ở / và /logistics/, phí order ở /logistics/bang-gia/', async () => {
+  const { readdirSync, statSync } = await import('node:fs');
+  const walk = (d) => readdirSync(d).flatMap((f) => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : p.endsWith('.html') ? [p] : []; });
+  const hits = walk(join(root, 'dist')).flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/id="([^"]+)"[^>]*data-owner-terms/g)].map((m) => `${f.replace(join(root, 'dist'), '')}#${m[1]}`)).sort();
+  assert.deepEqual(hits, ['/index.html#cam-ket', '/logistics/bang-gia/index.html#phi-dich-vu-order', '/logistics/index.html#cam-ket']);
+  const sec = read('logistics/bang-gia/index.html').split('id="phi-dich-vu-order"')[1].split('</section>')[0];
+  const nums = text(sec).match(/[\d.]+(?:đ|%)/g);
+  assert.deepEqual(nums, ['1.000.000đ', '3%', '1.000.000đ', '5.000.000đ', '2%', '5.000.000đ', '1%', '3.000.000đ', '2%', '60.000đ', '0đ'], 'số trong khối phí order');
 });
 
 test('FAQ: thời gian, đền bù, phí order đã có căn cứ owner', () => {
@@ -104,6 +119,9 @@ test('/api/fx: chuyển tỷ giá từ CRM, ẩn khi chưa cấu hình / chưa �
   assert.equal((await handleFx(req(), ENV, fake(404, {}))).status, 404);
   assert.equal((await handleFx(req(), ENV, fake(200, { rate: 0 }))).status, 502);
   assert.equal((await handleFx(req(), ENV, fake(200, { rate: 'abc' }))).status, 502);
+  assert.equal((await handleFx(req(), ENV, fake(200, { rate: 3.65 }))).status, 502, 'gõ nhầm tỷ giá');
+  assert.equal((await handleFx(req(), ENV, fake(200, { rate: true }))).status, 502);
+  assert.equal((await handleFx(req(), ENV, fake(200, { rate: 99999 }))).status, 502);
   assert.equal((await handleFx(req(), ENV, async () => { throw new Error('x'); })).status, 502);
   const ok = await handleFx(req(), ENV, fake(200, { exchange_rate: '3650.5', updated_at: '2026-11-17T03:00:00Z' }));
   assert.equal(ok.status, 200);

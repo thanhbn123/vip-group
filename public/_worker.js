@@ -576,7 +576,8 @@ export async function handleFx(request, env, fetchImpl = fetch) {
     if (r.status === 404) return json(404, { ok: false, error: 'not_set' });
     if (r.status === 429) return json(429, { ok: false, error: 'too_fast' });
     const rate = Number(data?.rate ?? data?.exchange_rate);
-    if (!r.ok || !Number.isFinite(rate) || rate <= 0) return json(502, { ok: false, error: 'upstream' });
+    // Khoảng hợp lý 1.000–10.000 đ/¥: chặn gõ nhầm ở CRM (vd 3.65) hiện "1¥ = 3,65đ" (verifier PR #63, phát hiện 9).
+    if (!r.ok || typeof (data?.rate ?? data?.exchange_rate) === 'boolean' || !Number.isFinite(rate) || rate < 1000 || rate > 10000) return json(502, { ok: false, error: 'upstream' });
     const res = json(200, { ok: true, rate, updated_at: typeof data?.updated_at === 'string' ? data.updated_at : null });
     res.headers.set('cache-control', 'public, max-age=300');
     return res;

@@ -30,11 +30,13 @@ export const orderFee = {
 };
 
 /** Cam kết đền bù — nguyên ý owner: "đền bù x10 tiền cước, mất hàng hỏng hàng hoàn lại tiền cước". */
+export const COMPENSATION_MULTIPLIER = 10;
 export const compensation: Fact = {
-  value: 'Mất hàng, hỏng hàng: đền bù gấp 10 lần tiền cước và hoàn lại tiền cước.',
+  value: `Mất hàng, hỏng hàng: đền bù gấp ${COMPENSATION_MULTIPLIER} lần tiền cước và hoàn lại tiền cước.`,
   source: SRC_OWNER_TERMS,
 };
 
-/** Thời gian vận chuyển — nguyên ý owner: "2 ngày về kho VN". Chưa xác nhận riêng từng kho → không ghi vào transitTime của kho. */
-export const TRANSIT_PHRASE = '2 ngày từ kho Trung Quốc về kho Việt Nam';
+/** Thời gian vận chuyển — nguyên ý owner: "2 ngày về kho VN"; owner xác nhận áp dụng cả 4 kho (transitTime từng kho dùng câu này). */
+export const TRANSIT_DAYS = 2;
+export const TRANSIT_PHRASE = `${TRANSIT_DAYS} ngày từ kho Trung Quốc về kho Việt Nam`;
 export const transit: Fact = { value: TRANSIT_PHRASE, source: SRC_OWNER_TERMS };
