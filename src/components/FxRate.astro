@@ -1,0 +1,38 @@
+---
+/**
+ * VIPG-WEB-034 · Tỷ giá CNY→VND công khai (owner 17/11/2026: "có công khai, admin được phép cập nhật").
+ * Không có số tỷ giá nào trong mã nguồn: trình duyệt hỏi /api/fx (public/_worker.js → CRM, nơi admin cập nhật).
+ * CRM chưa trả tỷ giá → khối giữ nguyên `hidden`, trang không hiện gì (không hiện "Đang cập nhật" ở chỗ nổi bật).
+ */
+---
+<p class="fx" data-fx hidden>
+  Tỷ giá hôm nay: <strong>1¥ = <span data-fx-rate></span>đ</strong><span class="fx-at" data-fx-at-wrap hidden> · cập nhật <time data-fx-at></time></span>
+</p>
+<script>
+  const els = document.querySelectorAll<HTMLElement>('[data-fx]');
+  if (els.length) {
+    fetch('/api/fx', { headers: { accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const rate = Number(d?.rate);
+        if (!d?.ok || !Number.isFinite(rate) || rate <= 0) return;
+        const at = d.updated_at ? new Date(d.updated_at) : null;
+        els.forEach((el) => {
+          el.querySelector('[data-fx-rate]')!.textContent = rate.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+          if (at && !Number.isNaN(at.getTime())) {
+            const t = el.querySelector<HTMLTimeElement>('[data-fx-at]')!;
+            t.dateTime = at.toISOString();
+            t.textContent = at.toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+            el.querySelector<HTMLElement>('[data-fx-at-wrap]')!.hidden = false;
+          }
+          el.hidden = false;
+        });
+      })
+      .catch(() => {});
+  }
+</script>
+<style>
+  .fx { margin: 0; font-size: 15px; color: var(--text-2); }
+  .fx strong { color: var(--brand-ink); font-variant-numeric: tabular-nums; }
+  .fx-at { color: var(--muted); }
+</style>

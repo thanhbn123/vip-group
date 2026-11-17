@@ -32,9 +32,10 @@ const READY = ['/logistics/', '/logistics/van-chuyen-trung-quoc-bac-ninh/', '/lo
 const PENDING = [];
 // Trang kho: DRAFT cho tới khi owner xác nhận kho có thật (verifier P0-1).
 const KT = '/logistics/kien-thuc/';
-const DRAFT = [KT,
-  ...['cach-tinh-so-khoi-va-can-nang-quy-doi', 'ghi-ma-khach-hang-khi-dat-hang-1688-taobao', 'dong-goi-hang-gui-tu-trung-quoc',
-    'c-o-form-e-va-ma-hs-hang-tham-quyen', 'tham-quyen-o-dau-nhap-hang-tham-quyen', 'chinh-ngach-va-ky-gui-tron-goi-khac-nhau-the-nao',
+// VIPG-WEB-034 (owner 17/11/2026): mục lục + 3 bài hướng dẫn đã xuất bản → chuyển sang READY; còn lại vẫn nháp.
+READY.push(KT, ...['cach-tinh-so-khoi-va-can-nang-quy-doi', 'ghi-ma-khach-hang-khi-dat-hang-1688-taobao', 'dong-goi-hang-gui-tu-trung-quoc'].map((s) => `${KT}${s}/`));
+const DRAFT = [
+  ...['c-o-form-e-va-ma-hs-hang-tham-quyen', 'tham-quyen-o-dau-nhap-hang-tham-quyen', 'chinh-ngach-va-ky-gui-tron-goi-khac-nhau-the-nao',
     'thu-tuc-hai-quan-nhap-khau-hang-trung-quoc-duong-bo', 'hang-dien-tu-co-pin-tu-trung-quoc'].map((s) => `${KT}${s}/`)];
 const BUILT = [...READY, ...PENDING];
 
@@ -117,7 +118,12 @@ test('chống trùng lặp: title, description, H1 khác nhau trên toàn site',
 
 test('production KHÔNG chứa dữ liệu MẪU, giá, thời gian giao hay đánh giá chưa xác minh', () => {
   for (const file of allHtml(dist)) {
-    const html = readFileSync(file, 'utf8');
+    // VIPG-WEB-034: khối "Ví dụ tính cước" chứa thành tiền TÍNH từ 5 mức giá owner (không gõ tay) — từng số đã được
+    // kiểm riêng ở tests/home-logistics.test.mjs, nên chỉ khối đó được loại khỏi phép chặn giá. Mọi chỗ khác vẫn chặn.
+    // Cùng lý do: khối có data-owner-terms (phí order, cam kết — owner 17/11/2026, src/data/vi/service-terms.ts) được kiểm riêng
+    // ở tests/home-logistics.test.mjs; câu thời gian owner chốt "2 ngày từ kho Trung Quốc về kho Việt Nam" được phép nguyên văn.
+    const html = readFileSync(file, 'utf8').replace(/<section class="section ex-section" id="vi-du-tinh-cuoc"[\s\S]*?<\/section>/, '')
+      .replace(/<section [^>]*data-owner-terms[\s\S]*?<\/section>/g, '').replace(/2 ngày từ kho Trung Quốc về kho Việt Nam/g, ' ');
     // Giá DUY NHẤT được phép: 5 mức owner cung cấp 06/11/2026 (src/data/vi/pricing.ts). Mọi giá khác vẫn bị chặn.
     const t = text(html).replace(/\b(?:20|16|15|14|12)\.000\s*(?:đ\/kg|VNĐ\/kg)/g, ' ').replace(/(?:20|16|15|14|12)\.000(?=\s*đ\/kg)/g, ' ');
     assert.doesNotMatch(t, /\bMẪU\b|\[MẪU\]|KHÔNG PHẢI ĐỊA CHỈ THẬT|BẢN DEMO/, `${file}: lọt dữ liệu mẫu`);
@@ -210,8 +216,10 @@ test('V2: trang tuyến — nội dung riêng, liên kết mạng lưới, phầ
     assert.ok(faq.mainEntity.length >= 3, `${p}: FAQPage`);
     for (const q of faq.mainEntity) {
       assert.ok(t.includes(q.name), `${p}: câu hỏi schema phải hiển thị: ${q.name}`);
-      assert.doesNotMatch(q.name, /mất bao lâu/, `${p}: câu thời gian (chưa có nguồn) không vào FAQPage`);
+      // VIPG-WEB-034: owner 17/11/2026 chốt "2 ngày về kho VN" cho cả 4 kho → câu thời gian có nguồn, được vào FAQPage với đúng câu owner.
+      if (/mất bao lâu/.test(q.name)) assert.match(q.acceptedAnswer.text, /2 ngày từ kho Trung Quốc về kho Việt Nam/, `${p}: câu thời gian phải theo owner`);
     }
+    assert.ok(faq.mainEntity.some((q) => /mất bao lâu/.test(q.name)), `${p}: thiếu câu thời gian đã có nguồn`);
     // Lưu ý giao hàng riêng từng kho (diễn giải từ địa chỉ owner) — phần nội dung không lặp giữa các tuyến.
     assert.match(t, /Lưu ý khi giao hàng tới kho/, `${p}: thiếu lưu ý giao hàng riêng`);
     // Owner 07/11/2026: bảng giá chung ÁP DỤNG cho 4 kho → trang tuyến hiện 5 bậc + Offer (chi tiết: pricing-policy.test.mjs).
@@ -282,7 +290,7 @@ test('bảng giá chi tiết: đúng 5 mức owner, bậc theo từng kiện, qu
 test('link nội bộ tới trang nháp không tồn tại trong production', () => {
   for (const file of allHtml(dist)) {
     const html = readFileSync(file, 'utf8');
-    assert.doesNotMatch(html, /href="\/logistics\/kien-thuc\//, `${file}: trỏ tới bài nháp`);
+    for (const p of DRAFT) assert.ok(!html.includes(`href="${p}"`), `${file}: trỏ tới bài nháp ${p}`);
   }
 });
 

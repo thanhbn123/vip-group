@@ -1,5 +1,6 @@
 import { contact } from './contact';
 import { company } from './company';
+import { TRANSIT_PHRASE, SRC_OWNER_TERMS, compensation, orderFee } from './service-terms';
 import type { Article, FaqItem, LogisticsPage, LogisticsProvider, PickupId, PickupPoint, Fact } from '../types';
 
 /**
@@ -96,7 +97,8 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Điểm nhận nằm trong khu logistics 新钢物流园, giai đoạn 3 (三期), tòa nhà số 2 (2栋) — ghi đủ "三期2栋" để tài xế tìm đúng tòa.', 'Khu vực: 海洋新城, phường 福海街道 (Phúc Hải), quận Bảo An (宝安区), phía tây Thâm Quyến.'],
     deliveryNotesZh: ['送货点位于新钢物流园三期2栋，请写全“三期2栋”，以免送错楼栋。', '区域：宝安区福海街道海洋新城。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    transitTime: pending('[MẪU] 2–3 ngày về Hà Nội'),
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
@@ -121,7 +123,8 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Điểm nhận là kho số 2, ô kho số 3 (2号库3号仓) trong khu kho 嘉功物流 trên đường 囷瑶路 — ghi đủ số kho và số ô.', 'Khu vực: quận Hải Thương (海沧区), Hạ Môn, tỉnh Phúc Kiến.'],
     deliveryNotesZh: ['送货点为嘉功物流2号库3号仓（囷瑶路），请写全库号与仓号。', '区域：福建省厦门市海沧区。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    transitTime: pending('[MẪU] 3–5 ngày về Hà Nội'),
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
@@ -146,7 +149,8 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Địa chỉ ở thôn Hổ Đường (虎塘村), số 26 đường 凤岗路, trấn Chung Lạc Đàm — khu ngoại thành phía bắc Quảng Châu.', 'Gửi nhà cung cấp đủ tên người nhận và số điện thoại liên hệ (cung cấp khi đăng ký) để tài xế liên hệ khi tới.'],
     deliveryNotesZh: ['地址位于广州北部白云区钟落潭镇虎塘村凤岗路26号。', '请将客户提供的收货人及联系电话一并告知司机，便于到达时联系。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    transitTime: pending('[MẪU] 3–5 ngày về Hà Nội'),
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
@@ -171,7 +175,8 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Điểm nhận: khu Bắc Uyển giai đoạn 3 (北苑三期), số 121 đường 秋实路, tòa nhà số 6, kho 10 đến 12.', 'Vào cửa Tây (西门), dỡ hàng cạnh thang máy chở hàng số 5 (5号货梯).'],
     deliveryNotesZh: ['送货点：北苑三期秋实路121号6号楼10-12库。', '请从西门进入，靠5号货梯卸货。'],
     receivingHours: pending('[MẪU] 08:30–17:30, thứ Hai – thứ Bảy'),
-    transitTime: pending('[MẪU] 5–7 ngày về Hà Nội'),
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
@@ -202,7 +207,9 @@ function pickupFaq(p: PickupBase): FaqItem[] {
     },
     {
       q: `Hàng từ ${p.city} về Việt Nam mất bao lâu?`,
-      a: `Thời gian phụ thuộc loại hàng, thủ tục và lịch xe. Gọi hoặc nhắn Zalo ${HOTLINE} để được báo thời gian cho lô hàng cụ thể.`,
+      a: p.transitTime.value
+        ? `Hàng nhận tại kho ${p.city} về Việt Nam theo thời gian vận chuyển ${p.transitTime.value}. Thời gian giao từ kho Việt Nam tới địa chỉ của bạn tuỳ phương án nhận hàng đã thỏa thuận.`
+        : `Thời gian phụ thuộc loại hàng, thủ tục và lịch xe. Gọi hoặc nhắn Zalo ${HOTLINE} để được báo thời gian cho lô hàng cụ thể.`,
       pending: p.transitTime.value === null,
     },
     p.extraFaq,
@@ -270,6 +277,11 @@ export const faqs: FaqItem[] = [
     a: 'Có. VIP GROUP hỗ trợ khách tìm nguồn và đặt hàng từ các nền tảng 1688, Taobao, Pinduoduo, sau đó vận chuyển về Việt Nam.',
   },
   {
+    // Owner 17/11/2026 (service-terms.ts).
+    q: 'Phí dịch vụ đặt hàng bao nhiêu?',
+    a: `Miễn phí dịch vụ cho đơn hàng đầu tiên. Từ đơn thứ hai, phí tính theo giá trị tiền hàng: ${orderFee.tiers.map((t) => `${t.percent}%`).join(', ')} — đơn càng lớn phí càng thấp. Bảng chi tiết có tại trang Bảng giá.`,
+  },
+  {
     q: 'Doanh nghiệp cần nhập khẩu chính ngạch thì làm thế nào?',
     a: 'VIP GROUP hỗ trợ nhập khẩu chính ngạch và khai báo hải quan với bộ chứng từ phù hợp. Hồ sơ cụ thể phụ thuộc mặt hàng — vui lòng gửi thông tin hàng để được tư vấn.',
   },
@@ -287,9 +299,9 @@ export const faqs: FaqItem[] = [
     a: 'Cước tính theo số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao theo cm ÷ 5000). Bậc giá theo kg xác định theo trọng lượng tính cước của từng kiện (không cộng gộp các kiện trong lô).',
   },
   {
-    q: 'Hàng về Bắc Ninh mất bao lâu?',
-    a: 'Thời gian phụ thuộc kho xuất phát, loại hàng và thủ tục. Thời gian cụ thể đang được cập nhật — vui lòng liên hệ để được báo theo lô hàng.',
-    pending: true,
+    // Owner 17/11/2026: "2 ngày về kho VN" (service-terms.ts).
+    q: 'Hàng từ Trung Quốc về Việt Nam mất bao lâu?',
+    a: `Thời gian vận chuyển ${TRANSIT_PHRASE}. Thời gian giao từ kho Việt Nam tới địa chỉ của bạn tuỳ phương án nhận hàng đã thỏa thuận.`,
   },
   {
     q: 'Nhận hàng tại Việt Nam như thế nào?',
@@ -297,8 +309,8 @@ export const faqs: FaqItem[] = [
   },
   {
     q: 'Hàng bị thiếu, hỏng khi vận chuyển thì xử lý ra sao?',
-    a: 'Chính sách kiểm đếm, khiếu nại và bồi thường đang được cập nhật. Vui lòng liên hệ hotline để được hướng dẫn trước khi gửi hàng giá trị cao.',
-    pending: true,
+    // Owner 17/11/2026: đền bù gấp 10 lần tiền cước, hoàn lại tiền cước (service-terms.ts).
+    a: `${compensation.value} Báo ngay cho VIP GROUP qua hotline / Zalo ${HOTLINE} kèm ảnh, video kiện hàng để được xử lý.`,
   },
   {
     q: 'Hàng cấm hoặc hàng cần giấy phép có gửi được không?',
@@ -496,8 +508,8 @@ export const knowledgeIndex: LogisticsPage = {
     'Hướng dẫn thực tế về nhập hàng Trung Quốc: cách tính số khối, cân nặng quy đổi, ghi mã khách hàng khi đặt hàng, đóng gói hàng gửi về Việt Nam.',
   h1: 'Kiến thức nhập hàng Trung Quốc',
   lead: 'Bài hướng dẫn thực tế cho chủ shop, xưởng sản xuất và doanh nghiệp.',
-  // Chưa có bài nào được duyệt → trang mục lục cũng chưa xuất bản.
-  status: 'draft',
+  // Owner 17/11/2026 ("6 đề xuất"): xuất bản 3 bài hướng dẫn; bài C/O Form E vẫn nháp chờ chuyên viên hải quan.
+  status: 'ready',
   keyword: 'kiến thức nhập hàng Trung Quốc',
 };
 
@@ -510,8 +522,8 @@ export const articles: Article[] = [
     description:
       'Hướng dẫn đo kiện, tính số khối m³ và cân nặng quy đổi để ước tính cước vận chuyển hàng Trung Quốc về Việt Nam, kèm ví dụ cụ thể.',
     keyword: 'cách tính số khối hàng Trung Quốc',
-    status: 'draft',
-    updated: '2026-11-06',
+    status: 'ready',
+    updated: '2026-11-17',
     sections: [
       {
         heading: 'Vì sao cần biết số khối?',
@@ -530,7 +542,9 @@ export const articles: Article[] = [
         heading: 'Cân nặng quy đổi',
         paragraphs: [
           'Cân nặng quy đổi (kg) = dài × rộng × cao (cm) ÷ hệ số quy đổi. Hệ số này do từng đơn vị vận chuyển quy định và có thể khác nhau theo tuyến, loại hình vận chuyển.',
-          'Hệ số quy đổi VIP GROUP áp dụng sẽ được ghi rõ trong báo giá cho từng lô hàng.',
+          'VIP GROUP áp dụng hệ số 5000: cân quy đổi = dài × rộng × cao (cm) ÷ 5000. Cước tính theo số lớn hơn giữa cân thực và cân quy đổi, xét riêng từng kiện.',
+          'Ví dụ: kiện 60 × 50 × 40 cm nặng 8 kg có cân quy đổi 120.000 ÷ 5000 = 24 kg. Vì 24 kg lớn hơn 8 kg nên kiện được tính cước như 24 kg. Cùng kích thước đó nhưng nặng 30 kg thì tính theo cân thực 30 kg.',
+          'Đơn giá theo từng bậc cân nặng xem tại trang Bảng giá; công cụ Báo giá nhanh trên trang đó tính sẵn cho nhiều loại kiện.',
         ],
       },
       {
@@ -538,7 +552,7 @@ export const articles: Article[] = [
         paragraphs: ['Một vài cách đơn giản giúp lô hàng gọn hơn:'],
         list: [
           'Đề nghị nhà cung cấp đóng thùng vừa khít, không độn quá nhiều.',
-          'Gom nhiều đơn nhỏ vào ít thùng lớn tại kho Trung Quốc.',
+          'Mua nhiều món từ cùng một nhà cung cấp và đề nghị họ đóng chung vào ít thùng.',
           'Với nội thất, đồ gỗ: ưu tiên tháo rời nếu sản phẩm cho phép.',
         ],
       },
@@ -551,13 +565,13 @@ export const articles: Article[] = [
     description:
       'Hướng dẫn ghi mã khách hàng và thông tin người nhận khi đặt hàng 1688, Taobao để kho Trung Quốc nhận đúng hàng và không bị thất lạc.',
     keyword: 'ghi mã khách hàng đặt hàng 1688',
-    status: 'draft',
+    status: 'ready',
     updated: '2026-11-06',
     sections: [
       {
         heading: 'Vì sao mã khách hàng quan trọng?',
         paragraphs: [
-          'Kho Trung Quốc nhận hàng của rất nhiều khách mỗi ngày. Mã khách hàng ghi trên kiện là cách để kho biết kiện đó thuộc về ai. Thiếu mã, kiện có thể phải chờ xác minh, làm chậm cả lô hàng.',
+          'Kho Trung Quốc nhận hàng của rất nhiều khách mỗi ngày. Mã khách hàng ghi trên kiện là cách để kho biết kiện đó thuộc về ai. Thiếu mã, kiện có thể phải chờ xác minh nên về chậm hơn.',
         ],
       },
       {
@@ -583,7 +597,7 @@ export const articles: Article[] = [
     description:
       'Lưu ý đóng gói hàng từ Trung Quốc về Việt Nam: hàng dễ vỡ, đồ gỗ nội thất, linh kiện, máy móc. Khi nào nên đóng gỗ, gia cố kiện hàng.',
     keyword: 'đóng gói hàng gửi từ Trung Quốc',
-    status: 'draft',
+    status: 'ready',
     updated: '2026-11-06',
     sections: [
       {
