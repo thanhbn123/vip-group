@@ -251,7 +251,7 @@ test('FAQPage chỉ chứa câu trả lời đã có căn cứ', () => {
   assert.ok(faq && faq.mainEntity.length >= 5);
   const names = faq.mainEntity.map((q) => q.name);
   assert.ok(names.includes('Bảng giá vận chuyển Trung Quốc – Việt Nam bao nhiêu một kg?'), 'câu hỏi bảng giá (đã có nguồn) phải vào FAQPage');
-  assert.ok(names.includes('Cước vận chuyển tính theo cân nặng hay theo khối?'), 'quy đổi 6000 owner xác nhận → vào FAQPage');
+  assert.ok(names.includes('Cước vận chuyển tính theo cân nặng hay theo khối?'), 'quy đổi 5000 (chủ dự án 17/11/2026) → vào FAQPage');
   for (const pendingQ of ['Hàng về Bắc Ninh mất bao lâu?', 'Gửi hàng về địa chỉ nào tại Trung Quốc?']) {
     assert.ok(!names.includes(pendingQ), `câu chưa xác minh không được vào FAQPage: ${pendingQ}`);
   }
@@ -259,7 +259,7 @@ test('FAQPage chỉ chứa câu trả lời đã có căn cứ', () => {
   for (const n of names) assert.ok(text(html).includes(n), `câu hỏi trong schema không hiển thị: ${n}`);
 });
 
-test('bảng giá chi tiết: đúng 5 mức owner, bậc theo từng kiện, quy đổi 6000, form thu lead chọn sẵn "báo giá"', () => {
+test('bảng giá chi tiết: đúng 5 mức owner, bậc theo từng kiện, quy đổi 5000, form thu lead chọn sẵn "báo giá"', () => {
   const html = read('/logistics/bang-gia/');
   const t = text(html).replace(/\s+/g, ' ');
   for (const [label, price] of [['0–5 kg', '20.000'], ['Trên 5 đến dưới 100 kg', '16.000'], ['Từ 100 đến dưới 500 kg', '15.000'], ['Từ 500 đến 1.000 kg', '14.000'], ['Trên 1.000 kg', '12.000']]) {
@@ -268,7 +268,7 @@ test('bảng giá chi tiết: đúng 5 mức owner, bậc theo từng kiện, qu
   assert.match(t, /Đơn vị tính: VNĐ\/kg/);
   assert.match(t, /Phụ phí và thuế \(nếu có\) sẽ được xác nhận trước khi báo giá chính thức/);
   assert.match(t, /theo trọng lượng tính cước của từng kiện, không cộng gộp cả lô/, 'owner 07/11/2026: bậc giá theo từng kiện');
-  assert.match(html, /data-calc data-divisor="6000"/, 'owner: quy đổi hệ số 6000');
+  assert.match(html, /data-calc data-divisor="5000"/, 'owner: quy đổi hệ số 5000');
   assert.doesNotMatch(t, /\bMẪU\b/);
   const start = html.indexOf('<form '); const form = html.slice(start, html.indexOf('</form>', start));
   assert.match(form, /id="form-lien-he"/);
