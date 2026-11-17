@@ -4,6 +4,8 @@ import type { Fact } from '../types';
  * VIPG-WEB-034 · Điều khoản dịch vụ owner chốt 17/11/2026 (trả lời khảo sát đối thủ, mục 1–3):
  *   1. Phí dịch vụ order: miễn phí đơn hàng đầu tiên; đến 1 triệu 3% · trên 1 đến 5 triệu 2% · trên 5 triệu 1%
  *      (owner chọn cách ghép bậc này khi được hỏi lại cùng ngày).
+ *      Tính PHẲNG: cả đơn chịu % của bậc chứa giá trị đơn, KHÔNG lũy tiến (owner 17/11/2026 "theo em đề xuất" — giống
+ *      cách đối thủ công bố; mốc chuyển bậc có lợi cho khách đặt đơn lớn).
  *   2. Tỷ giá CNY→VND: công khai trên web, admin cập nhật (ở CRM — web đọc qua /api/fx, không gõ tỷ giá vào repo).
  *   3. Đền bù gấp 10 lần tiền cước khi mất / hỏng hàng, hoàn lại tiền cước; 2 ngày về kho Việt Nam.
  * Đổi nội dung ở đây = đổi cam kết với khách: chỉ sửa khi owner chốt lại.
