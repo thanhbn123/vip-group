@@ -13,7 +13,7 @@ const T = pricing.tiers;
 const dist = join(root, 'dist');
 const read = (p) => readFileSync(join(dist, p, 'index.html'), 'utf8');
 const text = (h) => h.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-const ROUTES = ['tham-quyen', 'ha-mon', 'quang-chau', 'nghia-o'].map((id) => `/logistics/van-chuyen-${id}-ve-viet-nam/`);
+const ROUTES = ['tham-quyen', 'ha-mon', 'quang-chau', 'nghia-o', 'bang-tuong'].map((id) => `/logistics/van-chuyen-${id}-ve-viet-nam/`);
 
 test('ngưỡng giá: mỗi khối lượng/kiện rơi đúng 1 bậc, kể cả sát biên', () => {
   const cases = [
@@ -148,10 +148,12 @@ test('verifier P1-2: nút sao chép chép TOÀN BỘ địa chỉ; chuỗi trên
   assert.match(src, /const text = \(src\.textContent \?\? ''\)\.trim\(\);/);
   assert.match(src, /navigator\.clipboard\.writeText\(text\)/);
   assert.doesNotMatch(src.slice(src.indexOf('<script>')), /\.slice\(|substring|substr\(|replace\(/, 'không được cắt/sửa chuỗi trước khi chép');
-  const ADDR = ['深圳市宝安区福海街道海洋新城新钢物流园三期2栋', '福建省厦门市海沧区囷瑶路嘉功物流2号库3号仓', '广州市白云区钟落潭镇虎塘村凤岗路26号', '义乌市北苑三期秋实路121号6号楼10-12库西门，靠5号货梯'];
+  const ADDR = ['深圳市宝安区福海街道海洋新城新钢物流园三期2栋', '福建省厦门市海沧区囷瑶路嘉功物流2号库3号仓', '广州市白云区钟落潭镇虎塘村凤岗路26号', '义乌市北苑三期秋实路121号6号楼10-12库西门，靠5号货梯',
+    // VIPG-WEB-035 · owner 18/11/2026
+    '广西壮族自治区崇左市凭祥市友谊镇南山民族希望学校对面丰旗货场5号（雲晟跨境供应链）'];
   const seen = new Set();
   for (const p of ['/logistics/kho-trung-quoc/', ...ROUTES]) {
     for (const [, t] of read(p).matchAll(/<p class="addr"[^>]*data-copy-text[^>]*>([^<]*)</g)) { assert.ok(ADDR.includes(t.trim()), `${p}: chuỗi sao chép lạ "${t}"`); seen.add(t.trim()); }
   }
-  assert.equal(seen.size, 4, 'đủ 4 địa chỉ có nút sao chép');
+  assert.equal(seen.size, ADDR.length, 'đủ mọi địa chỉ owner có nút sao chép');
 });

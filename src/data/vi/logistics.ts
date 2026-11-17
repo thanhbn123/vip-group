@@ -62,7 +62,7 @@ export const processSteps = [
 
 const pending = (sample?: string): Fact => ({ value: null, source: null, sample });
 
-/* ───────────── 4 kho nhận hàng tại Trung Quốc (VIPG-WEB-026) ───────────── */
+/* ───────────── 5 kho nhận hàng tại Trung Quốc (VIPG-WEB-026; Bằng Tường VIPG-WEB-035) ───────────── */
 
 /**
  * NGUỒN: owner xác nhận 06/11/2026 (Project Controller — "VIP GROUP SEO MULTI-WAREHOUSE V2"):
@@ -75,6 +75,7 @@ const pending = (sample?: string): Fact => ({ value: null, source: null, sample 
 /** Owner directive 07/11/2026 (Final Local Acceptance): giá theo từng kiện + bảng giá chung cho 4 kho. */
 export const SRC_OWNER_PRICE = 'Owner directive 07/11/2026 — chính sách giá đã chốt';
 export const SRC_OWNER_WAREHOUSES = 'Owner xác nhận 06/11/2026 (Project Controller — SEO Multi-Warehouse V2)';
+export const SRC_OWNER_BANG_TUONG = 'Owner 18/11/2026: mở kho Bằng Tường (Quảng Tây), gửi địa chỉ; bảng giá chung áp dụng';
 const owner = (value: string): Fact => ({ value, source: SRC_OWNER_WAREHOUSES });
 
 type PickupBase = Omit<PickupPoint, 'faq' | 'faqZh'> & { extraFaq: FaqItem; extraFaqZh?: { q: string; a: string } };
@@ -97,10 +98,10 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Điểm nhận nằm trong khu logistics 新钢物流园, giai đoạn 3 (三期), tòa nhà số 2 (2栋) — ghi đủ "三期2栋" để tài xế tìm đúng tòa.', 'Khu vực: 海洋新城, phường 福海街道 (Phúc Hải), quận Bảo An (宝安区), phía tây Thâm Quyến.'],
     deliveryNotesZh: ['送货点位于新钢物流园三期2栋，请写全“三期2栋”，以免送错楼栋。', '区域：宝安区福海街道海洋新城。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
-    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng mọi kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng mọi kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
-    photos: { value: null, source: null },
+    photos: { value: ['/kho/tham-quyen-1.jpg', '/kho/tham-quyen-2.jpg'], source: 'Owner gửi ảnh kho 18/11/2026 (đã cắt khung, xoá EXIF/GPS)' },
     extraFaq: {
       q: 'Kho Thâm Quyến ở trang này có liên quan tới Shopee không?',
       a: 'Không. Kho Thâm Quyến ở trang này là nơi VIP GROUP nhận hàng của khách tự nhập từ nhà cung cấp tại Trung Quốc rồi vận chuyển về Việt Nam; không liên quan tới Shopee hay sàn thương mại điện tử nào.',
@@ -123,8 +124,8 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Điểm nhận là kho số 2, ô kho số 3 (2号库3号仓) trong khu kho 嘉功物流 trên đường 囷瑶路 — ghi đủ số kho và số ô.', 'Khu vực: quận Hải Thương (海沧区), Hạ Môn, tỉnh Phúc Kiến.'],
     deliveryNotesZh: ['送货点为嘉功物流2号库3号仓（囷瑶路），请写全库号与仓号。', '区域：福建省厦门市海沧区。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
-    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng mọi kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng mọi kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
@@ -149,10 +150,10 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Địa chỉ ở thôn Hổ Đường (虎塘村), số 26 đường 凤岗路, trấn Chung Lạc Đàm — khu ngoại thành phía bắc Quảng Châu.', 'Gửi nhà cung cấp đủ tên người nhận và số điện thoại liên hệ (cung cấp khi đăng ký) để tài xế liên hệ khi tới.'],
     deliveryNotesZh: ['地址位于广州北部白云区钟落潭镇虎塘村凤岗路26号。', '请将客户提供的收货人及联系电话一并告知司机，便于到达时联系。'],
     receivingHours: pending('[MẪU] 09:00–18:00, thứ Hai – thứ Bảy'),
-    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
-    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng mọi kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng mọi kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
-    photos: { value: null, source: null },
+    photos: { value: ['/kho/quang-chau-1.jpg'], source: 'Owner gửi ảnh kho 18/11/2026 (đã cắt khung, xoá EXIF/GPS)' },
     extraFaq: {
       q: 'Đặt hàng 1688, Taobao có giao về kho Quảng Châu được không?',
       a: 'Được. Khi đặt hàng, điền địa chỉ kho Quảng Châu làm địa chỉ nhận và ghi mã khách hàng theo hướng dẫn nhận được khi đăng ký. VIP GROUP cũng hỗ trợ đặt hàng 1688 / Taobao / Pinduoduo nếu bạn cần.',
@@ -175,8 +176,8 @@ const pickupBase: PickupBase[] = [
     deliveryNotes: ['Điểm nhận: khu Bắc Uyển giai đoạn 3 (北苑三期), số 121 đường 秋实路, tòa nhà số 6, kho 10 đến 12.', 'Vào cửa Tây (西门), dỡ hàng cạnh thang máy chở hàng số 5 (5号货梯).'],
     deliveryNotesZh: ['送货点：北苑三期秋实路121号6号楼10-12库。', '请从西门进入，靠5号货梯卸货。'],
     receivingHours: pending('[MẪU] 08:30–17:30, thứ Hai – thứ Bảy'),
-    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng cả 4 kho.
-    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng 4 kho` },
+    // Owner 17/11/2026: "2 ngày về kho VN", áp dụng mọi kho.
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng mọi kho` },
     priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE },
     photos: { value: null, source: null },
     extraFaq: {
@@ -184,6 +185,33 @@ const pickupBase: PickupBase[] = [
       a: 'Theo địa chỉ kho, điểm nhận là kho 10 đến 12, tòa nhà số 6, cửa Tây, cạnh thang máy chở hàng số 5 (6号楼10-12库西门，靠5号货梯). Gửi nguyên văn địa chỉ tiếng Trung cho nhà cung cấp hoặc tài xế để giao đúng chỗ.',
     },
     extraFaqZh: { q: '送货到义乌仓需要注意什么？', a: '请按地址从西门进入，靠5号货梯卸货（6号楼10-12库）。' },
+  },
+  {
+    // VIPG-WEB-035 · Owner 18/11/2026: mở kho Bằng Tường (Quảng Tây) — địa chỉ NGUYÊN VĂN owner gửi; bảng giá chung + 2 ngày áp dụng cả kho này.
+    id: 'bang-tuong',
+    city: 'Bằng Tường',
+    cityZh: '凭祥',
+    cityEn: 'Pingxiang',
+    province: 'Quảng Tây',
+    provinceZh: '广西',
+    district: 'trấn Hữu Nghị',
+    addressZh: { value: '广西壮族自治区崇左市凭祥市友谊镇南山民族希望学校对面丰旗货场5号（雲晟跨境供应链）', source: SRC_OWNER_BANG_TUONG },
+    context:
+      'Bằng Tường (凭祥, Pingxiang) là thành phố cửa khẩu thuộc Sùng Tả (崇左), Khu tự trị dân tộc Choang Quảng Tây, giáp tỉnh Lạng Sơn của Việt Nam qua cửa khẩu Hữu Nghị (友谊关). Kho nhận hàng nằm ở trấn Hữu Nghị (友谊镇), sát biên giới.',
+    contextZh: '凭祥市隶属广西壮族自治区崇左市，经友谊关与越南谅山省相邻。收货仓位于友谊镇，靠近边境。',
+    goods: ['Hàng từ nhà cung cấp ở Quảng Tây, Nam Ninh', 'Hàng 1688, Taobao gửi chuyển phát nội địa tới Bằng Tường', 'Hàng số lượng lớn, hàng nặng muốn nhận sát cửa khẩu'],
+    goodsZh: ['广西、南宁地区供应商货物', '1688、淘宝订单经国内快递发往凭祥', '希望在边境附近收货的大批量货物、重货'],
+    deliveryNotes: ['Điểm nhận: bãi hàng Phong Kỳ (丰旗货场) số 5, đối diện Trường Hy vọng Dân tộc Nam Sơn (南山民族希望学校), trấn Hữu Nghị.', 'Đơn vị tại điểm nhận: 雲晟跨境供应链 — ghi đủ "丰旗货场5号" và tên đơn vị để tài xế giao đúng bãi.'],
+    deliveryNotesZh: ['送货点：友谊镇南山民族希望学校对面丰旗货场5号。', '收货单位：雲晟跨境供应链，请写全"丰旗货场5号"及单位名称。'],
+    receivingHours: pending('[MẪU] 08:00–18:00, thứ Hai – Chủ nhật'),
+    transitTime: { value: TRANSIT_PHRASE, source: `${SRC_OWNER_TERMS} — áp dụng cả kho Bằng Tường (owner 18/11/2026)` },
+    priceApplies: { value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_BANG_TUONG },
+    photos: { value: null, source: null },
+    extraFaq: {
+      q: 'Giao hàng tới kho Bằng Tường cần lưu ý gì?',
+      a: 'Theo địa chỉ kho, điểm nhận là bãi hàng Phong Kỳ số 5 (丰旗货场5号), đối diện Trường Hy vọng Dân tộc Nam Sơn, trấn Hữu Nghị, đơn vị 雲晟跨境供应链. Gửi nguyên văn địa chỉ tiếng Trung cho nhà cung cấp hoặc tài xế để giao đúng bãi.',
+    },
+    extraFaqZh: { q: '送货到凭祥仓需要注意什么？', a: '请送至友谊镇南山民族希望学校对面丰旗货场5号（雲晟跨境供应链），并写全地址。' },
   },
 ];
 
@@ -202,7 +230,7 @@ function pickupFaq(p: PickupBase): FaqItem[] {
     {
       q: `Cước vận chuyển từ ${p.city} về Việt Nam tính thế nào?`,
       a: p.priceApplies.value
-        ? `Hàng nhận tại kho ${p.city} áp dụng bảng giá chung cho 4 kho: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá chọn theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 5000), không gộp cả lô. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.`
+        ? `Hàng nhận tại kho ${p.city} áp dụng bảng giá chung cho cả 5 kho: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá chọn theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 5000), không gộp cả lô. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.`
         : `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 5000). Bảng giá chung Trung Quốc – Việt Nam có tại trang Bảng giá; đơn giá áp dụng cho hàng nhận tại kho ${p.city} được xác nhận khi báo giá, cùng phụ phí và thuế (nếu có).`,
     },
     {
@@ -223,7 +251,7 @@ function pickupFaqZh(p: PickupBase): { q: string; a: string }[] {
     {
       q: '运费如何计算？',
       a: p.priceApplies.value
-        ? '四个仓库适用统一价格表（越南盾/公斤）：0–5 公斤 20,000；超过 5 公斤，不足 100 公斤 16,000；100 公斤至不足 500 公斤 15,000；500–1,000 公斤 14,000；超过 1,000 公斤 12,000。价格档位按每件货物的计费重量确定（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 5000），不合并整批重量；附加费及税费（如有）将在正式报价前确认。'
+        ? '五个仓库适用统一价格表（越南盾/公斤）：0–5 公斤 20,000；超过 5 公斤，不足 100 公斤 16,000；100 公斤至不足 500 公斤 15,000；500–1,000 公斤 14,000；超过 1,000 公斤 12,000。价格档位按每件货物的计费重量确定（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 5000），不合并整批重量；附加费及税费（如有）将在正式报价前确认。'
         : '运费按计费重量（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 5000）以公斤计算，具体单价以正式报价为准；附加费及税费（如有）将在正式报价前确认。',
     },
     ...(p.extraFaqZh ? [p.extraFaqZh] : []),
@@ -288,11 +316,11 @@ export const faqs: FaqItem[] = [
   {
     // VIPG-WEB-026: owner xác nhận 4 điểm nhận hàng 06/11/2026 → câu này có căn cứ.
     q: 'VIP GROUP nhận hàng ở đâu tại Trung Quốc?',
-    a: 'VIP GROUP nhận hàng tại 4 kho ở Trung Quốc: Thâm Quyến (quận Bảo An), Hạ Môn (quận Hải Thương), Quảng Châu (quận Bạch Vân) và Nghĩa Ô (Chiết Giang). Địa chỉ tiếng Trung từng kho có tại trang Kho Trung Quốc; tên người nhận và mã khách hàng ghi trên kiện được cung cấp sau khi đăng ký.',
+    a: 'VIP GROUP nhận hàng tại 5 kho ở Trung Quốc: Thâm Quyến (quận Bảo An), Hạ Môn (quận Hải Thương), Quảng Châu (quận Bạch Vân), Nghĩa Ô (Chiết Giang) và Bằng Tường (Quảng Tây, sát cửa khẩu Hữu Nghị). Địa chỉ tiếng Trung từng kho có tại trang Kho Trung Quốc; tên người nhận và mã khách hàng ghi trên kiện được cung cấp sau khi đăng ký.',
   },
   {
     q: 'Bảng giá vận chuyển Trung Quốc – Việt Nam bao nhiêu một kg?',
-    a: 'Đơn giá theo khối lượng: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá xác định theo trọng lượng tính cước của từng kiện, không gộp cả lô; áp dụng chung cho 4 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
+    a: 'Đơn giá theo khối lượng: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá xác định theo trọng lượng tính cước của từng kiện, không gộp cả lô; áp dụng chung cho 5 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô, Bằng Tường. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
   },
   {
     q: 'Cước vận chuyển tính theo cân nặng hay theo khối?',
@@ -327,7 +355,7 @@ export const pages: LogisticsPage[] = [
     nav: 'Tổng quan',
     title: 'Logistics Trung – Việt: vận chuyển, nhập khẩu, hải quan',
     description:
-      'Logistics VIP GROUP: nhận hàng tại 4 kho Trung Quốc, vận chuyển về Việt Nam, nhập khẩu chính ngạch, khai báo hải quan, đặt hàng 1688.',
+      'Logistics VIP GROUP: nhận hàng tại 5 kho Trung Quốc, vận chuyển về Việt Nam, nhập khẩu chính ngạch, khai báo hải quan, đặt hàng 1688.',
     h1: 'Logistics Trung Quốc – Việt Nam',
     lead: 'Nhận hàng tại Trung Quốc, vận chuyển về Việt Nam, hỗ trợ nhập khẩu chính ngạch và khai báo hải quan — phục vụ khách hàng Bắc Ninh và toàn miền Bắc.',
     status: 'ready',
@@ -339,7 +367,7 @@ export const pages: LogisticsPage[] = [
     nav: 'Về Bắc Ninh',
     title: 'Vận chuyển hàng Trung Quốc về Bắc Ninh, Từ Sơn',
     description:
-      `Vận chuyển hàng Trung Quốc về Bắc Ninh, Từ Sơn, Đồng Kỵ và khu công nghiệp: bảng giá theo kg, 4 kho Trung Quốc. Gọi/Zalo ${HOTLINE}.`,
+      `Vận chuyển hàng Trung Quốc về Bắc Ninh, Từ Sơn, Đồng Kỵ và khu công nghiệp: bảng giá theo kg, 5 kho Trung Quốc. Gọi/Zalo ${HOTLINE}.`,
     h1: 'Vận chuyển hàng Trung Quốc về Bắc Ninh',
     lead: 'Dành cho xưởng sản xuất, doanh nghiệp trong khu công nghiệp và chủ shop tại Bắc Ninh, Từ Sơn, Đồng Kỵ cần nhập hàng Trung Quốc thường xuyên.',
     status: 'ready',
@@ -364,10 +392,10 @@ export const pages: LogisticsPage[] = [
     key: 'kho-trung-quoc',
     href: '/logistics/kho-trung-quoc/',
     nav: 'Kho Trung Quốc',
-    title: 'Kho Trung Quốc: Thâm Quyến, Quảng Châu, Hạ Môn, Nghĩa Ô',
+    title: 'Kho Trung Quốc: địa chỉ 5 kho nhận hàng',
     description:
-      `VIP GROUP nhận hàng tại 4 kho Trung Quốc: Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô. Địa chỉ tiếng Trung, hướng dẫn gửi hàng, cách tính cước. Hotline/Zalo ${HOTLINE}.`,
-    h1: '4 kho nhận hàng tại Trung Quốc',
+      `5 kho nhận hàng Trung Quốc: Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô, Bằng Tường. Địa chỉ tiếng Trung, cách gửi hàng, cách tính cước. Zalo ${HOTLINE}.`,
+    h1: '5 kho nhận hàng tại Trung Quốc',
     lead: 'Địa chỉ tiếng Trung để gửi cho nhà cung cấp, hướng dẫn ghi mã khách hàng và cách chọn kho gần nguồn hàng nhất.',
     status: 'ready',
     keyword: 'kho Trung Quốc; kho nhận hàng Trung Quốc; 中国仓库地址',
@@ -423,6 +451,20 @@ export const pages: LogisticsPage[] = [
     status: 'ready',
     hideInNav: true,
     keyword: 'vận chuyển Nghĩa Ô về Việt Nam; kho Nghĩa Ô; 义乌到越南物流',
+  },
+  {
+    // VIPG-WEB-035 · owner 18/11/2026: kho Bằng Tường (Quảng Tây).
+    key: 'bang-tuong',
+    href: '/logistics/van-chuyen-bang-tuong-ve-viet-nam/',
+    nav: 'Bằng Tường',
+    title: 'Vận chuyển hàng Bằng Tường (Pingxiang, 凭祥) về Việt Nam',
+    description:
+      'Kho nhận hàng Bằng Tường (凭祥, Quảng Tây) sát cửa khẩu Hữu Nghị, vận chuyển về Việt Nam. Địa chỉ tiếng Trung, cách gửi hàng 1688, Taobao tới kho và bảng giá.',
+    h1: 'Vận chuyển hàng từ Bằng Tường về Việt Nam',
+    lead: 'Nhận hàng tại Bằng Tường, sát cửa khẩu Hữu Nghị, cho hàng từ Quảng Tây, Nam Ninh và hàng chuyển phát nội địa Trung Quốc.',
+    status: 'ready',
+    hideInNav: true,
+    keyword: 'vận chuyển Bằng Tường về Việt Nam; kho Bằng Tường; 凭祥到越南物流',
   },
   {
     key: 'quy-trinh',

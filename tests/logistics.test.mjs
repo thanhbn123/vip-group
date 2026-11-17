@@ -14,12 +14,15 @@ const SITE = 'https://www.vipgroup.com.vn';
 
 // V2: 4 trang tuyến kho (key → URL) và địa chỉ NGUYÊN VĂN owner cung cấp.
 const ROUTES = ['/logistics/van-chuyen-tham-quyen-ve-viet-nam/', '/logistics/van-chuyen-ha-mon-ve-viet-nam/',
-  '/logistics/van-chuyen-quang-chau-ve-viet-nam/', '/logistics/van-chuyen-nghia-o-ve-viet-nam/'];
+  '/logistics/van-chuyen-quang-chau-ve-viet-nam/', '/logistics/van-chuyen-nghia-o-ve-viet-nam/',
+  // VIPG-WEB-035 · owner 18/11/2026: kho Bằng Tường.
+  '/logistics/van-chuyen-bang-tuong-ve-viet-nam/'];
 const ADDR = {
   '/logistics/van-chuyen-tham-quyen-ve-viet-nam/': '深圳市宝安区福海街道海洋新城新钢物流园三期2栋',
   '/logistics/van-chuyen-ha-mon-ve-viet-nam/': '福建省厦门市海沧区囷瑶路嘉功物流2号库3号仓',
   '/logistics/van-chuyen-quang-chau-ve-viet-nam/': '广州市白云区钟落潭镇虎塘村凤岗路26号',
   '/logistics/van-chuyen-nghia-o-ve-viet-nam/': '义乌市北苑三期秋实路121号6号楼10-12库西门，靠5号货梯',
+  '/logistics/van-chuyen-bang-tuong-ve-viet-nam/': '广西壮族自治区崇左市凭祥市友谊镇南山民族希望学校对面丰旗货场5号（雲晟跨境供应链）',
 };
 // URL cũ (nháp, chưa từng phát hành) — thay bằng mạng lưới + trang tuyến, không được sinh ở bất kỳ bản nào.
 const RETIRED = ['/logistics/kho-quang-chau/', '/logistics/kho-tham-quyen/', '/logistics/van-chuyen-tham-quyen-viet-nam/'];
@@ -234,9 +237,9 @@ test('V2: trang tuyến — nội dung riêng, liên kết mạng lưới, phầ
     for (const m of t.matchAll(/0\d{2,3}[\s.]?\d{3}[\s.]?\d{3,4}/g)) assert.equal(m[0].replace(/\D/g, ''), '0961102655', `${p}: số lạ ${m[0]}`);
   }
   assert.equal(h1s.size, ROUTES.length, 'H1 mỗi tuyến phải khác nhau');
-  // Trang mạng lưới: nêu bảng giá chung cho 4 kho + bậc theo từng kiện (owner 07/11/2026).
+  // Trang mạng lưới: nêu bảng giá chung cho mọi kho + bậc theo từng kiện (owner 07/11/2026; 5 kho từ 18/11/2026).
   const net = text(read('/logistics/kho-trung-quoc/'));
-  assert.match(net, /Cả 4 kho áp dụng chung bảng giá/, 'mạng lưới: phải nêu bảng giá chung');
+  assert.match(net, /Cả 5 kho áp dụng chung bảng giá/, 'mạng lưới: phải nêu bảng giá chung');
   // FAQPage không trùng câu giữa trang mạng lưới và trang Hỏi đáp.
   const names = (path) => (ldAll(read(path)).find((d) => d['@type'] === 'FAQPage')?.mainEntity ?? []).map((q) => q.name);
   const dup = names('/logistics/kho-trung-quoc/').filter((n) => names('/logistics/cau-hoi-thuong-gap/').includes(n));
