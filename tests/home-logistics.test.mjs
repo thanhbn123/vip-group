@@ -50,7 +50,7 @@ for (const page of ['index.html', 'logistics/bang-gia/index.html']) {
       assert.ok(cards[i].trim().endsWith(total), `thẻ ${i + 1} thành tiền: ${cards[i]}`);
     });
     assert.match(text(sec), /Cước chỉ từ 12\.000đ\/kg/);
-    assert.match(text(sec), /÷ 5000/);
+    assert.match(text(sec), /÷ 6000/);
     assert.match(text(sec), /chưa gồm phụ phí và thuế/);
   });
 }
