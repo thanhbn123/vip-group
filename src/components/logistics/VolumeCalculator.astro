@@ -1,8 +1,8 @@
 ---
 /**
  * Công cụ tính số khối, cân quy đổi và CƯỚC ƯỚC TÍNH theo chính sách owner 07/11/2026:
- * bậc giá theo trọng lượng tính cước TỪNG KIỆN (max(cân thực, dài×rộng×cao÷ 6000)), không gộp lô.
- * Logic dùng chung với test: src/lib/pricing.ts. Không làm tròn khối lượng (owner chưa quy định cách làm tròn).
+ * owner 18/11/2026: bậc giá theo TỔNG trọng lượng tính cước (cân mỗi kiện = max(cân thực, dài×rộng×cao÷hệ số), làm tròn như phiếu xuất), như phiếu xuất kho.
+ * Logic dùng chung với test: src/lib/pricing.ts.
  */
 import { volumetricDivisor } from '../../data/vi/logistics';
 import { shown } from '../../lib/logistics';
@@ -28,12 +28,12 @@ const { value: divisor, isSample } = shown(volumetricDivisor);
   {divisor && (
     <dl class="calc-out calc-price" aria-live="polite">
       <div><dt>Trọng lượng tính cước / kiện</dt><dd data-out="charge">—</dd></div>
-      <div><dt>Bậc giá áp dụng (theo kiện)</dt><dd data-out="tier">—</dd></div>
+      <div><dt>Bậc giá áp dụng (theo tổng cân)</dt><dd data-out="tier">—</dd></div>
       <div><dt>Cước ước tính</dt><dd data-out="cost">—</dd><dd class="sub" data-out="cost-per"></dd></div>
     </dl>
   )}
   <p class="calc-note">
-    Ước tính cho các kiện giống nhau: mỗi kiện tra bậc giá theo trọng lượng tính cước của chính kiện đó (số lớn hơn giữa cân thực và cân quy đổi, hệ số {divisor ?? '—'}). Chưa gồm phụ phí và thuế (nếu có); cước chính thức theo báo giá.
+    Ước tính cho các kiện giống nhau, như phiếu xuất kho: trọng lượng tính cước mỗi kiện là số lớn hơn giữa cân thực và cân quy đổi (hệ số {divisor ?? '—'}; dưới 1 kg tính 1 kg, từ 1 kg làm tròn lên 0,1 kg), bậc giá theo tổng cân tính cước của cả lô. Chưa gồm phụ phí và thuế (nếu có); cước chính thức theo báo giá.
   </p>
 </div>
 <style>
@@ -76,7 +76,7 @@ const { value: divisor, isSample } = shown(volumetricDivisor);
         out('charge')!.textContent = `${fmt(e.chargeablePerPackage, 3)} kg`;
         out('tier')!.textContent = `${e.tier.price.toLocaleString('vi-VN')} đ/kg (${e.tier.label})`;
         out('cost')!.textContent = `${Math.round(e.total).toLocaleString('vi-VN')} đ`;
-        out('cost-per')!.textContent = `${Math.round(e.perPackage).toLocaleString('vi-VN')} đ/kiện × ${e.count}`;
+        out('cost-per')!.textContent = `${fmt(e.totalKg, 1)} kg × ${e.tier.price.toLocaleString('vi-VN')} đ/kg (${e.count} kiện)`;
       }
     };
     box.addEventListener('input', calc);

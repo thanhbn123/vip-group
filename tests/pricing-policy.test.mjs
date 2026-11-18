@@ -1,4 +1,5 @@
-// Chính sách giá owner chốt 07/11/2026: bậc giá theo trọng lượng tính cước TỪNG KIỆN (không gộp lô),
+// Chính sách giá: owner 18/11/2026 (VIPG-WEB-036 "Q5a", như phiếu xuất kho CRM V9.12) — bậc giá theo TỔNG trọng lượng tính cước của cả lô
+// (cộng cân tính cước đã làm tròn của từng kiện; thay chỉ thị 07/11/2026 "từng kiện, không gộp lô"),
 // cân quy đổi = dài × rộng × cao (cm) ÷ 6000, một bảng giá chung cho 4 kho. Test chạy đúng mô-đun thật src/lib/pricing.ts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -37,32 +38,36 @@ test('công thức quy đổi: dài × rộng × cao (cm) ÷ 6000; tính cước
   assert.equal(P.chargeableKg(-5, -1, 10, 10), 0, 'giá trị âm không làm sai kết quả');
 });
 
-test('TỪNG KIỆN, không gộp lô: 10 kiện × 12 kg → mỗi kiện 16.000 đ/kg (không phải bậc 120 kg = 15.000)', () => {
+test('GỘP LÔ như phiếu xuất (owner 18/11/2026): 10 kiện × 12 kg = 120 kg → bậc 15.000 đ/kg', () => {
   const e = P.estimate(T, { lCm: 30, wCm: 30, hCm: 30, kg: 12, count: 10 });
   assert.equal(e.chargeablePerPackage, 12);
-  assert.equal(e.tier.price, 16000);
-  assert.equal(e.perPackage, 192000);
-  assert.equal(e.total, 1920000);
+  assert.equal(e.totalKg, 120);
+  assert.equal(e.tier.price, 15000);
+  assert.equal(e.total, 1800000);
   // 1 kiện 120 kg mới vào bậc 15.000.
   assert.equal(P.estimate(T, { lCm: 30, wCm: 30, hCm: 30, kg: 120, count: 1 }).tier.price, 15000);
 });
 
-test('làm tròn: KHÔNG làm tròn khối lượng (owner chưa quy định); tiền ước tính làm tròn tới đồng', () => {
-  const e = P.estimate(T, { lCm: 33, wCm: 27, hCm: 19, kg: 2, count: 3 }); // 16.929 cm³ ÷ 6000 = 2,8215 kg
-  assert.equal(e.chargeablePerPackage, (33 * 27 * 19) / 6000);
-  assert.equal(e.tier.price, 20000);
-  assert.equal(e.total, Math.round(((33 * 27 * 19) / 6000) * 20000 * 3));
+test('làm tròn như phiếu xuất: mỗi kiện < 1 kg → 1 kg, từ 1 kg lên 0,1 kg; tổng × đơn giá bậc theo tổng', () => {
+  const e = P.estimate(T, { lCm: 33, wCm: 27, hCm: 19, kg: 2, count: 3 }); // 16.929 cm³ ÷ 6000 = 2,8215 kg → 2,9 kg
+  assert.equal(e.chargeablePerPackage, 2.9);
+  assert.equal(e.totalKg, 8.7);
+  assert.equal(e.tier.price, 16000);
+  assert.equal(e.total, 139200);
+  assert.equal(P.roundChargeableKg(0.4), 1); assert.equal(P.roundChargeableKg(1.11), 1.2); assert.equal(P.roundChargeableKg(3), 3);
   assert.ok(Number.isInteger(e.total));
   assert.equal(P.estimate(T, { lCm: 1, wCm: 1, hCm: 1, kg: 5, count: 2.4 }).count, 2, 'số kiện là số nguyên');
 });
 
-test('nguồn dữ liệu: basis vi/zh nêu "từng kiện", "không gộp", hệ số 6000, 4 kho', () => {
-  assert.match(pricing.basis, /từng kiện/);
-  assert.match(pricing.basis, /không cộng gộp cả lô/);
+test('nguồn dữ liệu: basis vi/zh nêu bậc theo tổng cân cả lô (như phiếu xuất), hệ số 6000, các kho', () => {
+  assert.match(pricing.basis, /tổng trọng lượng tính cước của cả lô/);
+  assert.match(pricing.basis, /như phiếu xuất kho/);
+  assert.doesNotMatch(pricing.basis, /không (cộng )?gộp/);
   assert.match(pricing.basis, /÷ 6000/);
   assert.match(pricing.basis, /Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô/);
-  assert.match(pricing.basisZh, /每件/);
-  assert.match(pricing.basisZh, /不合并/);
+  assert.match(pricing.basisZh, /总计费重量/);
+  assert.match(pricing.basisZh, /出库单/);
+  assert.doesNotMatch(pricing.basisZh, /不合并/);
   const src = readFileSync(join(root, 'src/data/vi/logistics.ts'), 'utf8');
   assert.equal((src.match(/priceApplies: \{ value: 'Áp dụng bảng giá chung Trung Quốc – Việt Nam', source: SRC_OWNER_PRICE \}/g) ?? []).length, 4);
 });
@@ -75,11 +80,11 @@ test('toàn site: không còn câu "theo tổng khối lượng cả lô"; trang
     assert.doesNotMatch(t, /được xác nhận khi báo giá — gửi yêu cầu báo giá/, `${f}: còn câu "đơn giá kho … xác nhận khi báo giá"`);
   }
   for (const p of ['/', '/logistics/bang-gia/', '/logistics/kho-trung-quoc/', ...ROUTES]) {
-    assert.match(text(read(p)), /trọng lượng tính cước (của )?từng kiện/, `${p}: thiếu chính sách từng kiện`);
+    assert.match(text(read(p)), /tổng trọng lượng tính cước (của )?cả lô/, `${p}: thiếu chính sách bậc theo tổng cân cả lô`);
   }
 });
 
-test('4 trang tuyến: hiện đủ 5 bậc giá + Offer schema đúng 5 đơn giá, eligibleQuantity theo kiện', () => {
+test('4 trang tuyến: hiện đủ 5 bậc giá + Offer schema đúng 5 đơn giá, eligibleQuantity theo kg (tổng cân)', () => {
   for (const p of ROUTES) {
     const html = read(p);
     const t = text(html);
@@ -89,7 +94,7 @@ test('4 trang tuyến: hiện đủ 5 bậc giá + Offer schema đúng 5 đơn g
     const lds = [...html.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)].map((m) => JSON.parse(m[1]));
     const svc = lds.find((d) => d['@type'] === 'Service');
     assert.deepEqual(svc.offers.map((o) => o.priceSpecification.price), [20000, 16000, 15000, 14000, 12000], p);
-    assert.ok(svc.offers.every((o) => o.priceSpecification.eligibleQuantity.unitText === 'kg/kiện'), p);
+    assert.ok(svc.offers.every((o) => o.priceSpecification.eligibleQuantity.unitText === 'kg'), p);
   }
 });
 
@@ -99,37 +104,32 @@ test('công cụ tính trên trang bảng giá có đủ ô cước ước tính
   assert.match(html, /data-divisor="6000"/);
 });
 
-test('ca bàn giao: 3 kiện × 4 kg → mỗi kiện 20.000 đ/kg (không gộp 12 kg → 16.000)', () => {
+test('3 kiện × 4 kg → gộp 12 kg → 16.000 đ/kg = 192.000 đ (như phiếu xuất; trước 18/11 tính riêng 240.000 đ)', () => {
   const e = P.estimate(T, { lCm: 20, wCm: 20, hCm: 20, kg: 4, count: 3 }); // quy đổi 1,33 kg < 4 kg
   assert.equal(e.chargeablePerPackage, 4);
-  assert.equal(e.tier.price, 20000);
-  assert.equal(e.total, 240000);
-  assert.equal(P.tierFor(T, 12).price, 16000, 'nếu gộp lô 12 kg sẽ ra 16.000 — KHÔNG được dùng');
+  assert.equal(e.totalKg, 12);
+  assert.equal(e.tier.price, 16000);
+  assert.equal(e.total, 192000);
 });
 
-test('FAQ trang tuyến (vi + zh) nêu đủ 5 mức và "từng kiện"', () => {
+test('FAQ trang tuyến (vi + zh) nêu đủ 5 mức và bậc theo tổng cân cả lô', () => {
   for (const p of ROUTES) {
     const html = read(p);
     const faq = [...html.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)].map((m) => JSON.parse(m[1])).find((d) => d['@type'] === 'FAQPage');
     const cuoc = faq.mainEntity.find((q) => /Cước vận chuyển từ .* tính thế nào/.test(q.name));
     assert.ok(cuoc, `${p}: thiếu câu cước trong FAQPage`);
-    for (const v of ['20.000đ/kg', '16.000đ/kg', '15.000đ/kg', '14.000đ/kg', '12.000đ/kg', 'từng kiện']) assert.ok(cuoc.acceptedAnswer.text.includes(v), `${p}: ${v}`);
-    assert.match(text(html), /按每件货物的计费重量确定/, `${p}: FAQ zh`);
+    for (const v of ['20.000đ/kg', '16.000đ/kg', '15.000đ/kg', '14.000đ/kg', '12.000đ/kg', 'cả lô']) assert.ok(cuoc.acceptedAnswer.text.includes(v), `${p}: ${v}`);
+    assert.match(text(html), /按整批货物的总计费重量确定/, `${p}: FAQ zh`);
   }
 });
 
-test('verifier P1-1: KHÔNG câu nào nói áp giá theo cả lô / 整批 — mọi câu nhắc "lô"/整批/同一批 phải là câu phủ định', () => {
+test('owner 18/11/2026 (Q5a): KHÔNG còn câu "không gộp lô" / 不合并整批 ở bất kỳ trang nào (HTML + JSON-LD)', () => {
   const walk = (d) => readdirSync(d).flatMap((n) => { const p = join(d, n); return statSync(p).isDirectory() ? walk(p) : p.endsWith('.html') ? [p] : []; });
   for (const f of walk(dist)) {
     const html = readFileSync(f, 'utf8');
     // Gồm cả chữ hiển thị và JSON-LD (FAQPage/Service) — nơi Google/AI đọc.
     const all = text(html) + ' ' + [...html.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)].map((m) => m[1]).join(' ');
-    for (const sentence of all.split(/[.;。；!?！？]\s|[。；]/)) {
-      // Lookaround Unicode: `\b` của JS không nhận chữ có dấu ("lô", "cả").
-      if (/(?<!\p{L})(?:cả|toàn bộ|tổng)(?!\p{L})[^.]{0,60}?(?<!\p{L})lô(?!\p{L})|(?<!\p{L})gộp(?!\p{L})[^.]{0,20}lô|整批|同一批|总重量/u.test(sentence)) {
-        assert.match(sentence, /(?<!\p{L})không(?!\p{L})|不/u, `${f.replace(dist, '')}: câu áp giá theo lô: "${sentence.trim().slice(0, 160)}"`);
-      }
-    }
+    assert.doesNotMatch(all, /không (cộng )?gộp (cả |các kiện trong )?lô|不合并整批|xét riêng từng kiện/u, `${f.replace(dist, '')}: còn câu chính sách cũ "không gộp lô"`);
   }
 });
 

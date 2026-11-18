@@ -72,7 +72,7 @@ const pending = (sample?: string): Fact => ({ value: null, source: null, sample 
  * - Bảng giá chung (pricing.ts) ÁP DỤNG cho cả 4 kho — owner directive 07/11/2026 (`priceApplies`, nguồn SRC_OWNER_PRICE).
  * - `context` / `goods` là kiến thức địa lý – thương mại chung về thành phố, không phải cam kết dịch vụ.
  */
-/** Owner directive 07/11/2026 (Final Local Acceptance): giá theo từng kiện + bảng giá chung cho 4 kho. */
+/** Owner directive 07/11/2026 (Final Local Acceptance): bảng giá chung cho các kho; owner 18/11/2026: bậc theo tổng cân cả lô (như phiếu xuất). */
 export const SRC_OWNER_PRICE = 'Owner directive 07/11/2026 — chính sách giá đã chốt';
 export const SRC_OWNER_WAREHOUSES = 'Owner xác nhận 06/11/2026 (Project Controller — SEO Multi-Warehouse V2)';
 export const SRC_OWNER_BANG_TUONG = 'Owner 18/11/2026: mở kho Bằng Tường (Quảng Tây), gửi địa chỉ; bảng giá chung áp dụng';
@@ -230,7 +230,7 @@ function pickupFaq(p: PickupBase): FaqItem[] {
     {
       q: `Cước vận chuyển từ ${p.city} về Việt Nam tính thế nào?`,
       a: p.priceApplies.value
-        ? `Hàng nhận tại kho ${p.city} áp dụng bảng giá chung cho cả 5 kho: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá chọn theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000), không gộp cả lô. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.`
+        ? `Hàng nhận tại kho ${p.city} áp dụng bảng giá chung cho cả 5 kho: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá chọn theo tổng trọng lượng tính cước của cả lô (cộng từng kiện, như phiếu xuất kho); trọng lượng tính cước mỗi kiện là số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000). Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.`
         : `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000). Bảng giá chung Trung Quốc – Việt Nam có tại trang Bảng giá; đơn giá áp dụng cho hàng nhận tại kho ${p.city} được xác nhận khi báo giá, cùng phụ phí và thuế (nếu có).`,
     },
     {
@@ -251,7 +251,7 @@ function pickupFaqZh(p: PickupBase): { q: string; a: string }[] {
     {
       q: '运费如何计算？',
       a: p.priceApplies.value
-        ? '五个仓库适用统一价格表（越南盾/公斤）：0–5 公斤 20,000；超过 5 公斤，不足 100 公斤 16,000；100 公斤至不足 500 公斤 15,000；500–1,000 公斤 14,000；超过 1,000 公斤 12,000。价格档位按每件货物的计费重量确定（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 6000），不合并整批重量；附加费及税费（如有）将在正式报价前确认。'
+        ? '五个仓库适用统一价格表（越南盾/公斤）：0–5 公斤 20,000；超过 5 公斤，不足 100 公斤 16,000；100 公斤至不足 500 公斤 15,000；500–1,000 公斤 14,000；超过 1,000 公斤 12,000。价格档位按整批货物的总计费重量确定（累加每件计费重量，与出库单相同；每件计费重量取实际重量与体积重量较大者，体积重量 = 长×宽×高 cm ÷ 6000）；附加费及税费（如有）将在正式报价前确认。'
         : '运费按计费重量（实际重量与体积重量取较大者，体积重量 = 长×宽×高 cm ÷ 6000）以公斤计算，具体单价以正式报价为准；附加费及税费（如有）将在正式报价前确认。',
     },
     ...(p.extraFaqZh ? [p.extraFaqZh] : []),
@@ -320,11 +320,11 @@ export const faqs: FaqItem[] = [
   },
   {
     q: 'Bảng giá vận chuyển Trung Quốc – Việt Nam bao nhiêu một kg?',
-    a: 'Đơn giá theo khối lượng: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá xác định theo trọng lượng tính cước của từng kiện, không gộp cả lô; áp dụng chung cho 5 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô, Bằng Tường. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
+    a: 'Đơn giá theo khối lượng: 0–5 kg 20.000đ/kg; trên 5 đến dưới 100 kg 16.000đ/kg; từ 100 đến dưới 500 kg 15.000đ/kg; từ 500 đến 1.000 kg 14.000đ/kg; trên 1.000 kg 12.000đ/kg. Bậc giá xác định theo tổng trọng lượng tính cước của cả lô (cộng từng kiện, như phiếu xuất kho); áp dụng chung cho 5 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô, Bằng Tường. Phụ phí và thuế (nếu có) được xác nhận trước khi báo giá chính thức.',
   },
   {
     q: 'Cước vận chuyển tính theo cân nặng hay theo khối?',
-    a: 'Cước tính theo số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao theo cm ÷ 6000). Bậc giá theo kg xác định theo trọng lượng tính cước của từng kiện (không cộng gộp các kiện trong lô).',
+    a: 'Cước tính theo số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao theo cm ÷ 6000). Bậc giá theo kg xác định theo tổng trọng lượng tính cước của cả lô — cộng trọng lượng tính cước của từng kiện, như phiếu xuất kho.',
   },
   {
     // Owner 17/11/2026: "2 ngày về kho VN" (service-terms.ts).
@@ -584,7 +584,7 @@ export const articles: Article[] = [
         heading: 'Cân nặng quy đổi',
         paragraphs: [
           'Cân nặng quy đổi (kg) = dài × rộng × cao (cm) ÷ hệ số quy đổi. Hệ số này do từng đơn vị vận chuyển quy định và có thể khác nhau theo tuyến, loại hình vận chuyển.',
-          'VIP GROUP áp dụng hệ số 6000: cân quy đổi = dài × rộng × cao (cm) ÷ 6000. Cước tính theo số lớn hơn giữa cân thực và cân quy đổi, xét riêng từng kiện.',
+          'VIP GROUP áp dụng hệ số 6000: cân quy đổi = dài × rộng × cao (cm) ÷ 6000. Trọng lượng tính cước mỗi kiện là số lớn hơn giữa cân thực và cân quy đổi; bậc giá theo tổng của cả lô.',
           'Ví dụ: kiện 60 × 50 × 40 cm nặng 8 kg có cân quy đổi 120.000 ÷ 6000 = 24 kg. Vì 24 kg lớn hơn 8 kg nên kiện được tính cước như 24 kg. Cùng kích thước đó nhưng nặng 30 kg thì tính theo cân thực 30 kg.',
           'Đơn giá theo từng bậc cân nặng xem tại trang Bảng giá; công cụ Báo giá nhanh trên trang đó tính sẵn cho nhiều loại kiện.',
         ],
