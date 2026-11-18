@@ -1,11 +1,11 @@
 /**
  * Logic tính cước DÙNG CHUNG (công cụ tính trên web + test) — chính sách owner chốt 07/11/2026:
- * - Bậc giá xác định theo trọng lượng tính cước của TỪNG KIỆN, không cộng gộp cả lô.
+ * - Owner 18/11/2026 (thay chỉ thị 07/11): bậc giá theo TỔNG trọng lượng tính cước của cả lô = Σ (cân tính cước mỗi kiện, đã làm tròn) — như phiếu xuất kho.
  * - Trọng lượng tính cước của kiện = max(cân thực, cân quy đổi); cân quy đổi = dài × rộng × cao (cm) ÷ 6000.
  * - Một bảng giá chung cho 5 kho Thâm Quyến, Hạ Môn, Quảng Châu, Nghĩa Ô, Bằng Tường (thêm 18/11/2026).
  *
- * Làm tròn: owner CHƯA quy định làm tròn khối lượng (ví dụ lên 0,1 kg hay 0,5 kg). Hàm ở đây KHÔNG làm tròn khối lượng;
- * chỉ làm tròn tiền ước tính tới đồng khi hiển thị. Ranh giới bậc dùng đúng min/max/inclusive trong pricing.ts.
+ * Làm tròn (như CRM V6.10, owner 11/11/2026): cân tính cước MỖI KIỆN dưới 1 kg tính 1 kg, từ 1 kg làm tròn LÊN 0,1 kg; tiền làm tròn tới đồng.
+ * Ranh giới bậc dùng đúng min/max/inclusive trong pricing.ts.
  */
 import type { PriceTier } from '../data/types';
 
@@ -27,13 +27,19 @@ export function tierFor(tiers: PriceTier[], kg: number): PriceTier {
   return hit[0];
 }
 
-/** Ước tính cước cho `count` kiện giống nhau — mỗi kiện tra bậc giá riêng (không gộp lô). */
+/** Cân tính cước MỘT kiện sau làm tròn như phiếu xuất: < 1 kg → 1 kg; còn lại làm tròn LÊN 0,1 kg. */
+export const roundChargeableKg = (kg: number) => (kg < 1 ? 1 : Math.ceil(Math.round(kg * 1e6) / 1e5) / 10);
+
+/**
+ * Ước tính cước cho `count` kiện giống nhau — NHƯ PHIẾU XUẤT KHO (owner 18/11/2026): tổng = cân tính cước mỗi kiện (đã làm tròn) × số kiện,
+ * bậc giá theo TỔNG đó, tiền = tổng × đơn giá bậc.
+ */
 export function estimate(tiers: PriceTier[], p: { lCm: number; wCm: number; hCm: number; kg: number; count: number }, divisor = VOLUMETRIC_DIVISOR) {
-  const perKg = chargeableKg(p.kg, p.lCm, p.wCm, p.hCm, divisor);
+  const perKg = roundChargeableKg(chargeableKg(p.kg, p.lCm, p.wCm, p.hCm, divisor));
   const count = Math.max(1, Math.round(p.count));
-  const tier = tierFor(tiers, perKg);
-  const perPackage = perKg * tier.price;
-  return { chargeablePerPackage: perKg, tier, perPackage, count, total: Math.round(perPackage * count) };
+  const totalKg = Math.round(perKg * count * 10) / 10;
+  const tier = tierFor(tiers, totalKg);
+  return { chargeablePerPackage: perKg, totalKg, tier, perPackage: perKg * tier.price, count, total: Math.round(totalKg * tier.price) };
 }
 
 /** schema.org Offer cho từng bậc giá (VND/kg) — dùng chung cho trang chủ, bảng giá chi tiết, trang tuyến. */
@@ -44,8 +50,8 @@ export const priceOffers = (tiers: PriceTier[]) =>
     priceCurrency: 'VND',
     priceSpecification: {
       '@type': 'UnitPriceSpecification', price: t.price, priceCurrency: 'VND', unitCode: 'KGM', unitText: 'kg',
-      // Bậc theo trọng lượng tính cước của MỘT kiện (owner 07/11/2026).
-      eligibleQuantity: { '@type': 'QuantitativeValue', minValue: t.min, ...(t.max !== null ? { maxValue: t.max } : {}), unitCode: 'KGM', unitText: 'kg/kiện' },
+      // Bậc theo TỔNG trọng lượng tính cước của cả lô (owner 18/11/2026).
+      eligibleQuantity: { '@type': 'QuantitativeValue', minValue: t.min, ...(t.max !== null ? { maxValue: t.max } : {}), unitCode: 'KGM', unitText: 'kg' },
     },
   }));
 
