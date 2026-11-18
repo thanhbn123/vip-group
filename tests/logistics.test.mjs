@@ -237,7 +237,7 @@ test('V2: trang tuyến — nội dung riêng, liên kết mạng lưới, phầ
     for (const m of t.matchAll(/0\d{2,3}[\s.]?\d{3}[\s.]?\d{3,4}/g)) assert.equal(m[0].replace(/\D/g, ''), '0961102655', `${p}: số lạ ${m[0]}`);
   }
   assert.equal(h1s.size, ROUTES.length, 'H1 mỗi tuyến phải khác nhau');
-  // Trang mạng lưới: nêu bảng giá chung cho mọi kho + bậc theo từng kiện (owner 07/11/2026; 5 kho từ 18/11/2026).
+  // Trang mạng lưới: nêu bảng giá chung cho mọi kho + bậc theo tổng cân cả lô (owner 18/11/2026; 5 kho từ 18/11/2026).
   const net = text(read('/logistics/kho-trung-quoc/'));
   assert.match(net, /Cả 5 kho áp dụng chung bảng giá/, 'mạng lưới: phải nêu bảng giá chung');
   // FAQPage không trùng câu giữa trang mạng lưới và trang Hỏi đáp.
@@ -274,7 +274,7 @@ test('FAQPage chỉ chứa câu trả lời đã có căn cứ', () => {
   for (const n of names) assert.ok(text(html).includes(n), `câu hỏi trong schema không hiển thị: ${n}`);
 });
 
-test('bảng giá chi tiết: đúng 5 mức owner, bậc theo từng kiện, quy đổi 6000, form thu lead chọn sẵn "báo giá"', () => {
+test('bảng giá chi tiết: đúng 5 mức owner, bậc theo tổng cân cả lô, quy đổi 6000, form thu lead chọn sẵn "báo giá"', () => {
   const html = read('/logistics/bang-gia/');
   const t = text(html).replace(/\s+/g, ' ');
   for (const [label, price] of [['0–5 kg', '20.000'], ['Trên 5 đến dưới 100 kg', '16.000'], ['Từ 100 đến dưới 500 kg', '15.000'], ['Từ 500 đến 1.000 kg', '14.000'], ['Trên 1.000 kg', '12.000']]) {
@@ -282,7 +282,7 @@ test('bảng giá chi tiết: đúng 5 mức owner, bậc theo từng kiện, qu
   }
   assert.match(t, /Đơn vị tính: VNĐ\/kg/);
   assert.match(t, /Phụ phí và thuế \(nếu có\) sẽ được xác nhận trước khi báo giá chính thức/);
-  assert.match(t, /theo trọng lượng tính cước của từng kiện, không cộng gộp cả lô/, 'owner 07/11/2026: bậc giá theo từng kiện');
+  assert.match(t, /theo tổng trọng lượng tính cước của cả lô/, 'owner 18/11/2026: bậc giá theo tổng cân cả lô (như phiếu xuất)');
   assert.match(html, /data-calc data-divisor="6000"/, 'owner: quy đổi hệ số 6000');
   assert.doesNotMatch(t, /\bMẪU\b/);
   const start = html.indexOf('<form '); const form = html.slice(start, html.indexOf('</form>', start));

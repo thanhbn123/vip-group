@@ -1,7 +1,8 @@
 ---
 /**
- * VIPG-WEB-033 · Báo giá nhanh (chủ dự án 17/11/2026 "3a"): nhiều dòng kiện (dài × rộng × cao, cân / kiện, số kiện) → cước từng dòng + tổng,
- * tính ở CRM theo ĐÚNG bảng giá chung đang dùng cho phiếu xuất (làm tròn cân, hệ số quy đổi, bậc theo từng kiện). Song ngữ Việt · 中文.
+ * VIPG-WEB-033 · Báo giá nhanh (chủ dự án 17/11/2026 "3a"): nhiều dòng kiện (dài × rộng × cao, cân / kiện, số kiện), tính ở CRM theo ĐÚNG bảng giá chung.
+ * VIPG-WEB-036 (chủ dự án 18/11/2026 "1a 2a 3a 4a"): tính NHƯ PHIẾU XUẤT KHO — cộng cân tính cước từng kiện → bậc giá theo TỔNG cân;
+ * dòng chỉ hiện cân, đơn giá + thành tiền ở Tổng; nhập nhanh "tổng cân + số kiện"; gợi ý bậc rẻ hơn. Song ngữ Việt · 中文.
  * Gọi /api/quote/price-list + /api/quote (public/_worker.js chuyển sang CRM). CRM chưa sẵn sàng → hiện Zalo / hotline.
  */
 import { provider } from '../../data/vi/logistics';
@@ -22,10 +23,18 @@ const phone = prettyPhone(provider.hotline);
       <label class="qq-wh"><span data-qq="wh">Kho nhận hàng tại Trung Quốc</span> <select id="qq-wh"></select></label>
       <div class="qq-scroll">
         <table class="qq-table">
-          <thead><tr><th data-qq="l">Dài (cm)</th><th data-qq="w">Rộng (cm)</th><th data-qq="h">Cao (cm)</th><th data-qq="kg">Cân / kiện (kg)</th><th data-qq="n">Số kiện</th><th data-qq="ck">Cân tính cước / kiện</th><th data-qq="price">Đơn giá</th><th data-qq="amount">Thành tiền</th><th></th></tr></thead>
+          <thead><tr><th data-qq="l">Dài (cm)</th><th data-qq="w">Rộng (cm)</th><th data-qq="h">Cao (cm)</th><th data-qq="kg">Cân / kiện (kg)</th><th data-qq="n">Số kiện</th><th data-qq="act">Cân thực</th><th data-qq="vol">Cân quy đổi</th><th data-qq="ck">Cân tính cước</th><th></th></tr></thead>
           <tbody id="qq-rows"></tbody>
         </table>
       </div>
+      <details class="qq-quick" id="qq-quick">
+        <summary data-qq="quick">Chỉ biết tổng cân? Nhập nhanh tổng cân + số kiện</summary>
+        <div class="qq-quick-row">
+          <label><span data-qq="qkg">Tổng cân (kg)</span> <input type="number" min="0" step="0.1" inputmode="decimal" id="qq-qkg" /></label>
+          <label><span data-qq="qn">Số kiện</span> <input type="number" min="1" step="1" inputmode="numeric" id="qq-qn" value="1" /></label>
+        </div>
+        <p class="muted small" data-qq="qhint">Không có kích thước thì tính theo cân thực; mỗi kiện vẫn tối thiểu 1 kg như phiếu xuất kho.</p>
+      </details>
       <div class="qq-actions">
         <button type="button" class="btn btn-ghost" id="qq-add" data-qq="add">+ Thêm loại kiện</button>
         <button type="button" class="btn btn-primary" id="qq-go" data-qq="go">Tính cước</button>
@@ -44,12 +53,20 @@ const phone = prettyPhone(provider.hotline);
   // @ts-nocheck — script trình duyệt thuần (DOM động); logic đã có test e2e/unit, bỏ kiểm tra kiểu như các script cùng loại
   const TXT = {
     vi: { title: 'Báo giá nhanh', lead: 'Điền kích thước, cân nặng và số kiện — hệ thống tính cước theo bảng giá hiện hành của VIP GROUP.', wh: 'Kho nhận hàng tại Trung Quốc',
-      l: 'Dài (cm)', w: 'Rộng (cm)', h: 'Cao (cm)', kg: 'Cân / kiện (kg)', n: 'Số kiện', ck: 'Cân tính cước / kiện', price: 'Đơn giá', amount: 'Thành tiền',
+      l: 'Dài (cm)', w: 'Rộng (cm)', h: 'Cao (cm)', kg: 'Cân / kiện (kg)', n: 'Số kiện', act: 'Cân thực', vol: 'Cân quy đổi', ck: 'Cân tính cước',
+      quick: 'Chỉ biết tổng cân? Nhập nhanh tổng cân + số kiện', qkg: 'Tổng cân (kg)', qn: 'Số kiện', qline: 'Nhập nhanh tổng cân',
+      qhint: 'Không có kích thước thì tính theo cân thực; mỗi kiện vẫn tối thiểu 1 kg như phiếu xuất kho.',
+      tck: 'Tổng cân tính cước', tier: 'bậc', unit: 'đơn giá', amount: 'Thành tiền', sub: 'Tổng cân thực {a} kg · tổng cân quy đổi (÷{d}) {v} kg',
+      merged: 'Tính như phiếu xuất kho: cộng cân tính cước của từng kiện, bậc giá theo tổng cân.', next: 'Thêm {k} kg nữa sẽ sang bậc {p}/kg (cước khi đó {m}).',
       add: '+ Thêm loại kiện', go: 'Tính cước', zalo: 'Gửi báo giá qua Zalo', copy: 'Chép báo giá', copied: 'Đã chép báo giá — dán vào Zalo để gửi',
       note: 'Cước ước tính theo bảng giá chung, chưa gồm phụ phí và thuế (nếu có); cước chính thức theo phiếu xuất kho.', off: 'Chưa tính được lúc này — vui lòng nhắn Zalo hoặc gọi',
       total: 'Tổng', pk: 'kiện', del: 'Xóa dòng', fast: 'Thao tác hơi nhanh, vui lòng đợi một chút.', rule: 'Cân tính cước mỗi kiện = số lớn hơn giữa cân thực và D×R×C ÷ {d}; dưới 1 kg tính 1 kg, từ 1 kg làm tròn lên 0,1 kg.' },
     zh: { title: '快速报价', lead: '填写尺寸、重量和件数——系统按 VIP GROUP 现行价格表计算运费。', wh: '中国收货仓库',
-      l: '长 (cm)', w: '宽 (cm)', h: '高 (cm)', kg: '每件重量 (kg)', n: '件数', ck: '每件计费重', price: '单价', amount: '金额',
+      l: '长 (cm)', w: '宽 (cm)', h: '高 (cm)', kg: '每件重量 (kg)', n: '件数', act: '实际重量', vol: '体积重', ck: '计费重',
+      quick: '只知道总重量？快速输入总重量 + 件数', qkg: '总重量 (kg)', qn: '件数', qline: '快速输入总重量',
+      qhint: '没有尺寸时按实际重量计算；每件仍按最低 1 kg 计（与出库单相同）。',
+      tck: '总计费重', tier: '档位', unit: '单价', amount: '金额', sub: '总实际重量 {a} kg · 总体积重（÷{d}）{v} kg',
+      merged: '与出库单相同：累加每件计费重，按总重量确定价格档位。', next: '再增加 {k} kg 即可进入 {p}/kg 档（届时运费 {m}）。',
       add: '+ 添加货物', go: '计算运费', zalo: '通过 Zalo 发送报价', copy: '复制报价', copied: '已复制报价——粘贴到 Zalo 发送',
       note: '按通用价格表估算，不含附加费及税费（如有）；正式运费以出库单为准。', off: '暂时无法计算——请通过 Zalo 联系', total: '合计', pk: '件', del: '删除', fast: '操作太快，请稍候。',
       rule: '每件计费重 = 实际重量与 长×宽×高 ÷ {d} 中较大者；不足 1 kg 按 1 kg，1 kg 以上向上取整至 0.1 kg。' },
@@ -65,7 +82,7 @@ const phone = prettyPhone(provider.hotline);
       const td = el('td'); const i = el('input', { type: 'number', min: '0', step, inputmode: 'decimal', 'data-f': f, 'aria-label': f });
       i.value = String(val); td.append(i); tr.append(td);
     }
-    for (const k of ['ck', 'price', 'amount']) tr.append(el('td', { 'data-out': k }, '—'));
+    for (const k of ['act', 'vol', 'ck']) tr.append(el('td', { 'data-out': k }, '—'));
     const td = el('td'); const del = el('button', { type: 'button', class: 'btn btn-ghost btn-sm', 'aria-label': TXT[L].del }, '×');
     del.addEventListener('click', () => { if ($('qq-rows').children.length > 1) tr.remove(); });
     td.append(del); tr.append(td); $('qq-rows').append(tr);
@@ -81,34 +98,54 @@ const phone = prettyPhone(provider.hotline);
   function lines() {
     return [...$('qq-rows').children].map((tr) => Object.fromEntries([...tr.querySelectorAll('input')].map((i) => [i.dataset.f, i.value === '' ? null : Number(i.value)])));
   }
+  /** 3a: nhập nhanh tổng cân + số kiện → một dòng {total_weight_kg, packages} (gửi CUỐI danh sách). */
+  function quickLine() {
+    const kg = Number($('qq-qkg').value); const n = Math.max(1, Math.floor(Number($('qq-qn').value) || 1));
+    return kg > 0 ? { total_weight_kg: kg, packages: n } : null;
+  }
+  const kgOf = (v) => (v === null || v === undefined ? '—' : `${fmt(v)} kg`);
+  const lineKg = (x, k) => (x[k] === null || x[k] === undefined ? null : Number(x[k]) * x.packages);
   function textOf(r) {
     const t = TXT[L]; const out = [`VIP GROUP — ${t.title} (${r.warehouse_code})`];
-    r.lines.forEach((x, i) => out.push(`${i + 1}. ${x.packages} ${t.pk} × ${fmt(x.chargeable_kg)} kg × ${money(x.unit_price)}/kg = ${money(x.amount)}`));
-    out.push(`${t.total}: ${r.total.packages} ${t.pk} · ${fmt(r.total.chargeable_kg)} kg · ${money(r.total.amount)}`, t.note);
+    r.lines.forEach((x, i) => out.push(`${i + 1}. ${x.quick ? `${t.qline}: ` : ''}${x.packages} ${t.pk} · ${t.ck} ${fmt(x.line_chargeable_kg ?? Number(x.chargeable_kg) * x.packages)} kg`));
+    out.push(totalLine(r), t.merged, t.note);
     return out.join('\n');
+  }
+  function totalLine(r) {
+    const t = TXT[L]; const T = r.total;
+    return `${t.tck}: ${fmt(T.chargeable_kg)} kg (${T.packages} ${t.pk})${T.tier?.label ? ` · ${t.tier} ${T.tier.label}` : ''}${T.unit_price ? ` · ${money(T.unit_price)}/kg` : ''} · ${t.amount} ${money(T.amount)}`;
   }
   function showResult(r) {
     last = r;
     const rows = [...$('qq-rows').children];
-    r.lines.forEach((x, i) => {
-      const tr = rows[i]; if (!tr) return;
-      tr.querySelector('[data-out="ck"]').textContent = `${fmt(x.chargeable_kg)} kg`;
-      tr.querySelector('[data-out="price"]').textContent = `${money(x.unit_price)}/kg`;
-      tr.querySelector('[data-out="amount"]').textContent = money(x.amount);
+    let ri = 0;
+    r.lines.forEach((x) => {
+      if (x.quick) return;
+      const tr = rows[ri++]; if (!tr) return;
+      tr.querySelector('[data-out="act"]').textContent = kgOf(lineKg(x, 'actual_kg'));
+      tr.querySelector('[data-out="vol"]').textContent = kgOf(lineKg(x, 'volumetric_kg'));
+      tr.querySelector('[data-out="ck"]').textContent = kgOf(x.line_chargeable_kg ?? lineKg(x, 'chargeable_kg'));
     });
-    const t = TXT[L];
-    $('qq-out').replaceChildren(el('p', { class: 'qq-total', 'data-qq-total': r.total.amount }, `${t.total}: ${r.total.packages} ${t.pk} · ${fmt(r.total.chargeable_kg)} kg · ${money(r.total.amount)}`),
-      el('p', { class: 'muted small' }, t.rule.replace('{d}', r.divisor)));
+    const t = TXT[L]; const T = r.total;
+    const nx = T.next_tier;
+    $('qq-out').replaceChildren(
+      el('p', { class: 'qq-total', 'data-qq-total': T.amount }, totalLine(r)),
+      T.actual_kg !== undefined ? el('p', { class: 'muted small', 'data-qq-sub': '' }, t.sub.replace('{a}', fmt(T.actual_kg)).replace('{v}', fmt(T.volumetric_kg)).replace('{d}', r.divisor)) : el('span'),
+      r.lines.some((x) => x.quick) ? el('p', { class: 'small', 'data-qq-quick-out': '' }, `${t.qline}: ${fmt(r.lines.find((x) => x.quick).line_chargeable_kg)} kg`) : el('span'),
+      nx ? el('p', { class: 'small qq-next', 'data-qq-next': nx.at_kg }, t.next.replace('{k}', fmt(nx.need_kg)).replace('{p}', money(nx.unit_price)).replace('{m}', money(nx.amount))) : el('span'),
+      el('p', { class: 'muted small' }, `${t.merged} ${t.rule.replace('{d}', r.divisor)}`));
     $('qq-share').hidden = false;
   }
   async function go() {
     const ls = lines().filter((x) => x.weight_kg > 0);
+    const q = quickLine(); if (q) ls.push(q);
     if (!ls.length) { $('qq-rows').querySelector('[data-f="weight_kg"]').focus(); return; }
     try {
       const r = await fetch('/api/quote', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ warehouse_code: $('qq-wh').value, lines: ls }) });
       const d = await r.json().catch(() => null);
       if (r.status === 429) { $('qq-out').replaceChildren(el('p', { class: 'muted' }, TXT[L].fast)); return; }
       if (!r.ok || !d?.ok) { $('qq-out').replaceChildren(el('p', { class: 'muted' }, d?.message || TXT[L].off)); return; }
+      if (q && d.lines?.length) d.lines[d.lines.length - 1].quick = true;
       showResult(d);
     } catch { $('qq-off').hidden = false; }
   }
@@ -144,5 +181,9 @@ const phone = prettyPhone(provider.hotline);
   .qq-table input { width: 5.5em; padding: 8px; border: 1px solid var(--line, #ccd); border-radius: 8px; }
   .qq-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .qq-total { font-size: 1.2rem; font-weight: 700; margin: 0; }
+  .qq-next { color: var(--brand, #c8102e); font-weight: 600; margin: 0; }
+  .qq-quick summary { cursor: pointer; font-weight: 600; }
+  .qq-quick-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+  .qq-quick-row input { width: 7em; padding: 8px; border: 1px solid var(--line, #ccd); border-radius: 8px; }
   .small { font-size: .9rem; }
 </style>

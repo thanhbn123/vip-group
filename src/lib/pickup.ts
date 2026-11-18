@@ -25,12 +25,12 @@ export const pickupAnswer = (p: PickupPoint) =>
   `VIP GROUP nhận hàng tại kho ${p.city} (${p.cityZh}, ${p.district}, ${p.province}) và vận chuyển về Việt Nam; dịch vụ do ${provider.name} vận hành. ` +
   `Nhà cung cấp giao hàng tới địa chỉ kho, ghi mã khách hàng trên từng kiện. ` +
   (p.priceApplies.value
-    ? `Cước theo bảng giá chung cho cả 5 kho (5 bậc giá theo kg); bậc giá xác định theo trọng lượng tính cước của từng kiện — số lớn hơn giữa cân thực và cân quy đổi (dài × rộng × cao cm ÷ 6000), không gộp cả lô. `
+    ? `Cước theo bảng giá chung cho cả 5 kho (5 bậc giá theo kg); bậc giá xác định theo tổng trọng lượng tính cước của cả lô (cộng trọng lượng tính cước của từng kiện, như phiếu xuất kho); trọng lượng tính cước mỗi kiện là số lớn hơn giữa cân thực và cân quy đổi (dài × rộng × cao cm ÷ 6000). `
     : `Cước tính theo kg trên khối lượng tính cước — số lớn hơn giữa cân nặng thực và cân nặng quy đổi (dài × rộng × cao cm ÷ 6000); đơn giá cho hàng nhận tại kho ${p.city} được xác nhận khi báo giá. `) +
   `Hotline/Zalo ${prettyPhone(provider.hotline)}.`;
 
 export const pickupAnswerZh = (p: PickupPoint) =>
-  `VIP GROUP 在${p.provinceZh}${p.cityZh}仓库直接收货并运往越南，服务由 ${provider.name} 运营。供应商将货物送至仓库地址，并在每件货物上标明客户编号（唛头）。${p.priceApplies.value ? '运费适用五个仓库统一价格表（按公斤分 5 档），价格档位按每件货物的计费重量确定，不合并整批重量。' : '运费按计费重量以公斤计算，具体单价以正式报价为准。'}热线 / Zalo：${prettyPhone(provider.hotline)}。`;
+  `VIP GROUP 在${p.provinceZh}${p.cityZh}仓库直接收货并运往越南，服务由 ${provider.name} 运营。供应商将货物送至仓库地址，并在每件货物上标明客户编号（唛头）。${p.priceApplies.value ? '运费适用五个仓库统一价格表（按公斤分 5 档），价格档位按整批货物的总计费重量确定（累加每件计费重量，与出库单相同）。' : '运费按计费重量以公斤计算，具体单价以正式报价为准。'}热线 / Zalo：${prettyPhone(provider.hotline)}。`;
 
 /** Các bước gửi hàng tới một kho (quy trình 4 bước của VIP GROUP). */
 export const pickupSteps = (p: PickupPoint) => [
