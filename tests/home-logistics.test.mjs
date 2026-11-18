@@ -28,11 +28,11 @@ test('thứ tự trang chủ: banner → bảng giá → ví dụ tính cước 
   assert.ok(hero < price && price < ex && ex < about, `sai thứ tự: ${[hero, price, ex, about]}`);
 });
 
-// Kỳ vọng tính tay theo bảng giá owner 06–07/11/2026 + hệ số 5000 (17/11/2026).
+// Kỳ vọng tính tay theo bảng giá owner 06–07/11/2026 + hệ số 6000 (chủ dự án 18/11/2026; 17/11 từng là 5000).
 const EXPECTED = [
-  ['Kiện nhỏ', '3 kg', '20.000đ/kg', '60.000đ'], // 30×20×15 → 1,8 kg quy đổi < 3 kg thực
-  ['Kiện vừa', '20 kg', '16.000đ/kg', '320.000đ'], // 50×40×30 → 12 kg quy đổi < 20 kg thực
-  ['Kiện nhẹ nhưng cồng kềnh', '24 kg', '16.000đ/kg', '384.000đ'], // 60×50×40 → 24 kg quy đổi > 8 kg thực
+  ['Kiện nhỏ', '3 kg', '20.000đ/kg', '60.000đ'], // 30×20×15 → 1,5 kg quy đổi < 3 kg thực
+  ['Kiện vừa', '20 kg', '16.000đ/kg', '320.000đ'], // 50×40×30 → 10 kg quy đổi < 20 kg thực
+  ['Kiện nhẹ nhưng cồng kềnh', '20 kg', '16.000đ/kg', '320.000đ'], // 60×50×40 → 20 kg quy đổi > 8 kg thực
 ];
 
 for (const page of ['index.html', 'logistics/bang-gia/index.html']) {
@@ -50,7 +50,7 @@ for (const page of ['index.html', 'logistics/bang-gia/index.html']) {
       assert.ok(cards[i].trim().endsWith(total), `thẻ ${i + 1} thành tiền: ${cards[i]}`);
     });
     assert.match(text(sec), /Cước chỉ từ 12\.000đ\/kg/);
-    assert.match(text(sec), /÷ 5000/);
+    assert.match(text(sec), /÷ 6000/);
     assert.match(text(sec), /chưa gồm phụ phí và thuế/);
   });
 }
