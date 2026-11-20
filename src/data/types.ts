@@ -138,6 +138,8 @@ export interface ShippingPricing {
   source: string;
   /** Ngày hiệu lực hiển thị (ISO). */
   updated: string;
+  /** VIPG-WEB-037 (owner 20/11/2026): phương án 1 — cân thực đồng giá (không quy đổi). Bảng 5 bậc = phương án 2. */
+  actualPlan?: { label: string; labelZh: string; price: number; basis: string; basisZh: string; tieredLabel: string; tieredLabelZh: string };
 }
 
 /* ───────────── Khu Logistics (VIPG-WEB-021) ───────────── */

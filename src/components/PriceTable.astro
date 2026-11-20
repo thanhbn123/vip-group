@@ -39,7 +39,17 @@ const pretty = hotlineDisplay ?? tel?.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 
       )}
     </div>
 
+    {pricing.actualPlan && (
+      <div class="price-card plan-card" data-plan="actual">
+        <div class="plan-head">
+          <h3 class="plan-title">{pricing.actualPlan.label} <span class="th-zh" lang="zh-CN">{pricing.actualPlan.labelZh}</span></h3>
+          <p class="plan-price"><span class="p">{fmt(pricing.actualPlan.price)}</span><span class="u">đ/kg</span></p>
+        </div>
+        <p class="plan-basis">{pricing.actualPlan.basis} <span lang="zh-CN">{pricing.actualPlan.basisZh}</span></p>
+      </div>
+    )}
     <div class="price-card">
+      {pricing.actualPlan && <h3 class="plan-title plan-title-2">{pricing.actualPlan.tieredLabel} <span class="th-zh" lang="zh-CN">{pricing.actualPlan.tieredLabelZh}</span></h3>}
       <table class="price-table">
         <caption class="visually-hidden">{pricing.title} — đơn vị {pricing.unit}</caption>
         <thead>
@@ -100,6 +110,13 @@ const pretty = hotlineDisplay ?? tel?.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 
   .u { font-size: 14px; font-weight: 600; color: var(--muted); margin-left: 3px; }
   .price-notes { padding: 18px 24px 20px; font-size: 14px; color: var(--text-2); display: grid; gap: 6px; }
   .price-notes p { margin: 0; }
+  .plan-card { margin-bottom: 16px; padding: 18px 24px; }
+  .plan-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .plan-title { font-size: 18px; margin: 0; }
+  .plan-title-2 { padding: 18px 24px 0; }
+  .plan-price { margin: 0; }
+  .plan-price .p { font-size: 28px; font-weight: 800; }
+  .plan-basis { margin: 8px 0 0; font-size: 14px; color: var(--text-2); }
   .updated { color: var(--muted); }
   @media (max-width: 480px) {
     .price-table thead th, .price-table tbody th, .price-table tbody td, .price-notes { padding-left: 16px; padding-right: 16px; }

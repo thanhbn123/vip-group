@@ -131,8 +131,9 @@ test('production KHÔNG chứa dữ liệu MẪU, giá, thời gian giao hay đ�
       .replace(/2 ngày từ kho Trung Quốc về kho Việt Nam/g, ' ');
     // Chỉ đúng 2 khối đã biết được miễn; khối data-owner-terms lạ nào khác → hỏng (verifier PR #63, phát hiện 1).
     assert.doesNotMatch(html, /data-owner-terms/, `${file}: khối data-owner-terms ngoài danh sách đã kiểm`);
-    // Giá DUY NHẤT được phép: 5 mức owner cung cấp 06/11/2026 (src/data/vi/pricing.ts). Mọi giá khác vẫn bị chặn.
-    const t = text(html).replace(/\b(?:20|16|15|14|12)\.000\s*(?:đ\/kg|VNĐ\/kg)/g, ' ').replace(/(?:20|16|15|14|12)\.000(?=\s*đ\/kg)/g, ' ');
+    // Giá DUY NHẤT được phép: 5 mức owner cung cấp 06/11/2026 + phương án cân thực 25.000đ/kg (owner 20/11/2026, VIPG-WEB-037)
+    // (src/data/vi/pricing.ts). Mọi giá khác vẫn bị chặn.
+    const t = text(html).replace(/\b(?:20|16|15|14|12|25)\.000\s*(?:đ\/kg|VNĐ\/kg)/g, ' ').replace(/(?:20|16|15|14|12|25)\.000(?=\s*đ\/kg)/g, ' ');
     assert.doesNotMatch(t, /\bMẪU\b|\[MẪU\]|KHÔNG PHẢI ĐỊA CHỈ THẬT|BẢN DEMO/, `${file}: lọt dữ liệu mẫu`);
     // Cờ `u` + lookahead Unicode: `\b` của JS không nhận "đ"/"₫" (verifier P1-2).
     assert.doesNotMatch(t, /\d[\d.,]*\s*(?:đ|₫|VNĐ|vnđ|VND|đồng|triệu|nghìn|k)(?![\p{L}\p{N}])/iu, `${file}: có giá tiền chưa xác minh`);
@@ -346,4 +347,14 @@ test('DEMO (VIPG_DEMO=1): ra dist-demo/, mọi trang noindex, có nhãn MẪU, c
   assert.doesNotMatch(text(kho), /Áp dụng bảng giá/, 'DEMO: dữ liệu mẫu priceApplies không được thành câu khẳng định');
   // Build DEMO không được ghi đè dist/ production: bản production không có nhãn MẪU.
   assert.doesNotMatch(text(read('/logistics/van-chuyen-nghia-o-ve-viet-nam/')), /\bMẪU\b/, 'build DEMO không ghi đè dist/');
+});
+
+test('VIPG-WEB-037 (owner 20/11/2026): bảng giá có 2 phương án — PA1 cân thực đồng giá 25.000 đ/kg (không quy đổi) + PA2 5 bậc', () => {
+  const html = readFileSync(join(dist, 'logistics/bang-gia/index.html'), 'utf8');
+  const t = text(html);
+  assert.match(t, /Phương án 1 · Cân thực đồng giá/);
+  assert.match(t, /25\.000\s*đ\/kg/);
+  assert.match(t, /không tính cân quy đổi/);
+  assert.match(t, /Phương án 2 · 5 bậc/);
+  assert.match(html, /data-plan="actual"/);
 });
