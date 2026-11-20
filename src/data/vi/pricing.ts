@@ -29,4 +29,12 @@ export const pricing: ShippingPricing = {
   basisZh: '价格档位按整批货物的总计费重量确定（累加每件计费重量，与出库单相同）。每件计费重量取实际重量与体积重量（长×宽×高 cm ÷ 6000）中较大者。适用于深圳、厦门、广州、义乌、凭祥五个仓库。',
   source: 'Owner cung cấp 06/11/2026; bậc theo tổng cân cả lô: owner 18/11/2026; 4 kho: owner directive 07/11/2026; thêm kho Bằng Tường: owner 18/11/2026',
   updated: '2026-11-07',
+  // VIPG-WEB-037 (owner 20/11/2026 — CRM V11.0 "báo giá 2 phương án"): PA1 cân thực đồng giá 25.000đ/kg; PA2 = 5 bậc ở trên (cân quy đổi).
+  actualPlan: {
+    label: 'Phương án 1 · Cân thực đồng giá', labelZh: '方案一 · 按实重统一价',
+    price: 25000,
+    basis: 'Tính theo cân nặng thực của từng kiện (không tính cân quy đổi theo kích thước); dưới 1 kg tính 1 kg, từ 1 kg làm tròn lên 0,1 kg. Phù hợp hàng nhẹ, cồng kềnh.',
+    basisZh: '按每件实际重量计费（不计体积重）；不足 1 kg 按 1 kg，1 kg 以上向上取整至 0.1 kg。适合轻泡货。',
+    tieredLabel: 'Phương án 2 · 5 bậc (cân quy đổi)', tieredLabelZh: '方案二 · 五档价格（计体积重）',
+  },
 };

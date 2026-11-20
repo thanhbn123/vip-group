@@ -60,7 +60,8 @@ const phone = prettyPhone(provider.hotline);
       merged: 'Tính như phiếu xuất kho: cộng cân tính cước của từng kiện, bậc giá theo tổng cân.', next: 'Thêm {k} kg nữa sẽ sang bậc {p}/kg (cước khi đó {m}).',
       add: '+ Thêm loại kiện', go: 'Tính cước', zalo: 'Gửi báo giá qua Zalo', copy: 'Chép báo giá', copied: 'Đã chép báo giá — dán vào Zalo để gửi',
       note: 'Cước ước tính theo bảng giá chung, chưa gồm phụ phí và thuế (nếu có); cước chính thức theo phiếu xuất kho.', off: 'Chưa tính được lúc này — vui lòng nhắn Zalo hoặc gọi',
-      total: 'Tổng', pk: 'kiện', del: 'Xóa dòng', fast: 'Thao tác hơi nhanh, vui lòng đợi một chút.', rule: 'Cân tính cước mỗi kiện = số lớn hơn giữa cân thực và D×R×C ÷ {d}; dưới 1 kg tính 1 kg, từ 1 kg làm tròn lên 0,1 kg.' },
+      total: 'Tổng', pk: 'kiện', del: 'Xóa dòng', fast: 'Thao tác hơi nhanh, vui lòng đợi một chút.', rule: 'Cân tính cước mỗi kiện = số lớn hơn giữa cân thực và D×R×C ÷ {d}; dưới 1 kg tính 1 kg, từ 1 kg làm tròn lên 0,1 kg.',
+      pa1: 'Phương án 1 · Cân thực đồng giá', pa2: 'Phương án 2 · 5 bậc', cheaper: 'rẻ hơn', pa1rule: 'Phương án 1 tính theo cân thực từng kiện, không tính cân quy đổi.' },
     zh: { title: '快速报价', lead: '填写尺寸、重量和件数——系统按 VIP GROUP 现行价格表计算运费。', wh: '中国收货仓库',
       l: '长 (cm)', w: '宽 (cm)', h: '高 (cm)', kg: '每件重量 (kg)', n: '件数', act: '实际重量', vol: '体积重', ck: '计费重',
       quick: '只知道总重量？快速输入总重量 + 件数', qkg: '总重量 (kg)', qn: '件数', qline: '快速输入总重量',
@@ -69,7 +70,8 @@ const phone = prettyPhone(provider.hotline);
       merged: '与出库单相同：累加每件计费重，按总重量确定价格档位。', next: '再增加 {k} kg 即可进入 {p}/kg 档（届时运费 {m}）。',
       add: '+ 添加货物', go: '计算运费', zalo: '通过 Zalo 发送报价', copy: '复制报价', copied: '已复制报价——粘贴到 Zalo 发送',
       note: '按通用价格表估算，不含附加费及税费（如有）；正式运费以出库单为准。', off: '暂时无法计算——请通过 Zalo 联系', total: '合计', pk: '件', del: '删除', fast: '操作太快，请稍候。',
-      rule: '每件计费重 = 实际重量与 长×宽×高 ÷ {d} 中较大者；不足 1 kg 按 1 kg，1 kg 以上向上取整至 0.1 kg。' },
+      rule: '每件计费重 = 实际重量与 长×宽×高 ÷ {d} 中较大者；不足 1 kg 按 1 kg，1 kg 以上向上取整至 0.1 kg。',
+      pa1: '方案一 · 按实重统一价', pa2: '方案二 · 五档价格', cheaper: '更便宜', pa1rule: '方案一按每件实际重量计费，不计体积重。' },
   };
   let L = 'vi'; let lists = []; let last = null;
   const $ = (id) => document.getElementById(id);
@@ -108,12 +110,20 @@ const phone = prettyPhone(provider.hotline);
   function textOf(r) {
     const t = TXT[L]; const out = [`VIP GROUP — ${t.title} (${r.warehouse_code})`];
     r.lines.forEach((x, i) => out.push(`${i + 1}. ${x.quick ? `${t.qline}: ` : ''}${x.packages} ${t.pk} · ${t.ck} ${fmt(x.line_chargeable_kg ?? Number(x.chargeable_kg) * x.packages)} kg`));
-    out.push(totalLine(r), t.merged, t.note);
+    out.push(totalLine(r));
+    if (r.plans?.actual) out.push(pa1Line(r));
+    out.push(t.merged, t.note);
     return out.join('\n');
   }
   function totalLine(r) {
     const t = TXT[L]; const T = r.total;
-    return `${t.tck}: ${fmt(T.chargeable_kg)} kg (${T.packages} ${t.pk})${T.tier?.label ? ` · ${t.tier} ${T.tier.label}` : ''}${T.unit_price ? ` · ${money(T.unit_price)}/kg` : ''} · ${t.amount} ${money(T.amount)}`;
+    const head = r.plans?.actual ? `${t.pa2} — ` : '';
+    return `${head}${t.tck}: ${fmt(T.chargeable_kg)} kg (${T.packages} ${t.pk})${T.tier?.label ? ` · ${t.tier} ${T.tier.label}` : ''}${T.unit_price ? ` · ${money(T.unit_price)}/kg` : ''} · ${t.amount} ${money(T.amount)}`;
+  }
+  /** VIPG-WEB-037: phương án 1 — cân thực đồng giá (CRM plans.actual). */
+  function pa1Line(r) {
+    const t = TXT[L]; const a = r.plans.actual;
+    return `${t.pa1} — ${fmt(a.chargeable_kg)} kg × ${money(a.unit_price)}/kg · ${t.amount} ${money(a.amount)}`;
   }
   function showResult(r) {
     last = r;
@@ -129,11 +139,13 @@ const phone = prettyPhone(provider.hotline);
     const t = TXT[L]; const T = r.total;
     const nx = T.next_tier;
     $('qq-out').replaceChildren(
-      el('p', { class: 'qq-total', 'data-qq-total': T.amount }, totalLine(r)),
+      r.plans?.actual ? el('p', { class: `qq-total${r.plans.cheaper === 'actual' ? ' qq-best' : ''}`, 'data-qq-pa1': r.plans.actual.amount },
+        `${pa1Line(r)}${r.plans.cheaper === 'actual' ? ` ✓ ${t.cheaper}` : ''}`) : el('span'),
+      el('p', { class: `qq-total${r.plans?.cheaper === 'tiered' ? ' qq-best' : ''}`, 'data-qq-total': T.amount }, `${totalLine(r)}${r.plans?.cheaper === 'tiered' ? ` ✓ ${t.cheaper}` : ''}`),
       T.actual_kg !== undefined ? el('p', { class: 'muted small', 'data-qq-sub': '' }, t.sub.replace('{a}', fmt(T.actual_kg)).replace('{v}', fmt(T.volumetric_kg)).replace('{d}', r.divisor)) : el('span'),
       r.lines.some((x) => x.quick) ? el('p', { class: 'small', 'data-qq-quick-out': '' }, `${t.qline}: ${fmt(r.lines.find((x) => x.quick).line_chargeable_kg)} kg`) : el('span'),
       nx ? el('p', { class: 'small qq-next', 'data-qq-next': nx.at_kg }, t.next.replace('{k}', fmt(nx.need_kg)).replace('{p}', money(nx.unit_price)).replace('{m}', money(nx.amount))) : el('span'),
-      el('p', { class: 'muted small' }, `${t.merged} ${t.rule.replace('{d}', r.divisor)}`));
+      el('p', { class: 'muted small' }, `${t.merged} ${t.rule.replace('{d}', r.divisor)}${r.plans?.actual ? ` ${t.pa1rule}` : ''}`));
     $('qq-share').hidden = false;
   }
   async function go() {
@@ -181,6 +193,7 @@ const phone = prettyPhone(provider.hotline);
   .qq-table input { width: 5.5em; padding: 8px; border: 1px solid var(--line, #ccd); border-radius: 8px; }
   .qq-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .qq-total { font-size: 1.2rem; font-weight: 700; margin: 0; }
+  .qq-best { color: var(--brand-ink, #0b5d3b); }
   .qq-next { color: var(--brand, #c8102e); font-weight: 600; margin: 0; }
   .qq-quick summary { cursor: pointer; font-weight: 600; }
   .qq-quick-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
