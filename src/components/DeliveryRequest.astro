@@ -1,0 +1,94 @@
+---
+/**
+ * VIPG-WEB-040 · Gọi giao hàng từ trang chủ (owner 27/11/2026, CRM V12.5 — VIP_CRM_LENH_GIAO_HANG_PROPOSAL.md "2b").
+ * Khách KHÔNG cần đăng nhập: nhập mã khách + số điện thoại đã đăng ký với VIP GROUP (phải trùng hồ sơ) + địa chỉ giao, SĐT người nhận,
+ * số kiện, mã kiện, ghi chú → POST /api/delivery (public/_worker.js → CRM). Lệnh vào trạng thái "chờ xác minh"; DOMA báo nhóm điều phối.
+ * Khách đã có tài khoản: nút sang Cổng khách (chọn kiện ở kho VN). Form không có action / name — gửi bằng fetch (CSP form-action 'none').
+ */
+import { getContent } from '../data';
+const portal = getContent('vi').contact.portal;
+---
+<section class="section dr-section" id="goi-giao-hang" aria-labelledby="dr-title">
+  <div class="container">
+    <div class="dr-card">
+      <div class="dr-head">
+        <div>
+          <span class="kicker">Khách hàng VIP GROUP</span>
+          <h2 id="dr-title">Gọi giao hàng</h2>
+          <p class="dr-lead">Hàng đã về kho Việt Nam? Gửi lệnh giao ngay tại đây — kho VIP GROUP xác minh và liên hệ giao tận nơi.</p>
+        </div>
+        <div class="dr-actions">
+          <button type="button" class="btn btn-primary" data-dr-open aria-expanded="false" aria-controls="dr-form">Gọi giao hàng</button>
+          {portal && <a class="btn btn-ghost" href={portal.loginUrl} data-track="portal_login_click" data-track-location="delivery">Đăng nhập Cổng khách để chọn kiện</a>}
+        </div>
+      </div>
+      <form id="dr-form" class="dr-form" hidden novalidate data-dr-form>
+        <div class="dr-grid">
+          <label><span>Mã khách hàng <span class="req" aria-hidden="true">*</span></span><input data-dr="customer_code" autocomplete="off" maxlength="40" placeholder="Vd VG001234 hoặc TT4678" required /></label>
+          <label><span>SĐT đã đăng ký với VIP GROUP <span class="req" aria-hidden="true">*</span></span><input data-dr="customer_phone" inputmode="tel" autocomplete="tel" maxlength="20" required /></label>
+          <label class="wide"><span>Địa chỉ giao <span class="req" aria-hidden="true">*</span></span><textarea data-dr="address" rows="2" maxlength="700" required placeholder="Số nhà, đường, phường / xã, tỉnh"></textarea></label>
+          <label>SĐT người nhận<input data-dr="phone" inputmode="tel" maxlength="60" placeholder="Bỏ trống = SĐT đã đăng ký" /></label>
+          <label>Số kiện<input data-dr="package_count" inputmode="numeric" maxlength="6" placeholder="Bỏ trống = bằng số mã kiện" /></label>
+          <label class="wide">Mã kiện (mỗi dòng một mã — không bắt buộc)<textarea data-dr="codes" rows="3" placeholder="EX63588&#10;EX63589"></textarea></label>
+          <label class="wide">Ghi chú<textarea data-dr="note" rows="2" maxlength="1000" placeholder="Vd: giao giờ hành chính, gọi trước khi tới"></textarea></label>
+        </div>
+        <p class="dr-small">Mã khách và số điện thoại phải trùng hồ sơ tại VIP GROUP. Lệnh gửi từ website được nhân viên xác minh trước khi giao.</p>
+        <div class="dr-row"><button type="submit" class="btn btn-primary" data-dr-send>Gửi lệnh giao</button></div>
+        <div class="dr-msg" data-dr-msg aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+</section>
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-dr-form]');
+  const open = document.querySelector<HTMLButtonElement>('[data-dr-open]');
+  if (form && open) {
+    const show = () => { form.hidden = false; open.setAttribute('aria-expanded', 'true'); form.querySelector<HTMLInputElement>('[data-dr="customer_code"]')?.focus(); };
+    open.addEventListener('click', () => (form.hidden ? show() : (form.hidden = true, open.setAttribute('aria-expanded', 'false'))));
+    if (location.hash === '#goi-giao-hang') show();
+    const val = (k: string) => (form.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[data-dr="${k}"]`)?.value || '').trim();
+    const msg = form.querySelector<HTMLElement>('[data-dr-msg]')!;
+    const send = form.querySelector<HTMLButtonElement>('[data-dr-send]')!;
+    const say = (text: string, kind: 'ok' | 'bad') => { msg.textContent = text; msg.className = `dr-msg ${kind}`; };
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!val('customer_code') || !val('customer_phone') || val('address').length < 3) { say('Vui lòng nhập mã khách hàng, số điện thoại đã đăng ký và địa chỉ giao.', 'bad'); return; }
+      const pc = val('package_count');
+      if (pc && !/^\d{1,6}$/.test(pc)) { say('Số kiện phải là số.', 'bad'); return; }
+      if (!pc && !val('codes')) { say('Nhập số kiện hoặc mã kiện.', 'bad'); return; }
+      send.disabled = true; say('Đang gửi…', 'ok');
+      try {
+        const r = await fetch('/api/delivery', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' },
+          body: JSON.stringify({ customer_code: val('customer_code'), customer_phone: val('customer_phone'), address: val('address'), phone: val('phone') || val('customer_phone'),
+            package_count: pc ? Number(pc) : null, codes: val('codes'), note: val('note') }) });
+        const d = await r.json().catch(() => null);
+        if (r.ok && d?.ok) {
+          say(`Đã nhận lệnh giao ${d.code}${d.package_count ? ` (${d.package_count} kiện)` : ''}. Nhân viên VIP GROUP sẽ xác minh và liên hệ với bạn.`, 'ok');
+          form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-dr]').forEach((x) => { if (!['customer_code', 'customer_phone'].includes(x.dataset.dr || '')) x.value = ''; });
+        } else if (r.status === 429) say(d?.message || 'Gửi hơi nhiều, vui lòng đợi một chút hoặc gọi hotline.', 'bad');
+        else say(d?.message || 'Chưa gửi được lúc này — vui lòng gọi hotline hoặc nhắn Zalo VIP GROUP.', 'bad');
+      } catch { say('Không kết nối được — vui lòng thử lại hoặc gọi hotline.', 'bad'); }
+      finally { send.disabled = false; }
+    });
+  }
+</script>
+<style>
+  .dr-section { padding-top: 24px; padding-bottom: 24px; }
+  .dr-card { border: 1px solid var(--line); border-left: 6px solid var(--brand); border-radius: var(--radius-sm); background: var(--bg); padding: 20px 24px; box-shadow: var(--shadow); }
+  .dr-head { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+  .dr-head h2 { margin: 4px 0; }
+  .dr-lead { margin: 0; color: var(--text-2); }
+  .dr-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .dr-form { margin-top: 18px; }
+  .dr-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .dr-grid { grid-template-columns: 1fr 1fr; } .dr-grid .wide { grid-column: 1 / -1; } }
+  .dr-grid label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; color: var(--text); }
+  .dr-grid input, .dr-grid textarea { font: inherit; font-weight: 400; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--bg); color: var(--text); width: 100%; box-sizing: border-box; }
+  .dr-grid input:focus-visible, .dr-grid textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+  .req { color: var(--brand); }
+  .dr-small { font-size: 13px; color: var(--muted); margin: 10px 0; }
+  .dr-row { display: flex; gap: 10px; }
+  .dr-msg { margin-top: 10px; font-weight: 600; }
+  .dr-msg.ok { color: #0b6b3a; }
+  .dr-msg.bad { color: var(--brand-ink); }
+</style>

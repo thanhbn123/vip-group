@@ -561,6 +561,34 @@ export async function handleQuote(request, env, fetchImpl = fetch) {
   }
 }
 
+// ───────── VIPG-WEB-040 · Gọi giao hàng (owner 27/11/2026, CRM V12.5 "2b") ─────────
+// POST /api/delivery {customer_code, customer_phone, address, phone?, package_count?, codes?, note?} → CRM /api/public/delivery-order.
+// CRM chỉ nhận khi mã khách + SĐT trùng hồ sơ; lệnh vào trạng thái "chờ xác minh". Trả { ok, code, status_label, package_count } — không có dữ liệu hồ sơ.
+export async function handleDelivery(request, env, fetchImpl = fetch) {
+  if (request.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
+  if (!env.CRM_NEWS_URL || !env.NEWS_PUBLIC_KEY) return json(503, { ok: false, error: 'not_configured' });
+  const raw = await request.text();
+  if (raw.length > 30000) return json(413, { ok: false, error: 'too_large' });
+  let body; try { body = JSON.parse(raw); } catch { return json(400, { ok: false, error: 'bad_json' }); }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json(400, { ok: false, error: 'bad_json' });
+  const pick = ({ customer_code, customer_phone, address, phone, package_count, codes, note }) => ({ customer_code, customer_phone, address, phone, package_count, codes, note });
+  try {
+    const ac = new AbortController(); const timer = setTimeout(() => ac.abort(), 8000);
+    const r = await fetchImpl(`${String(env.CRM_NEWS_URL).replace(/\/+$/, '')}/api/public/delivery-order`, {
+      method: 'POST', signal: ac.signal,
+      headers: { 'x-news-key': env.NEWS_PUBLIC_KEY, 'x-client-ip': request.headers.get('cf-connecting-ip') || '', accept: 'application/json', 'content-type': 'application/json' },
+      body: JSON.stringify(pick(body)) });
+    clearTimeout(timer);
+    const data = await r.json().catch(() => null);
+    if (r.status === 429) return json(429, { ok: false, error: 'too_fast', message: data?.error?.message || null });
+    if (r.status === 400 || r.status === 409) return json(r.status, { ok: false, error: data?.error?.code || 'invalid', message: data?.error?.message || null });
+    if (!r.ok || !data?.ok) return json(502, { ok: false, error: 'upstream' });
+    return json(200, { ok: true, code: String(data.code || ''), status_label: String(data.status_label || ''), package_count: Number(data.package_count) || null });
+  } catch {
+    return json(502, { ok: false, error: 'upstream' });
+  }
+}
+
 // ───────── VIPG-WEB-034 · Tỷ giá CNY→VND công khai (owner 17/11/2026: "có công khai, admin được phép cập nhật") ─────────
 // GET /api/fx → CRM /api/public/fx-rate (admin cập nhật trong CRM). Trả { ok, rate, updated_at, tiers } (tiers: VIPG-WEB-038). Cùng biến CRM_NEWS_URL + NEWS_PUBLIC_KEY.
 // CRM chưa có / chưa đặt tỷ giá → 404/503, giao diện giữ ẩn khối tỷ giá.
@@ -609,6 +637,7 @@ export default {
     if (pathname === '/api/quote/price-list' || pathname === '/api/quote') return handleQuote(request, env);
     if (pathname === '/api/goods/rules' || pathname === '/api/goods/check') return handleGoods(request, env);
     if (pathname === '/api/fx') return handleFx(request, env);
+    if (pathname === '/api/delivery') return handleDelivery(request, env);
     if (pathname.startsWith('/api/')) return json(404, { ok: false, error: 'not_found' });
     // VIPG-WEB-030: trang chủ + /tin-tuc/… + /zh/tin-tuc/… (tin tức từ CRM)
     if (pathname === '/' || /^\/(zh\/)?tin-tuc(\/|$)/.test(pathname)) return handleNews(request, env, ctx);
