@@ -159,3 +159,32 @@ test('trang chủ: khung tỷ giá góc trái ẩn tới khi CRM trả bảng, k
   assert.match(m[0], /aria-expanded="false"/);
   assert.doesNotMatch(m[0], /\d\.\d{3}đ|39\d\d/, 'không gõ tỷ giá vào HTML');
 });
+
+// VIPG-WEB-040 (owner 27/11/2026, CRM V12.5 "2b"): gọi giao hàng trên trang chủ
+test('trang chủ: khung "Gọi giao hàng" — form ẩn sẵn, không action / name (gửi bằng fetch /api/delivery)', () => {
+  const html = readFileSync(join(root, 'dist/index.html'), 'utf8');
+  const m = html.match(/<section class="section dr-section"[\s\S]*?<\/section>/);
+  assert.ok(m, 'có khung gọi giao hàng');
+  assert.match(m[0], /id="goi-giao-hang"/);
+  assert.match(m[0], /<form[^>]*hidden/);
+  assert.doesNotMatch(m[0], /<form[^>]*action=/);
+  assert.doesNotMatch(m[0], /<(input|textarea)[^>]*\sname=/);
+  assert.match(m[0], /data-dr="customer_phone"/);
+});
+
+test('/api/delivery: chuyển sang CRM (khóa + IP), chỉ trường cho phép; lỗi xác minh trả lại thông điệp; kết quả không có dữ liệu hồ sơ', async () => {
+  const { handleDelivery } = await import('../public/_worker.js');
+  const ENV = { CRM_NEWS_URL: 'https://crm.example', NEWS_PUBLIC_KEY: 'k' };
+  const req = (body, init = {}) => new Request('https://vipgroup.com.vn/api/delivery', { method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '1.2.3.4' }, body: typeof body === 'string' ? body : JSON.stringify(body), ...init });
+  let sent = null;
+  const fake = (status, out) => async (url, init) => { assert.equal(url, 'https://crm.example/api/public/delivery-order'); assert.equal(init.headers['x-news-key'], 'k'); assert.equal(init.headers['x-client-ip'], '1.2.3.4'); sent = JSON.parse(init.body); return new Response(JSON.stringify(out), { status }); };
+  assert.equal((await handleDelivery(new Request('https://vipgroup.com.vn/api/delivery'), ENV)).status, 405);
+  assert.equal((await handleDelivery(req({}), {})).status, 503);
+  assert.equal((await handleDelivery(req('{x'), ENV)).status, 400);
+  const ok = await handleDelivery(req({ customer_code: 'VG1', customer_phone: '0900', address: 'abc', codes: 'A\nB', evil: 1 }), ENV, fake(200, { ok: true, code: 'GH-261127-001', status: 'pending_verify', status_label: 'Chờ xác minh', package_count: 2, name: 'lộ' }));
+  assert.deepEqual(await ok.json(), { ok: true, code: 'GH-261127-001', status_label: 'Chờ xác minh', package_count: 2 });
+  assert.ok(!('evil' in sent)); assert.equal(sent.codes, 'A\nB');
+  const bad = await handleDelivery(req({ customer_code: 'VG1' }), ENV, fake(400, { error: { code: 'DELIVERY_VERIFY_FAILED', message: 'Mã khách hàng hoặc số điện thoại không khớp hồ sơ.' } }));
+  assert.equal(bad.status, 400); assert.equal((await bad.json()).error, 'DELIVERY_VERIFY_FAILED');
+  assert.equal((await handleDelivery(req({}), ENV, fake(500, {}))).status, 502);
+});

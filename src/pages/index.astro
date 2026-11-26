@@ -10,6 +10,7 @@ import PriceTable from '../components/PriceTable.astro';
 import PriceExamples from '../components/PriceExamples.astro';
 import Commitments from '../components/Commitments.astro';
 import FxBoard from '../components/FxBoard.astro';
+import DeliveryRequest from '../components/DeliveryRequest.astro';
 // Bí danh trong astro.config.mjs: cờ PUBLIC_CHAT_WIDGET tắt → component rỗng (không CSS/JS khung chat).
 import CommunityChat from '@vipg/community-chat';
 import { getContent } from '../data';
@@ -70,6 +71,9 @@ const sloganLast = sloganParts.pop();
       )}
     </div>
   </section>
+
+  {/* VIPG-WEB-040 (owner 27/11/2026): gọi giao hàng ngay trên trang chủ — lệnh vào CRM #/delivery-orders, DOMA báo nhóm điều phối */}
+  <DeliveryRequest />
 
   {/* VIPG-WEB-034: bảng giá + ví dụ tính cước ngay sau banner — khách tìm vận chuyển không phải cuộn qua phần giới thiệu tập đoàn. */}
   <PriceTable pricing={pricing} slogan={company.slogan} brand={company.name} hotline={contact.hotline} hotlineDisplay={contact.hotlineDisplay} zaloUrl={contact.zaloUrl}
