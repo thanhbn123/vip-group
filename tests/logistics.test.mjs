@@ -349,12 +349,17 @@ test('DEMO (VIPG_DEMO=1): ra dist-demo/, mọi trang noindex, có nhãn MẪU, c
   assert.doesNotMatch(text(read('/logistics/van-chuyen-nghia-o-ve-viet-nam/')), /\bMẪU\b/, 'build DEMO không ghi đè dist/');
 });
 
-test('VIPG-WEB-037 (owner 20/11/2026): bảng giá có 2 phương án — PA1 cân thực đồng giá 25.000 đ/kg (không quy đổi) + PA2 5 bậc', () => {
-  const html = readFileSync(join(dist, 'logistics/bang-gia/index.html'), 'utf8');
-  const t = text(html);
-  assert.match(t, /Phương án 1 · Cân thực đồng giá/);
-  assert.match(t, /25\.000\s*đ\/kg/);
-  assert.match(t, /không tính cân quy đổi/);
-  assert.match(t, /Phương án 2 · 5 bậc/);
-  assert.match(html, /data-plan="actual"/);
-});
+// VIPG-WEB-037 (owner 20/11/2026) thêm 2 phương án; VIPG-WEB-039 (owner 27/11/2026 "tạm ẩn ... không muốn hiện 2 phương án báo giá"):
+// pricing.showPlans = false → bảng giá + báo giá nhanh chỉ còn bảng 5 bậc (dữ liệu PA1 giữ trong pricing.ts để bật lại).
+test('VIPG-WEB-039: 2 phương án đang TẠM ẨN — không PA1 25.000 đ/kg, không nhãn phương án; báo giá nhanh bỏ plans của CRM', () => {
+  for (const f of ['logistics/bang-gia/index.html', 'index.html']) {
+    const html = readFileSync(join(dist, f), 'utf8');
+    const t = text(html);
+    assert.doesNotMatch(t, /Phương án [12]|方案[一二]/, f);
+    assert.doesNotMatch(t, /25\.000\s*đ\/kg/, f);
+    assert.doesNotMatch(html, /data-plan="actual"/, f);
+    assert.match(t, /20\.000/, `${f}: bảng 5 bậc vẫn còn`);
+  }
+  const bg = readFileSync(join(dist, 'logistics/bang-gia/index.html'), 'utf8');
+  assert.match(bg, /data-show-plans="0"/);
+})
