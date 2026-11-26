@@ -9,6 +9,7 @@ import MemberNote from '../components/MemberNote.astro';
 import PriceTable from '../components/PriceTable.astro';
 import PriceExamples from '../components/PriceExamples.astro';
 import Commitments from '../components/Commitments.astro';
+import FxBoard from '../components/FxBoard.astro';
 // Bí danh trong astro.config.mjs: cờ PUBLIC_CHAT_WIDGET tắt → component rỗng (không CSS/JS khung chat).
 import CommunityChat from '@vipg/community-chat';
 import { getContent } from '../data';
@@ -84,6 +85,9 @@ const sloganLast = sloganParts.pop();
 
   {/* VIP CHAT V1.0 — chỉ hiện khi build với PUBLIC_CHAT_WIDGET=1 (mặc định tắt). Dời xuống sau bảng giá (VIPG-WEB-034): khung chat cần VIP ID, khách mới chưa dùng được. */}
   <CommunityChat />
+
+  {/* VIPG-WEB-038: bảng tỷ giá CNY nổi góc trái (số từ CRM #/fx-board) */}
+  <FxBoard />
 
   <section class="section" aria-labelledby="about-title">
     <div class="container split">

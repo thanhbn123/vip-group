@@ -562,7 +562,7 @@ export async function handleQuote(request, env, fetchImpl = fetch) {
 }
 
 // ───────── VIPG-WEB-034 · Tỷ giá CNY→VND công khai (owner 17/11/2026: "có công khai, admin được phép cập nhật") ─────────
-// GET /api/fx → CRM /api/public/fx-rate (admin cập nhật trong CRM). Trả { ok, rate, updated_at }. Cùng biến CRM_NEWS_URL + NEWS_PUBLIC_KEY.
+// GET /api/fx → CRM /api/public/fx-rate (admin cập nhật trong CRM). Trả { ok, rate, updated_at, tiers } (tiers: VIPG-WEB-038). Cùng biến CRM_NEWS_URL + NEWS_PUBLIC_KEY.
 // CRM chưa có / chưa đặt tỷ giá → 404/503, giao diện giữ ẩn khối tỷ giá.
 export async function handleFx(request, env, fetchImpl = fetch) {
   if (request.method !== 'GET') return json(405, { ok: false, error: 'method_not_allowed' });
@@ -578,12 +578,28 @@ export async function handleFx(request, env, fetchImpl = fetch) {
     const rate = Number(data?.rate ?? data?.exchange_rate);
     // Khoảng hợp lý 1.000–10.000 đ/¥: chặn gõ nhầm ở CRM (vd 3.65) hiện "1¥ = 3,65đ" (verifier PR #63, phát hiện 9).
     if (!r.ok || typeof (data?.rate ?? data?.exchange_rate) === 'boolean' || !Number.isFinite(rate) || rate < 1000 || rate > 10000) return json(502, { ok: false, error: 'upstream' });
-    const res = json(200, { ok: true, rate, updated_at: typeof data?.updated_at === 'string' ? data.updated_at : null });
+    const res = json(200, { ok: true, rate, updated_at: typeof data?.updated_at === 'string' ? data.updated_at : null, tiers: fxTiers(data?.tiers) });
     res.headers.set('cache-control', 'public, max-age=300');
     return res;
   } catch {
     return json(502, { ok: false, error: 'upstream' });
   }
+}
+
+// VIPG-WEB-038 (owner 27/11/2026): bảng tỷ giá theo số tiền từ CRM V12.3 — chỉ nhận đúng dạng, mỗi mức 1.000–10.000 đ/¥; sai một mức → bỏ cả bảng
+// (khung góc trái ẩn, rate vẫn dùng cho phí order). Không nhận trường lạ (CRM không gửi tỷ giá gốc).
+export function fxTiers(raw) {
+  if (!Array.isArray(raw) || !raw.length || raw.length > 8) return [];
+  const numOrNull = (v) => (v === null ? null : typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : undefined);
+  const out = [];
+  for (const t of raw) {
+    const rate = typeof t?.rate === 'number' ? t.rate : NaN;
+    const label = typeof t?.label === 'string' ? t.label.trim().slice(0, 60) : '';
+    const min = numOrNull(t?.min_cny); const max = numOrNull(t?.max_cny);
+    if (!label || !Number.isFinite(rate) || rate < 1000 || rate > 10000 || min === undefined || max === undefined) return [];
+    out.push({ label, min_cny: min, min_inclusive: t.min_inclusive === true, max_cny: max, max_inclusive: t.max_inclusive === true, rate });
+  }
+  return out;
 }
 
 export default {

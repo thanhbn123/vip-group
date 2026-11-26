@@ -125,6 +125,37 @@ test('/api/fx: chuyển tỷ giá từ CRM, ẩn khi chưa cấu hình / chưa �
   assert.equal((await handleFx(req(), ENV, async () => { throw new Error('x'); })).status, 502);
   const ok = await handleFx(req(), ENV, fake(200, { exchange_rate: '3650.5', updated_at: '2026-11-17T03:00:00Z' }));
   assert.equal(ok.status, 200);
-  assert.deepEqual(await ok.json(), { ok: true, rate: 3650.5, updated_at: '2026-11-17T03:00:00Z' });
+  assert.deepEqual(await ok.json(), { ok: true, rate: 3650.5, updated_at: '2026-11-17T03:00:00Z', tiers: [] }, 'CRM cũ không có tiers → bảng rỗng');
   assert.match(ok.headers.get('cache-control'), /max-age=300/);
+});
+
+// VIPG-WEB-038 (owner 27/11/2026): bảng tỷ giá CNY góc trái trang chủ — mức đã cộng từ CRM V12.3 (#/fx-board)
+const T4 = [
+  { label: 'Dưới 1.000 tệ', min_cny: null, min_inclusive: false, max_cny: 1000, max_inclusive: false, rate: 3970 },
+  { label: 'Từ 1.000 đến dưới 3.000 tệ', min_cny: 1000, min_inclusive: true, max_cny: 3000, max_inclusive: false, rate: 3950 },
+  { label: 'Từ 3.000 đến 5.000 tệ', min_cny: 3000, min_inclusive: true, max_cny: 5000, max_inclusive: true, rate: 3940 },
+  { label: 'Trên 5.000 tệ', min_cny: 5000, min_inclusive: false, max_cny: null, max_inclusive: false, rate: 3930 },
+];
+test('/api/fx: chuyển bảng tỷ giá theo số tiền; sai một mức → bỏ cả bảng, rate vẫn dùng', async () => {
+  const { handleFx, fxTiers } = await import('../public/_worker.js');
+  const ENV = { CRM_NEWS_URL: 'https://crm.example', NEWS_PUBLIC_KEY: 'k' };
+  const fake = (body) => async () => new Response(JSON.stringify(body), { status: 200 });
+  const r = await handleFx(new Request('https://vipgroup.com.vn/api/fx'), ENV, fake({ rate: 3950, updated_at: '2026-11-27T02:00:00Z', tiers: [...T4.map((t) => ({ ...t, base: 3920 }))] }));
+  const b = await r.json();
+  assert.equal(b.rate, 3950);
+  assert.deepEqual(b.tiers, T4, 'giữ đúng 4 mức, bỏ trường lạ');
+  assert.deepEqual(fxTiers([{ ...T4[0], rate: 39.7 }, T4[1]]), [], 'gõ nhầm một mức');
+  assert.deepEqual(fxTiers([{ ...T4[0], label: '' }]), []);
+  assert.deepEqual(fxTiers([{ ...T4[0], min_cny: '1000' }]), []);
+  assert.deepEqual(fxTiers('x'), []);
+  assert.deepEqual(fxTiers(Array(9).fill(T4[0])), []);
+});
+
+test('trang chủ: khung tỷ giá góc trái ẩn tới khi CRM trả bảng, không số cứng', () => {
+  const html = readFileSync(join(root, 'dist/index.html'), 'utf8');
+  const m = html.match(/<aside[^>]*data-fxb[^>]*>[\s\S]*?<\/aside>/);
+  assert.ok(m, 'có khung tỷ giá');
+  assert.match(m[0], /hidden/);
+  assert.match(m[0], /aria-expanded="false"/);
+  assert.doesNotMatch(m[0], /\d\.\d{3}đ|39\d\d/, 'không gõ tỷ giá vào HTML');
 });
