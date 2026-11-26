@@ -1,0 +1,92 @@
+---
+/**
+ * VIPG-WEB-038 · Bảng tỷ giá CNY nổi ở góc trái trang chủ (owner 27/11/2026, CRM V12.3: "1 thay +50 2a 3b 4a 5a 6a" + "7b").
+ * Kế toán nhập tỷ giá GỐC trong CRM (#/fx-board); CRM tự cộng theo số tiền khách đổi (mặc định dưới 1.000 tệ +50 · 1.000–dưới 3.000 +30 ·
+ * 3.000–5.000 +20 · trên 5.000 +10) và chỉ trả các mức ĐÃ cộng → /api/fx (public/_worker.js) → khung này. Không có số nào trong mã nguồn.
+ * 5a: máy tính — khung mở sẵn ở góc trái dưới (thu gọn được); điện thoại — nút "¥ Tỷ giá", bấm mới mở bảng.
+ * CRM chưa trả bảng → cả khung giữ `hidden`.
+ */
+---
+<aside class="fxb" data-fxb hidden aria-label="Bảng tỷ giá nhân dân tệ">
+  <button type="button" class="fxb-toggle" data-fxb-toggle aria-expanded="false" aria-controls="fxb-panel">
+    <span aria-hidden="true">¥</span> Tỷ giá
+  </button>
+  <div class="fxb-panel" id="fxb-panel" data-fxb-panel hidden>
+    <div class="fxb-head">
+      <h2 class="fxb-title">Tỷ giá CNY hôm nay</h2>
+      <button type="button" class="fxb-close" data-fxb-close aria-label="Thu gọn bảng tỷ giá">×</button>
+    </div>
+    <table class="fxb-table">
+      <thead><tr><th scope="col">Số tiền đổi</th><th scope="col">1¥ =</th></tr></thead>
+      <tbody data-fxb-rows></tbody>
+    </table>
+    <p class="fxb-at" data-fxb-at-wrap hidden>Cập nhật <time data-fxb-at></time></p>
+  </div>
+</aside>
+<script>
+  const box = document.querySelector<HTMLElement>('[data-fxb]');
+  if (box) {
+    const toggle = box.querySelector<HTMLButtonElement>('[data-fxb-toggle]')!;
+    const panel = box.querySelector<HTMLElement>('[data-fxb-panel]')!;
+    const KEY = 'vipg-fxb-closed';
+    const setOpen = (open: boolean, remember = true) => {
+      panel.hidden = !open;
+      toggle.hidden = open;
+      toggle.setAttribute('aria-expanded', String(open));
+      if (remember) { try { sessionStorage.setItem(KEY, open ? '0' : '1'); } catch { /* chế độ riêng tư */ } }
+    };
+    toggle.addEventListener('click', () => { setOpen(true); box.querySelector<HTMLButtonElement>('[data-fxb-close]')!.focus(); });
+    box.querySelector('[data-fxb-close]')!.addEventListener('click', () => { setOpen(false); toggle.focus(); });
+    box.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) { setOpen(false); toggle.focus(); } });
+
+    const vnd = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+    fetch('/api/fx', { headers: { accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const tiers = Array.isArray(d?.tiers) ? d.tiers : [];
+        if (!d?.ok || !tiers.length) return;
+        const rows = box.querySelector('[data-fxb-rows]')!;
+        for (const t of tiers) {
+          const tr = document.createElement('tr');
+          const a = document.createElement('td'); a.textContent = String(t.label);
+          const b = document.createElement('td'); b.textContent = `${vnd(Number(t.rate))}đ`;
+          tr.append(a, b); rows.append(tr);
+        }
+        const at = d.updated_at ? new Date(d.updated_at) : null;
+        if (at && !Number.isNaN(at.getTime())) {
+          const el = box.querySelector<HTMLTimeElement>('[data-fxb-at]')!;
+          el.dateTime = at.toISOString();
+          el.textContent = at.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+          box.querySelector<HTMLElement>('[data-fxb-at-wrap]')!.hidden = false;
+        }
+        let closed = false;
+        try { closed = sessionStorage.getItem(KEY) === '1'; } catch { /* chế độ riêng tư */ }
+        // Máy tính mở sẵn (trừ khi khách đã thu gọn trong phiên này); điện thoại chỉ hiện nút.
+        setOpen(!closed && window.matchMedia('(min-width: 900px)').matches, false);
+        box.hidden = false;
+      })
+      .catch(() => {});
+  }
+</script>
+<style>
+  .fxb { position: fixed; z-index: 55; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); max-width: calc(100vw - 32px); }
+  .fxb[hidden] { display: none; }
+  .fxb-toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 16px; border: 2px solid var(--brand); border-radius: 999px;
+    background: var(--bg); color: var(--brand-ink); font: inherit; font-weight: 800; box-shadow: 0 8px 24px rgba(17, 17, 20, .16); cursor: pointer; }
+  .fxb-toggle[hidden] { display: none; }
+  .fxb-toggle span { font-size: 18px; }
+  .fxb-panel { width: 280px; max-width: 100%; background: var(--bg); border: 1px solid var(--line); border-top: 4px solid var(--brand); border-radius: var(--radius-sm);
+    box-shadow: var(--shadow); padding: 12px 14px 10px; }
+  .fxb-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .fxb-title { margin: 0; font-size: 16px; color: var(--text); }
+  .fxb-close { min-width: 40px; min-height: 40px; margin: -8px -8px -8px 0; border: 0; background: none; color: var(--muted); font-size: 24px; line-height: 1; cursor: pointer; border-radius: 8px; }
+  .fxb-close:hover { color: var(--text); background: var(--bg-alt); }
+  .fxb-toggle:focus-visible, .fxb-close:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .fxb-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .fxb-table th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 4px 0; border-bottom: 1px solid var(--line); }
+  .fxb-table th:last-child, .fxb-table td:last-child { text-align: right; }
+  .fxb-table td { padding: 7px 0; border-bottom: 1px solid var(--line); color: var(--text-2); }
+  .fxb-table td:last-child { font-weight: 800; color: var(--brand-ink); white-space: nowrap; padding-left: 12px; }
+  .fxb-at { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+  @media print { .fxb { display: none; } }
+</style>

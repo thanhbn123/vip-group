@@ -117,7 +117,9 @@ test('không ảnh hưởng nội dung trang chủ đang chạy: title, H1, các
     // (nút "Liên hệ hợp tác" ở banner bỏ, CtaBand cuối trang vẫn giữ) — các nút banner được kiểm ở tests/home-logistics.test.mjs.
     .replace(/<section class="section ex-section"[\s\S]*?<\/section>/, '').replace(/<section class="section commit-band"[\s\S]*?<\/section>/, '').replace(/<div class="hero-actions"[\s\S]*?<\/div>/, '')
     // VIP CHAT V1.0: khung "Phòng chat chung" chỉ có khi build PUBLIC_CHAT_WIDGET=1 (thay đổi có chủ đích, chờ owner duyệt).
-    .replace(/<section class="cc-section"[\s\S]*?<\/section>/, '')).replace(/© \d{4}/, '')
+    .replace(/<section class="cc-section"[\s\S]*?<\/section>/, '')
+    // VIPG-WEB-038 (owner 27/11/2026): khung bảng tỷ giá CNY nổi góc trái (ẩn tới khi CRM trả bảng) — kiểm ở tests/home-logistics.test.mjs.
+    .replace(/<aside class="fxb"[\s\S]*?<\/aside>/, '')).replace(/© \d{4}/, '')
     .replace(/Chính sách bảo mật · /, '').replace(/0961 102 655/g, '0961102655').replace(/ Xem thêm: Vận chuyển hàng Trung Quốc về Bắc Ninh · Vận chuyển Thâm Quyến về Việt Nam /, ' ').replace(/ Logistics /g, ' ').replace(/ Dịch vụ vận chuyển Trung Quốc – Việt Nam → /, ' ');
   // Thay đổi có chủ đích duy nhất ngoài bảng giá: owner đổi Hotline/Zalo 0968961962 → 0961102655 (06/11/2026).
   const liveNewPhone = live.replace(/0968961962/g, '0961102655').replace(/\+84968961962/g, '+84961102655');
