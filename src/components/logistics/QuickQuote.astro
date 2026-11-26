@@ -7,11 +7,14 @@
  */
 import { provider } from '../../data/vi/logistics';
 import { prettyPhone } from '../../lib/logistics';
+import { pricing } from '../../data/vi/pricing';
+// VIPG-WEB-039 (owner 27/11/2026 "tạm ẩn"): không hiện 2 phương án — bỏ qua plans CRM trả về
+const showPlans = pricing.showPlans === true;
 const phone = prettyPhone(provider.hotline);
 ---
 <section class="section" aria-labelledby="qq-title" id="bao-gia-nhanh">
   <div class="container">
-    <div class="card qq" data-quick-quote data-zalo={provider.zaloUrl}>
+    <div class="card qq" data-quick-quote data-zalo={provider.zaloUrl} data-show-plans={showPlans ? '1' : '0'}>
       <div class="qq-head">
         <h2 id="qq-title" data-qq="title">Báo giá nhanh</h2>
         <div class="qq-lang" role="group" aria-label="Ngôn ngữ / 语言">
@@ -158,6 +161,7 @@ const phone = prettyPhone(provider.hotline);
       if (r.status === 429) { $('qq-out').replaceChildren(el('p', { class: 'muted' }, TXT[L].fast)); return; }
       if (!r.ok || !d?.ok) { $('qq-out').replaceChildren(el('p', { class: 'muted' }, d?.message || TXT[L].off)); return; }
       if (q && d.lines?.length) d.lines[d.lines.length - 1].quick = true;
+      if (document.querySelector('[data-quick-quote]')?.getAttribute('data-show-plans') !== '1') delete d.plans; // VIPG-WEB-039
       showResult(d);
     } catch { $('qq-off').hidden = false; }
   }

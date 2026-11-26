@@ -139,6 +139,8 @@ export interface ShippingPricing {
   /** Ngày hiệu lực hiển thị (ISO). */
   updated: string;
   /** VIPG-WEB-037 (owner 20/11/2026): phương án 1 — cân thực đồng giá (không quy đổi). Bảng 5 bậc = phương án 2. */
+  /** VIPG-WEB-039 (owner 27/11/2026 "tạm ẩn"): false = KHÔNG hiện 2 phương án (bảng giá + báo giá nhanh) dù actualPlan / CRM plans có dữ liệu. */
+  showPlans?: boolean;
   actualPlan?: { label: string; labelZh: string; price: number; basis: string; basisZh: string; tieredLabel: string; tieredLabelZh: string };
 }
 

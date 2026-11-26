@@ -15,6 +15,8 @@ interface Props {
 }
 const { pricing, slogan, brand, hotline, hotlineDisplay = null, zaloUrl = null, quoteHref = null, detailHref = null, relatedLinks = [] } = Astro.props;
 const fmt = (n: number) => n.toLocaleString('vi-VN');
+// VIPG-WEB-039: 2 phương án chỉ hiện khi pricing.showPlans === true (owner 27/11/2026 tạm ẩn)
+const plan = pricing.showPlans ? pricing.actualPlan : undefined;
 const updated = pricing.updated.split('-').reverse().join('/');
 const tel = hotline?.replace(/\s/g, '');
 const pretty = hotlineDisplay ?? tel?.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3');
@@ -39,17 +41,17 @@ const pretty = hotlineDisplay ?? tel?.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 
       )}
     </div>
 
-    {pricing.actualPlan && (
+    {plan && (
       <div class="price-card plan-card" data-plan="actual">
         <div class="plan-head">
-          <h3 class="plan-title">{pricing.actualPlan.label} <span class="th-zh" lang="zh-CN">{pricing.actualPlan.labelZh}</span></h3>
-          <p class="plan-price"><span class="p">{fmt(pricing.actualPlan.price)}</span><span class="u">đ/kg</span></p>
+          <h3 class="plan-title">{plan.label} <span class="th-zh" lang="zh-CN">{plan.labelZh}</span></h3>
+          <p class="plan-price"><span class="p">{fmt(plan.price)}</span><span class="u">đ/kg</span></p>
         </div>
-        <p class="plan-basis">{pricing.actualPlan.basis} <span lang="zh-CN">{pricing.actualPlan.basisZh}</span></p>
+        <p class="plan-basis">{plan.basis} <span lang="zh-CN">{plan.basisZh}</span></p>
       </div>
     )}
     <div class="price-card">
-      {pricing.actualPlan && <h3 class="plan-title plan-title-2">{pricing.actualPlan.tieredLabel} <span class="th-zh" lang="zh-CN">{pricing.actualPlan.tieredLabelZh}</span></h3>}
+      {plan && <h3 class="plan-title plan-title-2">{plan.tieredLabel} <span class="th-zh" lang="zh-CN">{plan.tieredLabelZh}</span></h3>}
       <table class="price-table">
         <caption class="visually-hidden">{pricing.title} — đơn vị {pricing.unit}</caption>
         <thead>

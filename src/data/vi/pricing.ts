@@ -30,6 +30,8 @@ export const pricing: ShippingPricing = {
   source: 'Owner cung cấp 06/11/2026; bậc theo tổng cân cả lô: owner 18/11/2026; 4 kho: owner directive 07/11/2026; thêm kho Bằng Tường: owner 18/11/2026',
   updated: '2026-11-07',
   // VIPG-WEB-037 (owner 20/11/2026 — CRM V11.0 "báo giá 2 phương án"): PA1 cân thực đồng giá 25.000đ/kg; PA2 = 5 bậc ở trên (cân quy đổi).
+  // VIPG-WEB-039 (owner 27/11/2026): "tạm ẩn ... không muốn hiện 2 phương án báo giá" — giữ dữ liệu, chỉ tắt hiển thị. Bật lại: true.
+  showPlans: false,
   actualPlan: {
     label: 'Phương án 1 · Cân thực đồng giá', labelZh: '方案一 · 按实重统一价',
     price: 25000,
