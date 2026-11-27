@@ -1,7 +1,7 @@
 // VIPG-WEB-034 — Trang chủ ưu tiên vận chuyển: bảng giá + ví dụ tính cước ngay sau banner.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
