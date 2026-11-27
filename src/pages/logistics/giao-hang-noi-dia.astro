@@ -1,0 +1,15 @@
+---
+/**
+ * VIPG-WEB-041 · Check cước giao hàng nội địa (Allingo — CRM V12.8, owner 27/11/2026).
+ * Trang riêng dưới /logistics/ (bản đồ + bảng giá + form cần nhiều chỗ; khung "Gọi giao hàng" trên trang chủ giữ gọn và trỏ sang đây).
+ * Trình duyệt gọi /api/ship/quote và /api/ship/request (public/_worker.js → CRM). Khách chỉ thấy GIÁ KHÁCH, luôn kèm nhãn "Giá tạm tính, VIP xác nhận khi duyệt".
+ */
+import LogisticsLayout from '../../layouts/LogisticsLayout.astro';
+import ShipQuote from '../../components/logistics/ShipQuote.astro';
+import { pageByKey } from '../../lib/logistics';
+
+const page = pageByKey('giao-hang-noi-dia');
+---
+<LogisticsLayout page={page} showActions={false}>
+  <ShipQuote />
+</LogisticsLayout>

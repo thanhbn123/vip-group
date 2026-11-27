@@ -57,7 +57,8 @@ export default defineConfig({
     csp: {
       directives: [
         "default-src 'self'",
-        "img-src 'self' data:",
+        // Ô chọn điểm giao (VIPG-WEB-041) lấy ảnh nền bản đồ từ OpenStreetMap.
+        "img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
         "font-src 'self'",
         // Khung chat (khi bật) đọc API công khai ở origin khác → thêm đúng origin đó; tắt / cùng origin → chỉ 'self'.
         CHAT_ORIGIN ? `connect-src 'self' ${CHAT_ORIGIN}` : "connect-src 'self'",

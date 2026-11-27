@@ -188,3 +188,66 @@ test('/api/delivery: chuyển sang CRM (khóa + IP), chỉ trường cho phép; 
   assert.equal(bad.status, 400); assert.equal((await bad.json()).error, 'DELIVERY_VERIFY_FAILED');
   assert.equal((await handleDelivery(req({}), ENV, fake(500, {}))).status, 502);
 });
+
+// VIPG-WEB-041: Check cước giao hàng nội địa (Allingo) — /api/ship/quote + /api/ship/request
+test('/api/ship/quote: chuyển CRM (khóa + IP), chỉ trường cho phép, chỉ trả giá khách; 429 / SHIP_DISABLED / sai đầu vào', async () => {
+  const { handleShip } = await import('../public/_worker.js');
+  const ENV = { CRM_NEWS_URL: 'https://crm.example/', NEWS_PUBLIC_KEY: 'k' };
+  const req = (body) => new Request('https://vipgroup.com.vn/api/ship/quote', { method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '1.2.3.4' }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+  let sent = null;
+  const fake = (status, out) => async (url, init) => { assert.equal(url, 'https://crm.example/api/public/ship/quote'); assert.equal(init.headers['x-news-key'], 'k'); assert.equal(init.headers['x-client-ip'], '1.2.3.4'); sent = JSON.parse(init.body); return new Response(JSON.stringify(out), { status }); };
+  const good = { dest: { address: 'Hà Nội', lat: 21.03, lng: 105.85, evil: 1 }, weight_kg: '5', length_cm: 30, cod_amount: 0, evil: 1 };
+  assert.equal((await handleShip(new Request('https://vipgroup.com.vn/api/ship/quote'), ENV, 'quote')).status, 405);
+  assert.equal((await handleShip(req(good), {}, 'quote')).status, 503);
+  assert.equal((await handleShip(req('{x'), ENV, 'quote')).status, 400);
+  assert.equal((await handleShip(req({ ...good, dest: { lat: 0, lng: 0 } }), ENV, 'quote')).status, 400);
+  assert.equal((await handleShip(req({ ...good, weight_kg: 0 }), ENV, 'quote')).status, 400);
+  const ok = await handleShip(req(good), ENV, 'quote', fake(200, { quote_id: 'Q1', expires_at: '2026-11-27T10:00:00Z', note: 'n', options: [
+    { key: 'a|b', carrier_code: 'a', carrier_name: 'A', service_code: 'b', service_name: 'B', eta_text: '1-2 ngày', customer_price: 30000, allingo_cost: 20000, markup: 5 }, { carrier_code: 'x' }] }));
+  const d = await ok.json();
+  assert.equal(d.ok, true); assert.equal(d.quote_id, 'Q1'); assert.equal(d.options.length, 1);
+  assert.deepEqual(Object.keys(d.options[0]).sort(), ['carrier_code', 'carrier_name', 'customer_price', 'eta_text', 'key', 'service_code', 'service_name']);
+  assert.deepEqual(sent, { dest: { address: 'Hà Nội', lat: 21.03, lng: 105.85 }, weight_kg: 5, length_cm: 30 });
+  assert.equal((await handleShip(req(good), ENV, 'quote', fake(429, { error: { code: 'RATE' } }))).status, 429);
+  const off = await handleShip(req(good), ENV, 'quote', fake(503, { error: { code: 'SHIP_DISABLED' } }));
+  assert.equal(off.status, 503); assert.equal((await off.json()).error, 'ship_disabled');
+  assert.equal((await handleShip(req(good), ENV, 'quote', fake(500, {}))).status, 502);
+});
+
+test('/api/ship/request: bắt buộc Turnstile, chỉ trường cho phép, 400 lệch mã/SĐT trả lại thông điệp, kết quả chỉ có order.code + status', async () => {
+  const { handleShip } = await import('../public/_worker.js');
+  const ENV = { CRM_NEWS_URL: 'https://crm.example', NEWS_PUBLIC_KEY: 'k', TURNSTILE_SECRET: 's' };
+  const body = { customer_code: 'VG1', customer_phone: '0900000000', quote_id: 'Q1', option: { carrier_code: 'a', service_code: 'b', price: 1 }, address: 'abc', phone: '0911', codes: 'A\nB', package_count: 2, note: 'n', lat: 21, lng: 105, turnstile_token: 't', evil: 1 };
+  const req = (b) => new Request('https://vipgroup.com.vn/api/ship/request', { method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '1.2.3.4' }, body: JSON.stringify(b) });
+  let sent = null; let tsOk = true; let crmCalls = 0;
+  const fake = (status, out) => async (url, init) => {
+    if (String(url).includes('siteverify')) return new Response(JSON.stringify({ success: tsOk }));
+    crmCalls++; assert.equal(url, 'https://crm.example/api/public/ship/request'); assert.equal(init.headers['x-news-key'], 'k'); sent = JSON.parse(init.body);
+    return new Response(JSON.stringify(out), { status });
+  };
+  assert.equal((await handleShip(req(body), { ...ENV, TURNSTILE_SECRET: '' }, 'request', fake(200, {}))).status, 503);
+  assert.equal((await handleShip(req({ ...body, quote_id: '' }), ENV, 'request', fake(200, {}))).status, 400);
+  tsOk = false;
+  assert.equal((await handleShip(req(body), ENV, 'request', fake(200, {}))).status, 403);
+  assert.equal(crmCalls, 0, 'Turnstile hỏng → không gọi CRM');
+  tsOk = true;
+  const ok = await handleShip(req(body), ENV, 'request', fake(200, { order: { code: 'GH-261127-001', status: 'pending_verify', customer: 'lộ' }, secret: 1 }));
+  assert.deepEqual(await ok.json(), { ok: true, order: { code: 'GH-261127-001', status: 'pending_verify' } });
+  assert.ok(!('evil' in sent) && !('turnstile_token' in sent)); assert.deepEqual(sent.option, { carrier_code: 'a', service_code: 'b' }); assert.equal(sent.package_count, 2);
+  const bad = await handleShip(req(body), ENV, 'request', fake(400, { error: { code: 'DELIVERY_VERIFY_FAILED', message: 'Mã khách hàng hoặc số điện thoại không khớp hồ sơ.' } }));
+  assert.equal(bad.status, 400); assert.equal((await bad.json()).error, 'DELIVERY_VERIFY_FAILED');
+  assert.equal((await handleShip(req(body), ENV, 'request', fake(429, {}))).status, 429);
+});
+
+test('/logistics/giao-hang-noi-dia/: bản đồ tự host, nhãn giá tạm tính, CSP cho ô OSM, không action / name; Leaflet 1.9.4 có đủ tệp', () => {
+  const html = readFileSync(join(root, 'dist/logistics/giao-hang-noi-dia/index.html'), 'utf8');
+  assert.match(html, /Giá tạm tính, VIP xác nhận khi duyệt/);
+  assert.match(html, /src="\/vendor\/leaflet\/leaflet\.js"/);
+  assert.doesNotMatch(html, /unpkg|cdnjs|jsdelivr/);
+  assert.match(html, /img-src 'self' data: https:\/\/tile\.openstreetmap\.org https:\/\/\*\.tile\.openstreetmap\.org;/);
+  assert.match(html, /connect-src 'self';/);
+  assert.doesNotMatch(html, /<form[^>]*action=/);
+  assert.doesNotMatch(html, /<(input|textarea)[^>]*\sname="(?!sq-opt)/);
+  for (const f of ['leaflet.js', 'leaflet.css', 'images/marker-icon.png', 'images/marker-shadow.png', 'images/layers.png']) assert.ok(existsSync(join(root, 'dist/vendor/leaflet', f)), f);
+  assert.match(readFileSync(join(root, 'dist/vendor/leaflet/leaflet.js'), 'utf8').slice(0, 200), /Leaflet 1\.9\.4/);
+});

@@ -19,6 +19,7 @@ const portal = getContent('vi').contact.portal;
         </div>
         <div class="dr-actions">
           <button type="button" class="btn btn-primary" data-dr-open aria-expanded="false" aria-controls="dr-form">Gọi giao hàng</button>
+          <a class="btn btn-ghost" href="/logistics/giao-hang-noi-dia/">Check cước giao hàng</a>
           {portal && <a class="btn btn-ghost" href={portal.loginUrl} data-track="portal_login_click" data-track-location="delivery">Đăng nhập Cổng khách để chọn kiện</a>}
         </div>
       </div>

@@ -516,6 +516,18 @@ export const pages: LogisticsPage[] = [
     keyword: 'hàng cấm gửi từ Trung Quốc',
   },
   {
+    key: 'giao-hang-noi-dia',
+    href: '/logistics/giao-hang-noi-dia/',
+    nav: 'Giao hàng nội địa',
+    title: 'Check cước giao hàng nội địa Việt Nam – VIP GROUP',
+    description:
+      'Check cước giao hàng nội địa từ kho VIP GROUP: chọn điểm giao trên bản đồ, nhập cân nặng, xem giá tạm tính các hãng và gửi lệnh giao cho VIP GROUP xác nhận.',
+    h1: 'Check cước giao hàng nội địa',
+    lead: 'Chọn điểm giao trên bản đồ, nhập cân nặng để xem cước các hãng — rồi gửi lệnh giao, VIP GROUP xác nhận trước khi giao.',
+    status: 'ready',
+    keyword: 'check cước giao hàng nội địa',
+  },
+  {
     key: 'faq',
     href: '/logistics/cau-hoi-thuong-gap/',
     nav: 'Hỏi đáp',

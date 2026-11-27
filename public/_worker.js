@@ -589,6 +589,76 @@ export async function handleDelivery(request, env, fetchImpl = fetch) {
   }
 }
 
+// ───────── VIPG-WEB-041 · Check cước giao hàng nội địa (Allingo, CRM V12.8) ─────────
+// POST /api/ship/quote   → CRM /api/public/ship/quote   (không Turnstile; CRM giới hạn tốc độ theo x-client-ip)
+// POST /api/ship/request → CRM /api/public/ship/request (BẮT BUỘC Turnstile: body.turnstile_token, kiểm bằng TURNSTILE_SECRET)
+// Cùng biến CRM_NEWS_URL + NEWS_PUBLIC_KEY (header x-news-key) với các API công khai khác. Khách chỉ thấy GIÁ KHÁCH (customer_price):
+// mọi trường khác của CRM (cước gốc, markup…) bị cắt ở đây — chỉ chép lại các trường whitelist.
+const num = (v) => { if (v === null || v === undefined || v === '') return undefined; const n = Number(v); return Number.isFinite(n) ? n : NaN; };
+const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+const errCode = (data) => (typeof data?.error === 'string' ? data.error : data?.error?.code) || null;
+const errMsg = (data) => (typeof data?.error?.message === 'string' ? data.error.message : null);
+
+export async function handleShip(request, env, kind, fetchImpl = fetch) {
+  if (request.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
+  if (!env.CRM_NEWS_URL || !env.NEWS_PUBLIC_KEY) return json(503, { ok: false, error: 'not_configured' });
+  const isReq = kind === 'request';
+  if (isReq && !env.TURNSTILE_SECRET) return json(503, { ok: false, error: 'not_configured' });
+  const raw = await request.text();
+  if (raw.length > 8000) return json(413, { ok: false, error: 'too_large' });
+  let body; try { body = JSON.parse(raw); } catch { return json(400, { ok: false, error: 'bad_json' }); }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json(400, { ok: false, error: 'bad_json' });
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  let payload;
+  if (!isReq) {
+    const d = body.dest && typeof body.dest === 'object' ? body.dest : {};
+    const lat = num(d.lat), lng = num(d.lng), w = num(body.weight_kg);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 7 || lat > 24 || lng < 101 || lng > 120) return json(400, { ok: false, error: 'bad_dest' });
+    if (!Number.isFinite(w) || w <= 0 || w > 2000) return json(400, { ok: false, error: 'bad_weight' });
+    payload = { dest: { address: str(d.address, 500), lat, lng }, weight_kg: w };
+    for (const k of ['length_cm', 'width_cm', 'height_cm', 'cod_amount']) {
+      const v = num(body[k]);
+      if (v === undefined) continue;
+      if (!Number.isFinite(v) || v < 0 || v > 1e9) return json(400, { ok: false, error: `bad_${k}` });
+      if (v > 0) payload[k] = v;
+    }
+  } else {
+    const o = body.option && typeof body.option === 'object' ? body.option : {};
+    const lat = num(body.lat), lng = num(body.lng);
+    const pc = num(body.package_count);
+    if (!str(body.customer_code, 40) || !str(body.customer_phone, 20) || !str(body.quote_id, 80) || !str(o.carrier_code, 60) || !str(o.service_code, 60)
+      || str(body.address, 700).length < 3 || !Number.isFinite(lat) || !Number.isFinite(lng) || (pc !== undefined && (!Number.isInteger(pc) || pc < 0 || pc > 999999))) return json(400, { ok: false, error: 'invalid' });
+    if (!(await verifyTurnstile(env, body.turnstile_token, ip, fetchImpl))) return json(403, { ok: false, error: 'turnstile' });
+    payload = { customer_code: str(body.customer_code, 40), customer_phone: str(body.customer_phone, 20), quote_id: str(body.quote_id, 80),
+      option: { carrier_code: str(o.carrier_code, 60), service_code: str(o.service_code, 60) }, address: str(body.address, 700), phone: str(body.phone, 60),
+      codes: str(body.codes, 4000), package_count: pc === undefined ? null : pc, note: str(body.note, 1000), lat, lng };
+  }
+  try {
+    const ac = new AbortController(); const timer = setTimeout(() => ac.abort(), 10000);
+    const r = await fetchImpl(`${String(env.CRM_NEWS_URL).replace(/\/+$/, '')}/api/public/ship/${kind}`, {
+      method: 'POST', signal: ac.signal,
+      headers: { 'x-news-key': env.NEWS_PUBLIC_KEY, 'x-client-ip': ip, accept: 'application/json', 'content-type': 'application/json' },
+      body: JSON.stringify(payload) });
+    clearTimeout(timer);
+    const data = await r.json().catch(() => null);
+    if (r.status === 429) return json(429, { ok: false, error: 'rate_limited', message: errMsg(data) });
+    if (r.status === 503 && errCode(data) === 'SHIP_DISABLED') return json(503, { ok: false, error: 'ship_disabled' });
+    if (r.status === 400 || r.status === 409 || r.status === 422) return json(r.status, { ok: false, error: errCode(data) || 'invalid', message: errMsg(data) });
+    if (!r.ok || !data) return json(502, { ok: false, error: 'upstream' });
+    if (!isReq) {
+      const options = (Array.isArray(data.options) ? data.options : []).slice(0, 30).map((o) => ({
+        key: str(o?.key, 120), carrier_code: str(o?.carrier_code, 60), carrier_name: str(o?.carrier_name, 120), service_code: str(o?.service_code, 60),
+        service_name: str(o?.service_name, 120), eta_text: str(o?.eta_text, 120), customer_price: Number(o?.customer_price) })).filter((o) => o.carrier_code && o.service_code && Number.isFinite(o.customer_price));
+      return json(200, { ok: true, quote_id: str(data.quote_id, 80), expires_at: str(data.expires_at, 40), options, note: str(data.note, 300) });
+    }
+    const code = str(data.order?.code, 40);
+    if (!code) return json(502, { ok: false, error: 'upstream' });
+    return json(200, { ok: true, order: { code, status: str(data.order?.status, 40) || 'pending_verify' } });
+  } catch {
+    return json(502, { ok: false, error: 'upstream' });
+  }
+}
+
 // ───────── VIPG-WEB-034 · Tỷ giá CNY→VND công khai (owner 17/11/2026: "có công khai, admin được phép cập nhật") ─────────
 // GET /api/fx → CRM /api/public/fx-rate (admin cập nhật trong CRM). Trả { ok, rate, updated_at, tiers } (tiers: VIPG-WEB-038). Cùng biến CRM_NEWS_URL + NEWS_PUBLIC_KEY.
 // CRM chưa có / chưa đặt tỷ giá → 404/503, giao diện giữ ẩn khối tỷ giá.
@@ -638,6 +708,8 @@ export default {
     if (pathname === '/api/goods/rules' || pathname === '/api/goods/check') return handleGoods(request, env);
     if (pathname === '/api/fx') return handleFx(request, env);
     if (pathname === '/api/delivery') return handleDelivery(request, env);
+    if (pathname === '/api/ship/quote') return handleShip(request, env, 'quote');
+    if (pathname === '/api/ship/request') return handleShip(request, env, 'request');
     if (pathname.startsWith('/api/')) return json(404, { ok: false, error: 'not_found' });
     // VIPG-WEB-030: trang chủ + /tin-tuc/… + /zh/tin-tuc/… (tin tức từ CRM)
     if (pathname === '/' || /^\/(zh\/)?tin-tuc(\/|$)/.test(pathname)) return handleNews(request, env, ctx);

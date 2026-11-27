@@ -1,0 +1,254 @@
+---
+/**
+ * VIPG-WEB-041 · Khối "Check cước giao hàng nội địa". Bước 1: chọn điểm giao (Leaflet 1.9.4 tự host ở /vendor/leaflet/, nền OSM, ghim kéo được
+ * hoặc dán tọa độ) + cân nặng / kích thước / COD → /api/ship/quote. Bước 2: bảng hãng · dịch vụ · dự kiến · giá (chọn 1). Bước 3: mã khách + SĐT
+ * (phải trùng hồ sơ CRM) + địa chỉ… + Turnstile → /api/ship/request → mã GH-… "Chờ xác minh". Không action / name (CSP form-action 'none'; gửi bằng fetch).
+ */
+import { getContent } from '../../data';
+import { provider } from '../../data/vi/logistics';
+import { telHref, prettyPhone } from '../../lib/logistics';
+const siteKey = getContent('vi').contact.lead.turnstileSiteKey;
+const phone = prettyPhone(provider.hotline);
+---
+<section class="section sq" aria-labelledby="sq-title" data-sq data-sitekey={siteKey || ''}>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <div class="container">
+    <h2 id="sq-title">1. Chọn điểm giao và nhập hàng</h2>
+    <form class="sq-form" data-sq-quote novalidate>
+      <div class="sq-map-wrap">
+        <div class="sq-map" data-sq-map role="application" aria-label="Bản đồ chọn điểm giao — bấm vào bản đồ hoặc kéo ghim"></div>
+        <p class="sq-small">Bấm vào bản đồ hoặc kéo ghim đến đúng nơi nhận hàng. Bản đồ © <a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap</a>.</p>
+        <label class="sq-coord"><span>Hoặc dán tọa độ (vĩ độ, kinh độ)</span>
+          <span class="sq-row"><input data-sq="coord" inputmode="decimal" autocomplete="off" placeholder="21.0285, 105.8542" /><button type="button" class="btn btn-ghost" data-sq-paste>Đặt ghim</button></span></label>
+        <p class="sq-pin" data-sq-pin aria-live="polite">Chưa chọn điểm giao.</p>
+      </div>
+      <div class="sq-grid">
+        <label class="wide"><span>Địa chỉ giao <b class="req" aria-hidden="true">*</b></span><textarea data-sq="address" rows="2" maxlength="500" required placeholder="Số nhà, đường, phường / xã, tỉnh"></textarea></label>
+        <label><span>Cân nặng (kg) <b class="req" aria-hidden="true">*</b></span><input data-sq="weight" inputmode="decimal" autocomplete="off" required placeholder="Vd 5" /></label>
+        <label><span>Thu hộ COD (đ)</span><input data-sq="cod" inputmode="numeric" autocomplete="off" placeholder="Bỏ trống nếu không thu hộ" /></label>
+        <label><span>Dài (cm)</span><input data-sq="length" inputmode="decimal" autocomplete="off" /></label>
+        <label><span>Rộng (cm)</span><input data-sq="width" inputmode="decimal" autocomplete="off" /></label>
+        <label><span>Cao (cm)</span><input data-sq="height" inputmode="decimal" autocomplete="off" /></label>
+      </div>
+      <div class="sq-actions"><button type="submit" class="btn btn-primary" data-sq-go>Check cước</button></div>
+      <p class="sq-msg" data-sq-qmsg aria-live="polite"></p>
+    </form>
+
+    <div data-sq-results hidden>
+      <h2>2. Chọn hãng và dịch vụ</h2>
+      <div class="sq-table-wrap">
+        <table class="sq-table">
+          <thead><tr><th scope="col"><span class="visually-hidden">Chọn</span></th><th scope="col">Hãng · dịch vụ</th><th scope="col">Dự kiến</th><th scope="col" class="num">Giá</th></tr></thead>
+          <tbody data-sq-rows></tbody>
+        </table>
+      </div>
+      <p class="sq-note"><strong>Giá tạm tính, VIP xác nhận khi duyệt.</strong> <span data-sq-note></span> <span data-sq-exp></span></p>
+    </div>
+
+    <form class="sq-form sq-send" data-sq-send hidden novalidate>
+      <h2>3. Gửi lệnh giao</h2>
+      <p class="sq-chosen" data-sq-chosen></p>
+      <div class="sq-grid">
+        <label><span>Mã khách hàng <b class="req" aria-hidden="true">*</b></span><input data-sq="customer_code" autocomplete="off" maxlength="40" required placeholder="Vd VG001234 hoặc TT4678" /></label>
+        <label><span>SĐT đã đăng ký với VIP GROUP <b class="req" aria-hidden="true">*</b></span><input data-sq="customer_phone" inputmode="tel" autocomplete="tel" maxlength="20" required /></label>
+        <label class="wide"><span>Địa chỉ giao <b class="req" aria-hidden="true">*</b></span><textarea data-sq="send_address" rows="2" maxlength="700" required></textarea></label>
+        <label><span>SĐT người nhận</span><input data-sq="phone" inputmode="tel" maxlength="60" placeholder="Bỏ trống = SĐT đã đăng ký" /></label>
+        <label><span>Số kiện</span><input data-sq="package_count" inputmode="numeric" maxlength="6" placeholder="Bỏ trống = bằng số mã kiện" /></label>
+        <label class="wide"><span>Mã kiện (mỗi dòng một mã — không bắt buộc)</span><textarea data-sq="codes" rows="3" placeholder="EX63588&#10;EX63589"></textarea></label>
+        <label class="wide"><span>Ghi chú</span><textarea data-sq="note" rows="2" maxlength="1000" placeholder="Vd: giao giờ hành chính, gọi trước khi tới"></textarea></label>
+      </div>
+      <div class="sq-ts" data-sq-ts></div>
+      <p class="sq-small">Mã khách và số điện thoại phải trùng hồ sơ tại VIP GROUP. Lệnh gửi từ website được nhân viên xác minh trước khi giao.</p>
+      <div class="sq-actions"><button type="submit" class="btn btn-primary" data-sq-submit>Gửi lệnh giao</button></div>
+      <p class="sq-msg" data-sq-smsg aria-live="polite"></p>
+    </form>
+
+    <div class="sq-done card" data-sq-done hidden aria-live="polite">
+      <h2>Đã nhận lệnh giao</h2>
+      <p class="sq-code" data-sq-code></p>
+      <p>Trạng thái: <strong>Chờ xác minh</strong>. Nhân viên VIP GROUP sẽ xác minh và liên hệ với bạn.</p>
+    </div>
+
+    <p class="sq-small sq-off" data-sq-off hidden>Tạm thời chưa check cước được, vui lòng gọi hotline <a class="text-link" href={telHref(provider.hotline)}>{phone}</a> hoặc <a class="text-link" href="/#goi-giao-hang">gửi lệnh giao thường</a>.</p>
+    <p class="sq-small">Cần hỗ trợ? <a class="text-link" href={provider.zaloUrl} rel="noopener" target="_blank">Zalo {phone}</a> · <a class="text-link" href={telHref(provider.hotline)}>{phone}</a> · <a class="text-link" href="/#goi-giao-hang">Gửi lệnh giao thường (không chọn hãng)</a></p>
+  </div>
+</section>
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script is:inline src="/vendor/leaflet/leaflet.js" defer></script>
+<script>
+  // @ts-nocheck — script trình duyệt thuần (Leaflet / Turnstile là biến toàn cục)
+  const root = document.querySelector('[data-sq]');
+  if (root) {
+    const $ = (s) => root.querySelector(s);
+    const val = (k) => ($(`[data-sq="${k}"]`)?.value || '').trim();
+    const setv = (k, v) => { const e = $(`[data-sq="${k}"]`); if (e) e.value = v; };
+    const say = (sel, text, kind) => { const e = $(sel); e.textContent = text; e.className = `sq-msg ${kind || ''}`; };
+    const money = (n) => `${Math.round(n).toLocaleString('vi-VN')} đ`;
+    const num = (s) => { const t = String(s).trim().replace(/\s/g, '').replace(/,/g, '.'); return t === '' ? null : Number(t); };
+    let pin = null; let marker = null; let map = null; let quote = null; let chosen = null; let tsId = null;
+
+    const setPin = (lat, lng, pan) => {
+      pin = { lat: Math.round(lat * 1e6) / 1e6, lng: Math.round(lng * 1e6) / 1e6 };
+      $('[data-sq-pin]').textContent = `Điểm giao: ${pin.lat}, ${pin.lng}`;
+      if (map) {
+        if (!marker) {
+          marker = L.marker([pin.lat, pin.lng], { draggable: true, keyboard: true, title: 'Kéo để chọn điểm giao' }).addTo(map);
+          marker.on('dragend', () => { const p = marker.getLatLng(); setPin(p.lat, p.lng, false); });
+        } else marker.setLatLng([pin.lat, pin.lng]);
+        if (pan) map.setView([pin.lat, pin.lng], Math.max(map.getZoom(), 14));
+      }
+      invalidate();
+    };
+    // Đổi điểm giao / hàng → báo giá cũ không còn đúng
+    const invalidate = () => { quote = null; chosen = null; $('[data-sq-results]').hidden = true; $('[data-sq-send]').hidden = true; };
+
+    const initMap = () => {
+      if (map || typeof L === 'undefined') return;
+      L.Icon.Default.prototype.options.imagePath = '/vendor/leaflet/images/';
+      map = L.map($('[data-sq-map]'), { scrollWheelZoom: false }).setView([16.0, 106.0], 5);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
+      map.on('click', (e) => setPin(e.latlng.lat, e.latlng.lng, false));
+      if (pin) setPin(pin.lat, pin.lng, true);
+    };
+    if (typeof L !== 'undefined') initMap(); else { const s = document.querySelector('script[src="/vendor/leaflet/leaflet.js"]'); s?.addEventListener('load', initMap); window.addEventListener('load', initMap); }
+
+    $('[data-sq-paste]').addEventListener('click', () => {
+      const m = val('coord').match(/(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)/);
+      const a = m && parseFloat(m[1].replace(',', '.')); const b = m && parseFloat(m[2].replace(',', '.'));
+      if (!m || !(a >= 7 && a <= 24 && b >= 101 && b <= 120)) { say('[data-sq-qmsg]', 'Tọa độ chưa đúng — nhập dạng "21.0285, 105.8542" (điểm giao trong Việt Nam).', 'bad'); return; }
+      say('[data-sq-qmsg]', '', ''); setPin(a, b, true);
+    });
+    for (const k of ['weight', 'cod', 'length', 'width', 'height']) $(`[data-sq="${k}"]`).addEventListener('input', invalidate);
+
+    const FAIL = 'Chưa check cước được lúc này — vui lòng thử lại hoặc gọi hotline.';
+    $('[data-sq-quote]').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = $('[data-sq-go]'); $('[data-sq-off]').hidden = true; $('[data-sq-done]').hidden = true;
+      if (!pin) { say('[data-sq-qmsg]', 'Hãy chọn điểm giao trên bản đồ (hoặc dán tọa độ).', 'bad'); return; }
+      const w = num(val('weight'));
+      if (!(w > 0) || w > 2000) { say('[data-sq-qmsg]', 'Nhập cân nặng (kg) lớn hơn 0.', 'bad'); return; }
+      const body = { dest: { address: val('address'), lat: pin.lat, lng: pin.lng }, weight_kg: w };
+      for (const [k, f] of [['length', 'length_cm'], ['width', 'width_cm'], ['height', 'height_cm'], ['cod', 'cod_amount']]) {
+        const v = num(val(k)); if (v === null) continue;
+        if (!(v >= 0) || !Number.isFinite(v)) { say('[data-sq-qmsg]', 'Kích thước / COD phải là số.', 'bad'); return; }
+        if (v > 0) body[f] = v;
+      }
+      btn.disabled = true; say('[data-sq-qmsg]', 'Đang check cước…', '');
+      try {
+        const r = await fetch('/api/ship/quote', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(body) });
+        const d = await r.json().catch(() => null);
+        if (r.status === 503 && d?.error === 'ship_disabled') { say('[data-sq-qmsg]', '', ''); $('[data-sq-off]').hidden = false; return; }
+        if (r.status === 429) { say('[data-sq-qmsg]', 'Bạn check hơi nhiều, vui lòng đợi một chút hoặc gọi hotline.', 'bad'); return; }
+        if (!r.ok || !d?.ok) { say('[data-sq-qmsg]', FAIL, 'bad'); return; }
+        if (!d.options.length) { say('[data-sq-qmsg]', 'Chưa có hãng nào nhận tuyến này — vui lòng gọi hotline để được hỗ trợ.', 'bad'); return; }
+        quote = d; chosen = null; render(d); say('[data-sq-qmsg]', '', '');
+      } catch { say('[data-sq-qmsg]', 'Không kết nối được — vui lòng thử lại hoặc gọi hotline.', 'bad'); }
+      finally { btn.disabled = false; }
+    });
+
+    const cell = (tag, text, cls, label) => { const c = document.createElement(tag); if (cls) c.className = cls; if (label) c.dataset.label = label; c.textContent = text; return c; };
+    const render = (d) => {
+      const rows = $('[data-sq-rows]'); rows.replaceChildren();
+      d.options.forEach((o, i) => {
+        const tr = document.createElement('tr');
+        const td0 = document.createElement('td'); const inp = document.createElement('input');
+        inp.type = 'radio'; inp.name = 'sq-opt'; inp.id = `sq-opt-${i}`; inp.setAttribute('aria-label', `Chọn ${o.carrier_name} ${o.service_name}`);
+        inp.addEventListener('change', () => choose(o)); td0.append(inp);
+        const lab = document.createElement('label'); lab.htmlFor = inp.id; lab.className = 'sq-svc';
+        const b = document.createElement('strong'); b.textContent = o.carrier_name || o.carrier_code; lab.append(b, document.createElement('br'), document.createTextNode(o.service_name || o.service_code));
+        const td1 = document.createElement('td'); td1.append(lab);
+        tr.append(td0, td1, cell('td', o.eta_text || '—', '', 'Dự kiến'), cell('td', money(o.customer_price), 'num', 'Giá'));
+        rows.append(tr);
+      });
+      $('[data-sq-note]').textContent = d.note || '';
+      const exp = d.expires_at ? new Date(d.expires_at) : null;
+      $('[data-sq-exp]').textContent = exp && !isNaN(exp) ? `Báo giá có hiệu lực đến ${exp.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}.` : '';
+      $('[data-sq-results]').hidden = false; $('[data-sq-send]').hidden = true;
+      $('[data-sq-results]').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    const ensureTurnstile = () => {
+      if (tsId !== null || !window.turnstile || !root.dataset.sitekey) return;
+      tsId = window.turnstile.render($('[data-sq-ts]'), { sitekey: root.dataset.sitekey, language: 'vi' });
+    };
+    const choose = (o) => {
+      chosen = o;
+      $('[data-sq-chosen]').textContent = `Đã chọn: ${o.carrier_name} · ${o.service_name} — ${money(o.customer_price)} (giá tạm tính, VIP xác nhận khi duyệt)`;
+      if (!val('send_address')) setv('send_address', val('address'));
+      $('[data-sq-send]').hidden = false;
+      if (!root.dataset.sitekey) say('[data-sq-smsg]', 'Chưa gửi lệnh được qua website — vui lòng gọi hotline.', 'bad');
+      ensureTurnstile(); if (tsId === null) window.addEventListener('load', ensureTurnstile, { once: true });
+    };
+
+    $('[data-sq-send]').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = $('[data-sq-submit]');
+      if (!quote || !chosen || !pin) { say('[data-sq-smsg]', 'Vui lòng chọn một dịch vụ ở bước 2.', 'bad'); return; }
+      if (!val('customer_code') || !val('customer_phone') || val('send_address').length < 3) { say('[data-sq-smsg]', 'Vui lòng nhập mã khách hàng, số điện thoại đã đăng ký và địa chỉ giao.', 'bad'); return; }
+      const pc = val('package_count');
+      if (pc && !/^\d{1,6}$/.test(pc)) { say('[data-sq-smsg]', 'Số kiện phải là số.', 'bad'); return; }
+      if (!pc && !val('codes')) { say('[data-sq-smsg]', 'Nhập số kiện hoặc mã kiện.', 'bad'); return; }
+      const token = window.turnstile && tsId !== null ? window.turnstile.getResponse(tsId) : '';
+      if (!token) { say('[data-sq-smsg]', 'Vui lòng hoàn tất bước xác minh "Tôi không phải robot".', 'bad'); return; }
+      btn.disabled = true; say('[data-sq-smsg]', 'Đang gửi…', '');
+      try {
+        const r = await fetch('/api/ship/request', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({
+          customer_code: val('customer_code'), customer_phone: val('customer_phone'), quote_id: quote.quote_id,
+          option: { carrier_code: chosen.carrier_code, service_code: chosen.service_code }, address: val('send_address'), phone: val('phone') || val('customer_phone'),
+          codes: val('codes'), package_count: pc ? Number(pc) : null, note: val('note'), lat: pin.lat, lng: pin.lng, turnstile_token: token }) });
+        const d = await r.json().catch(() => null);
+        if (r.ok && d?.ok && d.order?.code) {
+          $('[data-sq-code]').textContent = `Mã lệnh giao: ${d.order.code}`;
+          $('[data-sq-send]').hidden = true; $('[data-sq-results]').hidden = true; $('[data-sq-done]').hidden = false;
+          $('[data-sq-done]').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
+        if (r.status === 400 || r.status === 409 || r.status === 422) say('[data-sq-smsg]', d?.message || 'Mã khách hàng hoặc số điện thoại không khớp hồ sơ, hoặc báo giá đã hết hạn — vui lòng kiểm tra lại / check cước lại.', 'bad');
+        else if (r.status === 429) say('[data-sq-smsg]', 'Gửi hơi nhiều, vui lòng đợi một chút hoặc gọi hotline.', 'bad');
+        else if (r.status === 403) say('[data-sq-smsg]', 'Xác minh chưa hợp lệ — vui lòng thử lại.', 'bad');
+        else if (r.status === 503 && d?.error === 'ship_disabled') $('[data-sq-off]').hidden = false;
+        else say('[data-sq-smsg]', 'Chưa gửi được lúc này — vui lòng gọi hotline hoặc nhắn Zalo VIP GROUP.', 'bad');
+        if (window.turnstile && tsId !== null) window.turnstile.reset(tsId);
+      } catch { say('[data-sq-smsg]', 'Không kết nối được — vui lòng thử lại hoặc gọi hotline.', 'bad'); }
+      finally { btn.disabled = false; }
+    });
+  }
+</script>
+<style>
+  .sq h2 { margin: 24px 0 12px; }
+  .sq h2:first-child, .sq .container > h2:first-child { margin-top: 0; }
+  .sq-form { display: grid; gap: 14px; }
+  .sq-map { height: 320px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--bg-soft, #eef0f2); z-index: 0; }
+  .sq-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .sq-grid { grid-template-columns: 1fr 1fr; } .sq-grid .wide { grid-column: 1 / -1; } .sq-map { height: 400px; } }
+  .sq label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; color: var(--text); min-width: 0; }
+  .sq input:not([type="radio"]), .sq textarea { font: inherit; font-weight: 400; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--bg); color: var(--text); width: 100%; box-sizing: border-box; min-width: 0; }
+  .sq input:focus-visible, .sq textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+  .sq-row { display: flex; gap: 8px; align-items: stretch; }
+  .sq-row input { flex: 1; }
+  .sq-small, .sq-pin { font-size: 13px; color: var(--muted); margin: 6px 0; }
+  .sq-pin { font-weight: 600; color: var(--text-2); }
+  .req { color: var(--brand); }
+  .sq-msg { margin: 0; font-weight: 600; min-height: 1em; }
+  .sq-msg.bad { color: var(--brand-ink); }
+  .sq-table-wrap { overflow-x: auto; }
+  .sq-table { width: 100%; border-collapse: collapse; }
+  .sq-table th, .sq-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .sq-table .num { text-align: right; white-space: nowrap; font-weight: 700; }
+  .sq-table input[type="radio"] { width: 22px; height: 22px; accent-color: var(--brand); }
+  .sq-svc { display: block; font-weight: 400; cursor: pointer; }
+  .sq-note { margin: 12px 0; }
+  .sq-chosen { font-weight: 600; margin: 0; }
+  .sq-ts { min-height: 65px; }
+  .sq-code { font-size: 22px; font-weight: 800; }
+  .sq-off { color: var(--brand-ink); font-weight: 600; }
+  @media (max-width: 520px) {
+    .sq-table thead { display: none; }
+    .sq-table, .sq-table tbody, .sq-table tr { display: block; }
+    .sq-table tr { display: grid; grid-template-columns: 34px 1fr auto; gap: 2px 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .sq-table td { display: block; border: 0; padding: 0; }
+    .sq-table td:nth-child(3) { grid-column: 2; font-size: 13px; color: var(--muted); }
+    .sq-table td:nth-child(3)::before { content: "Dự kiến: "; }
+    .sq-table td.num { grid-column: 3; grid-row: 1 / span 2; align-self: center; }
+    .sq-table td:first-child { grid-row: 1 / span 2; align-self: center; }
+  }
+</style>
